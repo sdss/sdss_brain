@@ -1,0 +1,2 @@
+recursive-include python/sdss_brain/etc *
+recursive-include cextern/**/*
