@@ -11,18 +11,18 @@
 from __future__ import print_function, division, absolute_import
 
 
-class Sdss_brainError(Exception):
-    """A custom core Sdss_brain exception"""
+class BrainError(Exception):
+    """A custom core Brain exception"""
 
     def __init__(self, message=None):
 
         message = 'There has been an error' \
             if not message else message
 
-        super(Sdss_brainError, self).__init__(message)
+        super(BrainError, self).__init__(message)
 
 
-class Sdss_brainNotImplemented(Sdss_brainError):
+class BrainNotImplemented(BrainError):
     """A custom exception for not yet implemented features."""
 
     def __init__(self, message=None):
@@ -30,45 +30,45 @@ class Sdss_brainNotImplemented(Sdss_brainError):
         message = 'This feature is not implemented yet.' \
             if not message else message
 
-        super(Sdss_brainNotImplemented, self).__init__(message)
+        super(BrainNotImplemented, self).__init__(message)
 
 
-class Sdss_brainAPIError(Sdss_brainError):
+class BrainAPIError(BrainError):
     """A custom exception for API errors"""
 
     def __init__(self, message=None):
         if not message:
-            message = 'Error with Http Response from Sdss_brain API'
+            message = 'Error with Http Response from Brain API'
         else:
-            message = 'Http response error from Sdss_brain API. {0}'.format(message)
+            message = 'Http response error from Brain API. {0}'.format(message)
 
-        super(Sdss_brainAPIError, self).__init__(message)
+        super(BrainAPIError, self).__init__(message)
 
 
-class Sdss_brainApiAuthError(Sdss_brainAPIError):
+class BrainApiAuthError(BrainAPIError):
     """A custom exception for API authentication errors"""
     pass
 
 
-class Sdss_brainMissingDependency(Sdss_brainError):
+class BrainMissingDependency(BrainError):
     """A custom exception for missing dependencies."""
     pass
 
 
-class Sdss_brainWarning(Warning):
-    """Base warning for Sdss_brain."""
+class BrainWarning(Warning):
+    """Base warning for Brain."""
 
 
-class Sdss_brainUserWarning(UserWarning, Sdss_brainWarning):
+class BrainUserWarning(UserWarning, BrainWarning):
     """The primary warning class."""
     pass
 
 
-class Sdss_brainSkippedTestWarning(Sdss_brainUserWarning):
+class BrainSkippedTestWarning(BrainUserWarning):
     """A warning for when a test is skipped."""
     pass
 
 
-class Sdss_brainDeprecationWarning(Sdss_brainUserWarning):
+class BrainDeprecationWarning(BrainUserWarning):
     """A warning for deprecated features."""
     pass
