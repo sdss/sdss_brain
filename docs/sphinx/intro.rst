@@ -11,12 +11,18 @@ SDSS user experience.
 
 .. _mma:
 
-Multi-Modal Data Access System
-------------------------------
+Multi-Modal Data Access System (MMA)
+------------------------------------
 
-The ``MMAMixIn`` is bare-bones class to be mixed with any other class.  When mixed in, it adds MMA
-functionality to that class. A convenience class, ``Brain`` to fu 
+The ``MMAMixIn`` is a bare-bones class to be mixed with any other class.  When mixed in, it adds MMA
+functionality to that class. The MMA provides three operating modes: `auto`, `local`, and `remote`. 
 
+- **local**: Load objects locally first from a database, and upon failure from a local filepath.
+- **remote**: Load objects remotely over the API.
+- **auto**: Automatically tries to load objects locally, and upon failure loads object remotely.
+
+Depending on the mode and the logic preformed, the MMA will load data from origin `file`, `db`, or `api`.
+See the :ref:`Mode Decision Tree <mma_tree>` for a workflow diagram. 
 
 When subclassing ``MMAMixIn``, there are several abstract methods that you must define.  These methods are
 
@@ -26,12 +32,17 @@ When subclassing ``MMAMixIn``, there are several abstract methods that you must 
 - ``_load_object_from_db``: Defines the logic for loading an object from a database
 - ``_load_object_from_api``: Defines the logic for loading an object remotely over an API
 
+
+The ``Brain`` class is a convenience class that creates a basic object template with the ``MMAMixIn`` already
+applied.  It also provides a ``repr`` and some placeholder logic to load objects based on the ``data_origin``.
+
 .. _example:
 
 Example
 -------
 
-Let's step through the creation of new class to interface with MaNGA data cubes.   
+Let's step through the creation of new class to interface with MaNGA data cubes using the ``Brain`` convenience
+class.
 
 ::
 
@@ -50,6 +61,18 @@ Let's step through the creation of new class to interface with MaNGA data cubes.
 
         def _parse_inputs(self, value):
             pass
+
+To set up database access for your tool, set the ``_db`` class attribute to the appropriate database containing
+information for.  Since we're creating a tool for MaNGA cubes, we use the `mangadb` database from `sdssdb`.
+
+Next, we define the ``_set_access_path_params`` method for our tool.  Here we must specify the ``sdss_access`` 
+path template **name** and **keyword parameters** needed to build complete file paths.  ``_set_access_path_params``
+requires both a string `self.path_name` and dictionary `self.path_params` to be set.  Otherwise an error will be raised.
+For MaNGA DRP cubes, the ``sdss_access`` name is **mangacube**, and it takes three keyword arguments, a plate id, 
+an IFU designation, and the DRP version to define a complete filepath.
+
+Finally we define the ``_parse_inputs`` method.  This method defines some logic 
+
 
 Now that we have our class defined, let's see it in use.  If we specified a database to use during class
 definition, the default local action is to attempt to connect via the db.

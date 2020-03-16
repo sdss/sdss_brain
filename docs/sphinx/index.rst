@@ -26,6 +26,7 @@ Reference
    :maxdepth: 1
 
    api
+   mma
 
 
 Indices and tables
