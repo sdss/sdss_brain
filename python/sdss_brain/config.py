@@ -7,7 +7,7 @@
 # Created: Friday, 14th February 2020 1:41:34 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 9:30:35 am
+# Last Modified: Monday, 16th March 2020 9:33:41 am
 # Modified By: Brian Cherinka
 
 
@@ -57,7 +57,7 @@ class Config(object):
         value = value.upper()
         if value not in self._allowed_releases:
             raise BrainError('trying to set an invalid release version. Valid releases are: {0}'
-                              .format(', '.join(self._allowed_releases)))
+                             .format(', '.join(self._allowed_releases)))
 
         self._release = value
 
@@ -71,7 +71,7 @@ class Config(object):
         return max(self._allowed_releases, key=lambda t: int(t.rsplit('DR', 1)[-1]))
 
     def _load_defaults(self):
-        ''' Load the Brain config yaml file '''
+        ''' Load the Brain config yaml file and update any parameters '''
 
         # update any matching Config values
         for key, value in cfg_params.items():
