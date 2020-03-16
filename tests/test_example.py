@@ -7,7 +7,7 @@
 # Created: Monday, 16th March 2020 11:41:57 am
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 11:59:14 am
+# Last Modified: Monday, 16th March 2020 1:33:21 pm
 # Modified By: Brian Cherinka
 
 
@@ -15,10 +15,12 @@ from __future__ import print_function, division, absolute_import
 import pytest
 from sdss_brain.core import Brain
 from sdssdb.sqlalchemy.mangadb import database
+from sdss_brain.helpers import get_mapped_version
 
 
 class Cube(Brain):
     _db = database
+    mapped_version = 'manga'
 
     def _parse_input(self, value):
         self.plateifu = value
@@ -27,7 +29,8 @@ class Cube(Brain):
 
     def _set_access_path_params(self):
         self.path_name = 'mangacube'
-        self.path_params = {'plate': self.plate, 'ifu': self.ifu, 'drpver': 'v2_4_3'}
+        drpver = get_mapped_version(self.mapped_version, release=self.release, key='drpver')
+        self.path_params = {'plate': self.plate, 'ifu': self.ifu, 'drpver': drpver}
 
     def _load_object_from_file(self, data=None):
         pass

@@ -2,3 +2,16 @@
 
 ignore_db: False
 download: False
+
+mapped_versions:
+  manga:
+    DR16: {drpver: v2_4_3, dapver: 2.2.1}  
+    DR15: {drpver: v2_4_3, dapver: 2.2.1}  
+    DR14: {drpver: v2_1_2, dapver: null}  
+    DR13: {drpver: v1_5_4, dapver: null}  
+    MPL9: {drpver: v2_7_1, dapver: 2.4.1}  
+    MPL8: {drpver: v2_5_3, dapver: 2.3.0}  
+    MPL7: {drpver: v2_4_3, dapver: 2.2.1}  
+    MPL6: {drpver: v2_3_1, dapver: 2.1.3}  
+    MPL5: {drpver: v2_0_1, dapver: 2.0.2}  
+    MPL4: {drpver: v1_5_1, dapver: 1.1.1}
