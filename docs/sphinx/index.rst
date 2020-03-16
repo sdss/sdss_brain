@@ -15,9 +15,9 @@ Contents
 .. toctree::
   :maxdepth: 2
 
-  What's new in sdss_brain? <CHANGELOG>
   Introduction to sdss_brain <intro>
-
+  How to use the global configuration <config>
+  How to map specific version numbers to Data Release ids <version>
 
 Reference
 ---------
@@ -27,6 +27,7 @@ Reference
 
    api
    mma
+   CHANGELOG
 
 
 Indices and tables

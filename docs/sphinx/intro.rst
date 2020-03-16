@@ -9,6 +9,11 @@ user-facing tools and interfaces.  It combines the utility of other core SDSS pa
 ``sdss-access``, ``sdss-tree``, ``sdssdb``, ``sdsstools`` to enable a more streamlined and simplified 
 SDSS user experience.
 
+This package provides the following:
+
+- Multi-Modal data access with the ``MMAMixIn`` and ``Brain`` classes
+- xxx
+
 .. _mma:
 
 Multi-Modal Data Access System (MMA)
@@ -17,9 +22,9 @@ Multi-Modal Data Access System (MMA)
 The ``MMAMixIn`` is a bare-bones class to be mixed with any other class.  When mixed in, it adds MMA
 functionality to that class. The MMA provides three operating modes: `auto`, `local`, and `remote`. 
 
-- **local**: Load objects locally first from a database, and upon failure from a local filepath.
-- **remote**: Load objects remotely over the API.
 - **auto**: Automatically tries to load objects locally, and upon failure loads object remotely.
+- **local**: Load objects locally first from a database, and upon failure from a local filepath.
+- **remote**: Load objects remotely over an API.
 
 Depending on the mode and the logic preformed, the MMA will load data from origin `file`, `db`, or `api`.
 See the :ref:`Mode Decision Tree <mma_tree>` for a workflow diagram. 
@@ -38,11 +43,11 @@ applied.  It also provides a ``repr`` and some placeholder logic to load objects
 
 .. _example:
 
-Example
--------
+Example Usage
+-------------
 
 Let's step through the creation of new class to interface with MaNGA data cubes using the ``Brain`` convenience
-class.
+class, highlighting how to integrate the MMA into a new tool.
 
 ::
 
@@ -55,12 +60,27 @@ class.
         mapped_version = 'manga'
 
         def _set_access_path_params(self):
+            ''' set sdss_access parameters '''
+            # set path name
             self.path_name = 'mangacube'
+
+            # set path keyword arguments 
             drpver = get_mapped_version(self.mapped_version, key='drpver')
             self.path_params = {'plate': self.plate, 'ifu':self.ifu, 'drpver': drpver}
 
-        def _parse_inputs(self, value):
-            pass
+        def _parse_input(self, value):
+            ''' parse the input value string '''
+            # match for plate-ifu designation, e.g. 8485-1901
+            plateifu_pattern = re.compile(r'([0-9]{4,5})-([0-9]{4,9})')
+            plateifu_match = re.match(plateifu_pattern, value)
+            
+            # match on plate-ifu or else assume a filename
+            if plateifu_match is not None:
+                self.objectid = value
+                self.plateifu = plateifu_match.group(0)
+                self.plate, self.ifu = plateifu_match.groups(0)
+            else:
+                self.filename = value
 
 To set up database access for your tool, set the ``_db`` class attribute to the appropriate database containing
 information for.  Since we're creating a tool for MaNGA cubes, we use the `mangadb` database from `sdssdb`.
@@ -71,8 +91,9 @@ requires both a string `self.path_name` and dictionary `self.path_params` to be 
 For MaNGA DRP cubes, the ``sdss_access`` name is **mangacube**, and it takes three keyword arguments, a plate id, 
 an IFU designation, and the DRP version to define a complete filepath.
 
-Finally we define the ``_parse_inputs`` method.  This method defines some logic 
-
+Finally we define the ``_parse_input`` method.  This method defines the logic of determining what kind of input
+has been passed, either an object ID or a filepath.  We add some logic to determine if the input string is a 
+plate-IFU designation, otherwise we assume it is a filepath.   
 
 Now that we have our class defined, let's see it in use.  If we specified a database to use during class
 definition, the default local action is to attempt to connect via the db.
@@ -111,3 +132,5 @@ Now the ``data_origin`` is set to ``file``.  If we don't have the file locally, 
     >>> cube
         <MangaCube objectid='8485-1902', mode='remote', data_origin='api'>
 
+Note this class does not actually load any data, as we have not yet defined any of the 
+``_load_object_from_xxx`` methods.
