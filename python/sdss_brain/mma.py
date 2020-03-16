@@ -7,7 +7,7 @@
 # Created: Friday, 14th February 2020 2:23:01 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 12:05:17 pm
+# Last Modified: Monday, 16th March 2020 2:10:37 pm
 # Modified By: Brian Cherinka
 
 
@@ -84,7 +84,7 @@ def check_access_params(func):
     return wrapper
 
 
-class MMAMixIn(abc.ABC, object):
+class MMAMixIn(abc.ABC):
 
     def __init__(self, data_input=None, filename=None, objectid=None, mode=None, data=None,
                  release=None, download=None, ignore_db=False, use_db=None):
@@ -213,7 +213,7 @@ class MMAMixIn(abc.ABC, object):
 
         # ensure either filename or objectid is specified
         if self.filename is None and self.objectid is None:
-            raise BrainError('no inputs defined.')
+            raise BrainError('no inputs defined. filename and objectid are both None')
 
         # check for any misaligments and misassignments
         if self.filename:

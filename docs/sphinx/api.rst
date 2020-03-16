@@ -6,10 +6,33 @@ sdss_brain Reference
 
 .. _api-main:
 
-Main
-----
+.. _api_config:
 
-.. automodule:: sdss_brain.main
+Config
+------
+
+.. automodule:: sdss_brain.config
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. _api_mma:
+
+Multi-Modal Access (MMA)
+------------------------
+
+.. automodule:: sdss_brain.mma
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+.. _api_helpers:
+
+Helpers
+-------
+
+.. automodule:: sdss_brain.helpers
    :members:
    :undoc-members:
    :show-inheritance:
