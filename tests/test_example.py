@@ -7,7 +7,7 @@
 # Created: Monday, 16th March 2020 11:41:57 am
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 4:13:26 pm
+# Last Modified: Monday, 16th March 2020 5:49:53 pm
 # Modified By: Brian Cherinka
 
 
@@ -16,7 +16,8 @@ import pytest
 import re
 from sdss_brain.core import Brain
 from sdssdb.sqlalchemy.mangadb import database
-from sdss_brain.helpers import get_mapped_version
+from sdss_brain.helpers import get_mapped_version, load_fits_file
+from astropy.io import fits
 
 
 class Cube(Brain):
@@ -37,6 +38,9 @@ class Cube(Brain):
         self.path_name = 'mangacube'
         drpver = get_mapped_version(self.mapped_version, release=self.release, key='drpver')
         self.path_params = {'plate': self.plate, 'ifu': self.ifu, 'drpver': drpver}
+
+    def _load_object_from_file(self, data=None):          
+        self.data = load_fits_file(self.filename)
 
 
 @pytest.fixture(scope='module')
@@ -66,3 +70,8 @@ class TestCube(object):
             assert path.startswith('https://data.sdss.org')
         else:
             assert not path.startswith('https://data.sdss.org')
+
+    def test_load_from_file(self):
+        cube = Cube('8485-1901', ignore_db=True)
+        assert cube.data is not None
+        assert isinstance(cube.data, fits.HDUList)

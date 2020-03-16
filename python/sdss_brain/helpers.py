@@ -7,24 +7,28 @@
 # Created: Monday, 16th March 2020 1:00:14 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 1:46:17 pm
+# Last Modified: Monday, 16th March 2020 5:29:39 pm
 # Modified By: Brian Cherinka
 
 
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
+
+import pathlib
+from astropy.io import fits
+from sdss_brain import log
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError
 
 
 def get_mapped_version(name, release=None, key=None):
     ''' Get a version id mapped to a release number
-    
+
     For a given named category, looks up the "mapped_versions" attribute from
     the configuration yaml file and returns a version number that has been mapped
     to a specific release. For example, for manga, DR16 maps to drpver='v2_4_3'
     and dapver='2.2.1'. This can be useful when needing to specify certain versions
     when defining paths to files.
-    
+
     Parameters:
         name (str):
             The name of the set of versions to access
@@ -60,7 +64,7 @@ def get_mapped_version(name, release=None, key=None):
     version = versions.get(release, None)
     if not version:
         raise BrainError(f'no version found for release {release} in {name}')
-    
+
     # check for a specific key in the version dictionary
     if key:
         assert type(version) == dict, f'version must be a dictionary to access a key,value pair'
@@ -68,4 +72,31 @@ def get_mapped_version(name, release=None, key=None):
         version = version.get(key, None)
 
     return version
-    
+
+
+def load_fits_file(filename):
+    ''' Load a FITS file
+
+    Opens and loads a FITS file with astropy.io.fits.
+
+    Parameters:
+        filename (str):
+            A FITS filen to open
+
+    Returns:
+        an Astropy HDUList
+    '''
+
+    path = pathlib.Path(filename)
+    assert path.exists() and path.is_file(), 'input filename must exist and be a file'
+
+    assert '.fits' in path.suffixes, 'filename is not a valid FITS file'
+
+    try:
+        hdulist = fits.open(path)
+    except (IOError, OSError) as err:
+        log.error(f'Cannot open FITS file {filename}: {err}')
+        raise BrainError(f'Failed to open FITS files {filename}: {err}')
+    else:
+        return hdulist
+

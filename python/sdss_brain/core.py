@@ -7,19 +7,20 @@
 # Created: Sunday, 15th March 2020 4:53:35 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 4:34:42 pm
+# Last Modified: Monday, 16th March 2020 5:38:32 pm
 # Modified By: Brian Cherinka
 
 
 from __future__ import print_function, division, absolute_import
 from sdss_brain.mma import MMAMixIn
+from astropy.io import fits
 
 
 class Brain(MMAMixIn):
-    ''' '''
+    ''' Convenience class for utilizing the MMA mixin '''
     _db = None
     mapped_version = None
-    
+
     def __init__(self, data_input=None, filename=None,
                  objectid=None, mode=None, data=None,
                  release=None, download=None,
@@ -56,4 +57,9 @@ class Brain(MMAMixIn):
 
     def _load_object_from_api(self, data=None):
         pass
-    
+
+    def __del__(self):
+        ''' Destructor for closing FITS files. '''
+        if self.data_origin == 'file' and isinstance(self.data, fits.HDUList):
+            self.data.close()
+
