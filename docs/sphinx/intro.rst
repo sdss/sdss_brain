@@ -89,7 +89,8 @@ Next, we define the ``_set_access_path_params`` method for our tool.  Here we mu
 path template **name** and **keyword parameters** needed to build complete file paths.  ``_set_access_path_params``
 requires both a string `self.path_name` and dictionary `self.path_params` to be set.  Otherwise an error will be raised.
 For MaNGA DRP cubes, the ``sdss_access`` name is **mangacube**, and it takes three keyword arguments, a plate id, 
-an IFU designation, and the DRP version to define a complete filepath.
+an IFU designation, and the DRP version to define a complete filepath.  To understand what the 
+``get_mapped_version`` function is doing, see :ref:`version mappping <version>`. 
 
 Finally we define the ``_parse_input`` method.  This method defines the logic of determining what kind of input
 has been passed, either an object ID or a filepath.  We add some logic to determine if the input string is a 

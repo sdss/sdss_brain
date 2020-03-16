@@ -7,7 +7,7 @@
 # Created: Friday, 14th February 2020 1:41:34 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 6:25:30 pm
+# Last Modified: Monday, 16th March 2020 6:38:10 pm
 # Modified By: Brian Cherinka
 
 
@@ -60,6 +60,14 @@ class Config(object):
         self._release = value
 
     def set_release(self, version=None):
+        ''' Set a new release
+        
+        If version not specified, uses the latest public DR
+        
+        Parameters:
+            version (str):
+                The new data release to set
+        '''
         if not version:
             version = self._get_latest_release()
             log.info(f'Setting release to latest: {version}')
