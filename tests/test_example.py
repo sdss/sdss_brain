@@ -7,7 +7,7 @@
 # Created: Monday, 16th March 2020 11:41:57 am
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 1:33:21 pm
+# Last Modified: Monday, 16th March 2020 2:36:43 pm
 # Modified By: Brian Cherinka
 
 
@@ -31,15 +31,6 @@ class Cube(Brain):
         self.path_name = 'mangacube'
         drpver = get_mapped_version(self.mapped_version, release=self.release, key='drpver')
         self.path_params = {'plate': self.plate, 'ifu': self.ifu, 'drpver': drpver}
-
-    def _load_object_from_file(self, data=None):
-        pass
-
-    def _load_object_from_db(self, data=None):
-        pass
-
-    def _load_object_from_api(self, data=None):
-        pass
 
 
 @pytest.fixture(scope='module')

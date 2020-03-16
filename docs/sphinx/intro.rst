@@ -18,10 +18,7 @@ The ``MMAMixIn`` is bare-bones class to be mixed with any other class.  When mix
 functionality to that class. A convenience class, ``Brain`` to fu 
 
 
-Subclassing the ``Brain`` 
-^^^^^^^^^^^^^^^^^^^^^^^^^
-
-When subclassing ``Brain``, there are several abstract methods that you must define.  These methods are
+When subclassing ``MMAMixIn``, there are several abstract methods that you must define.  These methods are
 
 - ``_parse_inputs``: Defines the logic to parse the input string into an object id or filename
 - ``_set_access_path_params``: Defines parameters needed by `sdss_access` to generate filepaths
@@ -54,17 +51,40 @@ Let's step through the creation of new class to interface with MaNGA data cubes.
         def _parse_inputs(self, value):
             pass
 
-        def _load_object_from_file(self, data=None):
-            pass
-
-        def _load_object_from_db(self, data=None):
-            pass
-
-        def _load_object_from_api(self, data=None):
-            pass
-
-Now that we have our class defined.
+Now that we have our class defined, let's see it in use.  If we specified a database to use during class
+definition, the default local action is to attempt to connect via the db.
 ::
 
-    cube = MangaCube('8485-1901')
-    cube
+    >>> cube = MangaCube('8485-1901')
+    >>> cube
+        <MangaCube objectid='8485-1901', mode='local', data_origin='db'>
+
+The ``data_origin`` has been set to `db` and the mode is ``local``.  We can override the default database we 
+use with the ``use_db`` keyword during instantiation.
+::  
+
+        cube = MangaCube('8485-1901', use_db=mangadb)
+
+Or we can ignore the database altogther with the ``ignore_db`` keyword.  If you don't have a database, it
+defaults to using local files. You can also turn off the database globally by setting the ``ignore_db`` option
+in your custom configuration. 
+::
+
+    >>> cube = MangaCube('8485-1901', ignore_db=True)
+    >>> cube
+        <MangaCube objectid='8485-1901', mode='local', data_origin='file'>
+
+Now the ``data_origin`` is set to ``file``.  If we don't have the file locally, or we explicitly set the
+``mode='remote'``, it uses the remote API.
+::
+
+    >>> # explicitly set the mode to remote
+    >>> cube = MangaCube('8485-1901', mode='remote')
+    >>> cube 
+        <MangaCube objectid='8485-1901', mode='remote', data_origin='api'>
+
+    >>> # load a cube we don't have 
+    >>> cube = MangaCube('8485-1902')
+    >>> cube
+        <MangaCube objectid='8485-1902', mode='remote', data_origin='api'>
+

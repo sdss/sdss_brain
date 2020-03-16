@@ -47,7 +47,7 @@ if sphinx_template == 'sphinx-bootstrap':
 # ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinx.ext.autosummary',
               'sphinx.ext.todo', 'sphinx.ext.viewcode', 'sphinx.ext.mathjax',
-              'sphinx.ext.intersphinx']
+              'sphinx.ext.intersphinx', 'sphinx.ext.inheritance_diagram']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -140,6 +140,10 @@ rst_epilog = f"""
 
 html_css_files = [
     'pygments.css'
+]
+
+html_js_files = [
+    'copybutton.js',
 ]
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
