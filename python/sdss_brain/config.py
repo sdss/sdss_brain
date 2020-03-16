@@ -7,13 +7,11 @@
 # Created: Friday, 14th February 2020 1:41:34 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 9:33:41 am
+# Last Modified: Monday, 16th March 2020 10:00:24 am
 # Modified By: Brian Cherinka
 
 
 from __future__ import print_function, division, absolute_import
-import os
-import warnings
 from sdss_brain import cfg_params, log
 from sdss_brain.exceptions import BrainError
 
@@ -79,6 +77,7 @@ class Config(object):
                 self.__setattr__(key, value)
 
         self._custom_config = cfg_params
+
 
 config = Config()
 

@@ -7,30 +7,21 @@
 # Created: Friday, 14th February 2020 2:23:01 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 9:45:12 am
+# Last Modified: Monday, 16th March 2020 11:24:57 am
 # Modified By: Brian Cherinka
 
 
 from __future__ import print_function, division, absolute_import
 import abc
 import os
-import re
 import time
 import warnings
 
 import six
-from dataclasses import dataclass, field
 from functools import wraps
 from sdss_brain import log
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError, BrainMissingDependency, BrainUserWarning
-#from marvin.utils.db import testDbConnection
-#from marvin.utils.general.general import mangaid2plateifu
-
-try:
-    from sdss_access.path import Path
-except ImportError:
-    Path = None
 
 try:
     from sdss_access import Access
@@ -42,7 +33,7 @@ __all__ = ['MMAMixIn']
 
 def create_new_access(release):
     ''' create a new sdss_access instance
-    
+
     Parameters:
         release (str):
             The sdss data release
@@ -59,12 +50,12 @@ def create_new_access(release):
 
 def set_access(func):
     ''' Decorator that sets the _access attribute
-    
+
     Creates a new sdss_access instance if either the _access
     attribute is None or the object release differs from the access
     release.  Ensures that a new sdss_access.Access is instantiated
     when we change releases, e.g. between public DRs or work releases.
-    
+
     '''
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -75,8 +66,8 @@ def set_access(func):
             inst._access = create_new_access(inst.release)
         return func(*args, **kwargs)
     return wrapper
-    
-    
+
+
 def check_access_params(func):
     '''Decorator that checks for correct output from set_access_path_params '''
 
@@ -91,7 +82,7 @@ def check_access_params(func):
         assert type(inst.path_params) == dict, 'the path_params attribute must be a dictionary'
         return func(*args, **kwargs)
     return wrapper
-    
+
 
 class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
 
@@ -112,17 +103,16 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
 
         # determine the input
         self._determine_inputs(data_input)
-        
+
         assert self.mode in ['auto', 'local', 'remote']
         assert self.filename is not None or self.objectid is not None, 'no inputs set.'
 
-        #self.datamodel = None
-        #self._set_datamodel()
-
         # sdss_access attributes
         self._access = None
+        self.path_name = None
+        self.path_params = None
         self._set_access_path_params()
-        
+
         # perform the multi-modal data access
         if self.mode == 'local':
             self._do_local()
@@ -241,17 +231,16 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
     @abc.abstractmethod
     def _parse_input(self, value):
         ''' Parses the input value to determine the kind of input
-        
+
         This method must be overridden by each subclass and contains the logic
         to determine the kind of input passed into it, i.e. either a filename or an
         object identification string. 
         '''
-        pass
-    
+
     @check_access_params
     def get_full_path(self, url=None):
         """ Returns the full path of the file in the tree.
-        
+
         Parameters:
             url (bool):
                 If True, specifies the url location rather than the local file location
@@ -270,11 +259,11 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
                           'Error message is: {0}'.format(str(ee)), BrainUserWarning)
             fullpath = None
         return fullpath
-    
+
     @abc.abstractmethod
     def _set_access_path_params(self):
         ''' Return the sdss_access path parameters
-        
+
         This method must be overridden by each subclass and must set at least two
         parameters, "path_name", and "path_params", which specify parameters to be passed
         to sdss_access.
@@ -284,12 +273,11 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
             - path_name (str): Required. The sdss_access template path key name.
             - path_params (dict): Required. The keywords needed to fill out the sdss_access template path
         '''
-        pass
 
     @check_access_params
     def download(self):
-        """ Download using sdss_access """
-        
+        """ Download the file using sdss_access """
+
         self.access.remote()
         self.access.add(self.path_name, **self.path_params)
         self.access.set_stream()
@@ -299,3 +287,15 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
         time.sleep(0.001)
 
         self.filename = paths[0]  # doing this for single files, may need to change
+
+    @abc.abstractmethod
+    def _load_object_from_file(self, data=None):
+        pass
+
+    @abc.abstractmethod
+    def _load_object_from_db(self, data=None):
+        pass
+
+    @abc.abstractmethod
+    def _load_object_from_api(self, data=None):
+        pass

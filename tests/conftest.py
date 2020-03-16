@@ -30,9 +30,10 @@ def mock_mma(tmp_path):
 
 class Toy(MockMMA):
 
-    def __init__(self, data_input=None, filename=None, objectid=None, mode=None):
+    def __init__(self, data_input=None, filename=None, objectid=None, mode=None, 
+                 release=None):
         MockMMA.__init__(self, data_input=data_input, filename=filename,
-                         objectid=objectid, mode=mode)
+                         objectid=objectid, mode=mode, release=release)
 
     def _parse_input(self, value):
         obj = {"objectid": None}
@@ -43,3 +44,37 @@ class Toy(MockMMA):
     def _set_access_path_params(self):
         self.path_name = 'toy'
         self.path_params = {'object': self.objectid}
+
+    def _load_object_from_file(self, data=None):
+        pass
+
+    def _load_object_from_db(self, data=None):
+        pass
+
+    def _load_object_from_api(self, data=None):
+        pass
+
+
+@pytest.fixture()
+def make_file(tmp_path):
+    ''' fixture to create a fake file '''
+    path = tmp_path / "files"
+    path.mkdir()
+    toyfile = path / "toy_object_A.txt"
+    toyfile.write_text('this is a toy file')
+    yield toyfile
+
+
+def make_badtoy(bad):
+    class BadToy(Toy):
+        def _set_access_path_params(self):
+            self.path_name = 'toy'
+            self.path_params = {'object': self.objectid}
+            if bad == 'noname':
+                self.path_name = None
+            elif bad == 'noparam':
+                self.path_params = None
+            elif bad == 'notdict':
+                self.path_params = 'badparams'
+
+    return BadToy('A')
