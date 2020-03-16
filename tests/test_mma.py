@@ -7,7 +7,7 @@
 # Created: Saturday, 14th March 2020 3:21:52 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 11:23:33 am
+# Last Modified: Monday, 16th March 2020 12:01:03 pm
 # Modified By: Brian Cherinka
 
 
@@ -30,7 +30,7 @@ class TestMMA(object):
         toy = Toy(exp)
         assert toy.mode == 'local'
         assert getattr(toy, data) == exp
-        
+
     def test_remote(self):
         toy = Toy(self.objectid)
         assert toy.mode == 'remote'
@@ -49,13 +49,13 @@ class TestMMA(object):
         assert toy.mode == 'local'
         assert getattr(toy, data) == exp
         assert toy.data_origin == 'file'
-        
+
     def test_get_full_path(self, make_file):
         toy = Toy(self.objectid)
         path = toy.get_full_path()
         assert f'files/toy_object_{self.objectid}.txt' in path
 
-        
+
 class TestMMAFails(object):
     objectid = 'A'
 

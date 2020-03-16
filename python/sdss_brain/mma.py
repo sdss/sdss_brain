@@ -7,7 +7,7 @@
 # Created: Friday, 14th February 2020 2:23:01 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 11:24:57 am
+# Last Modified: Monday, 16th March 2020 12:05:17 pm
 # Modified By: Brian Cherinka
 
 
@@ -84,7 +84,7 @@ def check_access_params(func):
     return wrapper
 
 
-class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
+class MMAMixIn(abc.ABC, object):
 
     def __init__(self, data_input=None, filename=None, objectid=None, mode=None, data=None,
                  release=None, download=None, ignore_db=False, use_db=None):
