@@ -7,7 +7,7 @@
 # Created: Friday, 14th February 2020 2:23:01 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Sunday, 15th March 2020 12:16:38 pm
+# Last Modified: Sunday, 15th March 2020 7:21:31 pm
 # Modified By: Brian Cherinka
 
 
@@ -19,7 +19,8 @@ import time
 import warnings
 
 import six
-
+from dataclasses import dataclass, field
+from functools import wraps
 from sdss_brain import log
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError, BrainMissingDependency, BrainUserWarning
@@ -39,14 +40,28 @@ except ImportError:
 __all__ = ['MMAMixIn']
 
 
+def check_access_params(func):
+    '''Decorator that checks for correct output from set_access_path_params '''
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        inst = args[0]
+        path_params = inst._set_access_path_params()
+        assert type(path_params) == dict, 'set_access_path_params must return a dictionary'
+        assert 'name' in path_params, ('dictionary returned by set_access_path_params'
+                                       ' must contain a "name" keyword argument')
+        return func(*args, **kwargs)
+    return wrapper
+    
+
 class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
 
     def __init__(self, data_input=None, filename=None, objectid=None, mode=None, data=None,
-                 release=None, download=None, ignore_db=False, db=None):
+                 release=None, download=None, ignore_db=False, use_db=None):
         self.data = data
         self.data_origin = None
         self._ignore_db = ignore_db
-        self.db = db
+        self._db = use_db
 
         self.filename = filename
         self.objectid = objectid
@@ -72,7 +87,7 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
         elif self.mode == 'auto':
             try:
                 self._do_local()
-            except Exception as ee:
+            except BrainError as ee:
 
                 if self.filename:
                     # If the input contains a filename we don't want to go into remote mode.
@@ -119,7 +134,7 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
 
         elif self.objectid:
 
-            if self.db and self.db.connected and not self._ignore_db:
+            if self._db and self._db.connected and not self._ignore_db:
                 self.mode = 'local'
                 self.data_origin = 'db'
             else:
@@ -182,30 +197,51 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
     def _parse_input(self, value):
         pass
     
-    @abc.abstractmethod
-    def _get_full_path(self, pathType=None, url=None, **pathParams):
-        """Returns the full path of the file in the tree.
+    @check_access_params
+    def _get_full_path(self):
+        """ Returns the full path of the file in the tree. """
 
-        This method must be overridden by each subclass.
-
-        """
+        path_params = self._set_access_path_params()
+        url = path_params.pop('url', None)
+        path_name = path_params.pop('name', None)
 
         try:
             if url:
-                fullpath = self.access.url(pathType, **pathParams)
+                fullpath = self.access.url(path_name, **path_params)
             else:
-                fullpath = self.access.full(pathType, **pathParams)
+                fullpath = self.access.full(path_name, **path_params)
         except Exception as ee:
             warnings.warn('sdss_access was not able to retrieve the full path of the file. '
                           'Error message is: {0}'.format(str(ee)), BrainUserWarning)
             fullpath = None
         return fullpath
+    
+    @abc.abstractmethod
+    def _set_access_path_params(self):
+        ''' Return the sdss_access path parameters
+        
+        This method must be overridden by each subclass and must return
+        a dictionary of parameters to be passed to sdss_access.  The dictionary must
+        contain a keyword "name", the sdss_access template path key.
 
-    def download(self, pathType=None, **pathParams):
+        Dictionary parameters:
+
+            - name (str): Required. The sdss_access template path key name.
+            - url (bool): If True, tells sdss_access to return the url location instead of location file location
+            - any additonal keywords needed to fill out the sdss_access template path
+
+        '''
+        pass
+
+    @check_access_params
+    def download(self):
         """ Download using sdss_access """
 
+        path_params = self._set_access_path_params()
+        path_name = path_params.pop('name', None)
+        
         self.access.remote()
-        self.access.add(pathType, **pathParams)
+        self.access.add(path_name, **path_params)
         self.access.set_stream()
         self.access.commit()
         paths = self.access.get_paths()

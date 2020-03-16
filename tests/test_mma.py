@@ -7,7 +7,7 @@
 # Created: Saturday, 14th March 2020 3:21:52 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Sunday, 15th March 2020 12:10:16 pm
+# Last Modified: Sunday, 15th March 2020 4:40:32 pm
 # Modified By: Brian Cherinka
 
 
@@ -15,6 +15,7 @@ from __future__ import print_function, division, absolute_import
 import pytest
 from sdss_brain.config import config
 from sdss_brain.mma import MMAMixIn
+from sdss_brain.exceptions import BrainError
 from sdss_access import Access
 
 
@@ -46,10 +47,10 @@ def mock_mma(tmp_path):
     MockMMA.mock_template = str(path / 'toy_object_{object}.txt')
 
 
-class Toy(MockMMA, object):
+class Toy(MockMMA):
     
-    def __init__(self, data_input=None, filename=None, objectid=None):
-        MockMMA.__init__(self, data_input=data_input, filename=filename, objectid=objectid)
+    def __init__(self, data_input=None, filename=None, objectid=None, mode=None):
+        MockMMA.__init__(self, data_input=data_input, filename=filename, objectid=objectid, mode=mode)
 
     def _parse_input(self, value):
         obj = {"objectid": None}
@@ -57,9 +58,8 @@ class Toy(MockMMA, object):
             obj['objectid'] = value
         return obj
 
-    def _get_full_path(self):
-        params = {'object': self.objectid}
-        return super(Toy, self)._get_full_path('toy', **params)
+    def _set_access_path_params(self):
+        return {'name': 'toy', 'object': self.objectid}
 
 
 class TestMMA(object):
@@ -91,3 +91,8 @@ class TestMMA(object):
         toy = Toy(objectid=self.objectid)
         assert toy.mode == 'local'
         assert toy.objectid == self.objectid
+
+    def test_fail_remote_filename(self):
+        with pytest.raises(BrainError) as cm:
+            Toy(filename='A', mode='remote')
+        assert 'filename not allowed in remote mode' in str(cm.value)
