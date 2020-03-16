@@ -7,7 +7,7 @@
 # Created: Friday, 14th February 2020 2:23:01 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 2:10:37 pm
+# Last Modified: Monday, 16th March 2020 4:14:40 pm
 # Modified By: Brian Cherinka
 
 
@@ -203,13 +203,7 @@ class MMAMixIn(abc.ABC):
             assert isinstance(data_input, six.string_types), 'input must be a string.'
 
             # parse the input data
-            input_dict = self._parse_input(data_input)
-
-            if input_dict['objectid'] is not None:
-                self.objectid = data_input
-            else:
-                # Assumes the input must be a filename
-                self.filename = data_input
+            self._parse_input(data_input)
 
         # ensure either filename or objectid is specified
         if self.filename is None and self.objectid is None:

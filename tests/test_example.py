@@ -7,12 +7,13 @@
 # Created: Monday, 16th March 2020 11:41:57 am
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 2:36:43 pm
+# Last Modified: Monday, 16th March 2020 4:13:26 pm
 # Modified By: Brian Cherinka
 
 
 from __future__ import print_function, division, absolute_import
 import pytest
+import re
 from sdss_brain.core import Brain
 from sdssdb.sqlalchemy.mangadb import database
 from sdss_brain.helpers import get_mapped_version
@@ -23,9 +24,14 @@ class Cube(Brain):
     mapped_version = 'manga'
 
     def _parse_input(self, value):
-        self.plateifu = value
-        self.plate, self.ifu = value.split('-')
-        return {'objectid': value}
+        plateifu_pattern = re.compile(r'([0-9]{4,5})-([0-9]{4,9})')
+        plateifu_match = re.match(plateifu_pattern, value)
+        if plateifu_match is not None:
+            self.objectid = value
+            self.plateifu = plateifu_match.group(0)
+            self.plate, self.ifu = plateifu_match.groups(0)
+        else:
+            self.filename = value
 
     def _set_access_path_params(self):
         self.path_name = 'mangacube'
