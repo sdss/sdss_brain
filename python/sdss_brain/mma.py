@@ -7,7 +7,7 @@
 # Created: Friday, 14th February 2020 2:23:01 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 9:21:33 am
+# Last Modified: Monday, 16th March 2020 9:45:12 am
 # Modified By: Brian Cherinka
 
 
@@ -62,7 +62,8 @@ def set_access(func):
     
     Creates a new sdss_access instance if either the _access
     attribute is None or the object release differs from the access
-    release.
+    release.  Ensures that a new sdss_access.Access is instantiated
+    when we change releases, e.g. between public DRs or work releases.
     
     '''
     @wraps(func)
@@ -85,6 +86,8 @@ def check_access_params(func):
         inst._set_access_path_params()
         assert hasattr(inst, 'path_name'), 'set_access_path_params must set a "path_name" attribute'
         assert hasattr(inst, 'path_params'), 'set_access_path_params must set a "path_params" attribute'
+        assert getattr(inst, 'path_name'), 'the path_name attribute cannot be None'
+        assert getattr(inst, 'path_params'), 'the path_params attribute cannot be None'
         assert type(inst.path_params) == dict, 'the path_params attribute must be a dictionary'
         return func(*args, **kwargs)
     return wrapper
@@ -94,12 +97,12 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
 
     def __init__(self, data_input=None, filename=None, objectid=None, mode=None, data=None,
                  release=None, download=None, ignore_db=False, use_db=None):
+        # data attributes
         self.data = data
-        self.data_origin = None
         self._db = use_db
-
         self.filename = filename
         self.objectid = objectid
+        self.data_origin = None
 
         # inputs or config variables
         self.mode = mode or config.mode
@@ -120,6 +123,7 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
         self._access = None
         self._set_access_path_params()
         
+        # perform the multi-modal data access
         if self.mode == 'local':
             self._do_local()
         elif self.mode == 'remote':
@@ -133,7 +137,7 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
                     # If the input contains a filename we don't want to go into remote mode.
                     raise(ee)
                 else:
-                    log.info('local mode failed. Trying remote now.')
+                    log.debug('local mode failed. Trying remote now.')
                     self._do_remote()
 
         # Sanity check to make sure data_origin has been properly set.
@@ -156,10 +160,11 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
         return self._access
 
     def _do_local(self):
-        """Tests if it's possible to load the data locally."""
+        """ Check if it's possible to load the data locally."""
 
         if self.filename:
 
+            # check if the file exists locally
             if os.path.exists(self.filename):
                 self.mode = 'local'
                 self.data_origin = 'file'
@@ -168,10 +173,12 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
 
         elif self.objectid:
 
+            # prioritize a database unless explicitly set to ignore
             if self._db and self._db.connected and not self._ignore_db:
                 self.mode = 'local'
                 self.data_origin = 'db'
             else:
+                # retrieve the full local access path
                 fullpath = self.get_full_path()
 
                 if fullpath and os.path.exists(fullpath):
@@ -179,6 +186,7 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
                     self.filename = fullpath
                     self.data_origin = 'file'
                 else:
+                    # optionally download the file
                     if self._forcedownload:
                         self.download()
                         self.data_origin = 'file'
@@ -187,7 +195,7 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
                                          'input parameters.')
 
     def _do_remote(self):
-        """Tests if remote connection is possible."""
+        """ Check if remote connection is possible."""
 
         if self.filename:
             raise BrainError('filename not allowed in remote mode.')
@@ -204,6 +212,7 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
 
             assert isinstance(data_input, six.string_types), 'input must be a string.'
 
+            # parse the input data
             input_dict = self._parse_input(data_input)
 
             if input_dict['objectid'] is not None:
@@ -212,9 +221,11 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
                 # Assumes the input must be a filename
                 self.filename = data_input
 
+        # ensure either filename or objectid is specified
         if self.filename is None and self.objectid is None:
             raise BrainError('no inputs defined.')
 
+        # check for any misaligments and misassignments
         if self.filename:
             self.objectid = None
 
