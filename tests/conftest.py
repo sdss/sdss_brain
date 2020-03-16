@@ -41,4 +41,5 @@ class Toy(MockMMA):
         return obj
 
     def _set_access_path_params(self):
-        return {'name': 'toy', 'object': self.objectid}
+        self.path_name = 'toy'
+        self.path_params = {'object': self.objectid}
