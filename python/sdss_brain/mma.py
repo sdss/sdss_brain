@@ -7,7 +7,7 @@
 # Created: Friday, 14th February 2020 2:23:01 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 9:16:57 am
+# Last Modified: Monday, 16th March 2020 9:21:33 am
 # Modified By: Brian Cherinka
 
 
@@ -96,17 +96,16 @@ class MMAMixIn(object, six.with_metaclass(abc.ABCMeta)):
                  release=None, download=None, ignore_db=False, use_db=None):
         self.data = data
         self.data_origin = None
-        self._ignore_db = ignore_db
         self._db = use_db
 
         self.filename = filename
         self.objectid = objectid
 
-        self.mode = mode if mode is not None else config.mode
-
-        self._release = release if release is not None else config.release
-
-        self._forcedownload = download if download is not None else config.download
+        # inputs or config variables
+        self.mode = mode or config.mode
+        self._release = release or config.release
+        self._forcedownload = download or config.download
+        self._ignore_db = ignore_db or config.ignore_db
 
         # determine the input
         self._determine_inputs(data_input)

@@ -7,14 +7,14 @@
 # Created: Friday, 14th February 2020 1:41:34 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Saturday, 14th March 2020 3:20:13 pm
+# Last Modified: Monday, 16th March 2020 9:30:35 am
 # Modified By: Brian Cherinka
 
 
 from __future__ import print_function, division, absolute_import
 import os
 import warnings
-from sdss_brain import config as cfg_params, log
+from sdss_brain import cfg_params, log
 from sdss_brain.exceptions import BrainError
 
 
@@ -25,10 +25,15 @@ class Config(object):
         self._mode = 'auto'
         self._release = None
         self.download = False
+        self.ignore_db = False
+
         # TODO replace with a tree access method
         self._allowed_releases = [f'DR{i}' for i in range(8, 17)]
         # set latest release
         self.release = self._get_latest_release()
+
+        # load default config parameters
+        self._load_defaults()
 
     def __repr__(self):
         return f'<Config(release={self.release}, mode={self.mode})>'
@@ -65,6 +70,15 @@ class Config(object):
     def _get_latest_release(self):
         return max(self._allowed_releases, key=lambda t: int(t.rsplit('DR', 1)[-1]))
 
+    def _load_defaults(self):
+        ''' Load the Brain config yaml file '''
+
+        # update any matching Config values
+        for key, value in cfg_params.items():
+            if hasattr(self, key):
+                self.__setattr__(key, value)
+
+        self._custom_config = cfg_params
 
 config = Config()
 
