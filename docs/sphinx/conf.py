@@ -25,7 +25,7 @@ on_rtd = os.environ.get('READTHEDOCS') == 'True'
 
 # Sphinx template selected in cookiecutter and whether to use releases
 sphinx_template = 'sphinx-bootstrap'
-use_releases = 'no'
+use_releases = 'yes'
 
 if sphinx_template == 'sphinx-bootstrap':
     import sphinx_bootstrap_theme
@@ -48,6 +48,10 @@ if sphinx_template == 'sphinx-bootstrap':
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.napoleon', 'sphinx.ext.autosummary',
               'sphinx.ext.todo', 'sphinx.ext.viewcode', 'sphinx.ext.mathjax',
               'sphinx.ext.intersphinx', 'sphinx.ext.inheritance_diagram']
+
+# 'releases' (changelog) settings
+releases_issue_uri = "https://github.com/sdss/sdss_brain/issues/%s"
+releases_release_uri = "https://github.com/sdss/sdss_brain/tree/%s"
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -323,7 +327,7 @@ texinfo_documents = [
 
 if use_releases == 'yes':
 
-    extensions += ['sdsstools.releases']
+    extensions += ['releases']
 
     releases_github_path = 'sdss/sdss_brain'
     releases_document_name = ['CHANGELOG']
