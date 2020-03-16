@@ -16,7 +16,7 @@ Contents
   :maxdepth: 2
 
   Introduction to sdss_brain <intro>
-  How to use the global configuration <config>
+  About the global configuration <config>
   How to map specific version numbers to Data Release ids <version>
 
 Reference

@@ -7,12 +7,12 @@
 # Created: Friday, 14th February 2020 1:41:34 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 10:00:24 am
+# Last Modified: Monday, 16th March 2020 6:25:30 pm
 # Modified By: Brian Cherinka
 
 
 from __future__ import print_function, division, absolute_import
-from sdss_brain import cfg_params, log
+from sdss_brain import cfg_params, log, tree
 from sdss_brain.exceptions import BrainError
 
 
@@ -25,8 +25,8 @@ class Config(object):
         self.download = False
         self.ignore_db = False
 
-        # TODO replace with a tree access method
-        self._allowed_releases = [f'DR{i}' for i in range(8, 17)]
+        # get allowed releases from the Tree
+        self._allowed_releases = tree.get_available_releases()
         # set latest release
         self.release = self._get_latest_release()
 
@@ -34,8 +34,8 @@ class Config(object):
         self._load_defaults()
 
     def __repr__(self):
-        return f'<Config(release={self.release}, mode={self.mode})>'
-    
+        return f'<SDSSConfig(release={self.release}, mode={self.mode})>'
+
     @property
     def mode(self):
         return self._mode
@@ -66,7 +66,9 @@ class Config(object):
         self.release = version
 
     def _get_latest_release(self):
-        return max(self._allowed_releases, key=lambda t: int(t.rsplit('DR', 1)[-1]))
+        ''' get the latest public DR release '''
+        drsonly = [i for i in self._allowed_releases if 'DR' in i]
+        return max(drsonly, key=lambda t: int(t.rsplit('DR', 1)[-1]))
 
     def _load_defaults(self):
         ''' Load the Brain config yaml file and update any parameters '''
