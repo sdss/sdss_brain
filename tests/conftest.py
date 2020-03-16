@@ -1,11 +1,44 @@
+#!usr/bin/env python
 # encoding: utf-8
 #
 # conftest.py
 
-"""
-Here you can add fixtures that will be used for all the tests in this
-directory. You can also add conftest.py files in underlying subdirectories.
-Those conftest.py will only be applies to the tests in that subdirectory and
-underlying directories. See https://docs.pytest.org/en/2.7.3/plugins.html for
-more information.
-"""
+
+import pytest
+from sdss_brain.mma import MMAMixIn
+from sdss_access import Access
+from sdss_brain.config import config
+
+
+class MockMMA(MMAMixIn):
+    ''' mock MMA mixin to allow additions of fake sdss_access template paths '''
+    mock_template = None
+
+    @property
+    def access(self):
+        access = Access(public='DR' in config.release, release=config.release.lower())
+        access.templates['toy'] = self.mock_template
+        return access
+
+
+@pytest.fixture(autouse=True)
+def mock_mma(tmp_path):
+    ''' fixture that updates the mock_template path '''
+    path = tmp_path / "files"
+    MockMMA.mock_template = str(path / 'toy_object_{object}.txt')
+
+
+class Toy(MockMMA):
+
+    def __init__(self, data_input=None, filename=None, objectid=None, mode=None):
+        MockMMA.__init__(self, data_input=data_input, filename=filename,
+                         objectid=objectid, mode=mode)
+
+    def _parse_input(self, value):
+        obj = {"objectid": None}
+        if len(value) == 1 and value.isalpha():
+            obj['objectid'] = value
+        return obj
+
+    def _set_access_path_params(self):
+        return {'name': 'toy', 'object': self.objectid}

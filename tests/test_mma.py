@@ -7,16 +7,15 @@
 # Created: Saturday, 14th March 2020 3:21:52 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Sunday, 15th March 2020 4:40:32 pm
+# Last Modified: Sunday, 15th March 2020 11:54:22 pm
 # Modified By: Brian Cherinka
 
 
-from __future__ import print_function, division, absolute_import
+from __future__ import absolute_import, division, print_function
+
 import pytest
-from sdss_brain.config import config
-from sdss_brain.mma import MMAMixIn
 from sdss_brain.exceptions import BrainError
-from sdss_access import Access
+from .conftest import Toy
 
 
 @pytest.fixture()
@@ -29,69 +28,36 @@ def make_file(tmp_path):
     yield toyfile
 
 
-class MockMMA(MMAMixIn):
-    ''' mock MMA mixin to allow additions of fake sdss_access template paths '''
-    mock_template = None
-
-    @property
-    def access(self):
-        access = Access(public='DR' in config.release, release=config.release.lower())
-        access.templates['toy'] = self.mock_template
-        return access
-
-
-@pytest.fixture(autouse=True)
-def mock_mma(tmp_path):
-    ''' fixture that updates the mock_template path '''
-    path = tmp_path / "files"
-    MockMMA.mock_template = str(path / 'toy_object_{object}.txt')
-
-
-class Toy(MockMMA):
-    
-    def __init__(self, data_input=None, filename=None, objectid=None, mode=None):
-        MockMMA.__init__(self, data_input=data_input, filename=filename, objectid=objectid, mode=mode)
-
-    def _parse_input(self, value):
-        obj = {"objectid": None}
-        if len(value) == 1 and value.isalpha():
-            obj['objectid'] = value
-        return obj
-
-    def _set_access_path_params(self):
-        return {'name': 'toy', 'object': self.objectid}
-
-
 class TestMMA(object):
     objectid = 'A'
 
-    def test_local_input(self, make_file):
-        toy = Toy(self.objectid)
+    @pytest.mark.parametrize('data', [('filename'), ('objectid')])
+    def test_local_input(self, make_file, data):
+        if data == 'filename':
+            exp = str(make_file)
+        else:
+            exp = self.objectid
+        toy = Toy(exp)
         assert toy.mode == 'local'
-        assert toy.objectid == self.objectid
-
-    def test_local_input_file(self, make_file):
-        filename = str(make_file)
-        toy = Toy(filename)
-        assert toy.mode == 'local'
-        assert toy.filename == filename
-
+        assert getattr(toy, data) == exp
+        
     def test_remote(self):
         toy = Toy(self.objectid)
         assert toy.mode == 'remote'
         assert toy.objectid == self.objectid
+
+    @pytest.mark.parametrize('data', [('filename'), ('objectid')])
+    def test_explicit_input(self, make_file, data):
+        if data == 'filename':
+            filename = str(make_file)
+            toy = Toy(filename=filename)
+            exp = filename
+        else:
+            toy = Toy(objectid=self.objectid)
+            exp = self.objectid
+        assert toy.mode == 'local'
+        assert getattr(toy, data) == exp
         
-    def test_explicit_filename(self, make_file):
-        filename = str(make_file)
-        toy = Toy(filename=filename)
-        assert toy.mode == 'local'
-        assert toy.filename == filename
-
-    def test_explicit_object(self, make_file):
-        toy = Toy(objectid=self.objectid)
-        assert toy.mode == 'local'
-        assert toy.objectid == self.objectid
-
     def test_fail_remote_filename(self):
         with pytest.raises(BrainError) as cm:
             Toy(filename='A', mode='remote')
