@@ -7,7 +7,7 @@
 # Created: Saturday, 14th March 2020 3:21:52 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 12:01:03 pm
+# Last Modified: Tuesday, 17th March 2020 5:36:17 pm
 # Modified By: Brian Cherinka
 
 
@@ -55,6 +55,16 @@ class TestMMA(object):
         path = toy.get_full_path()
         assert f'files/toy_object_{self.objectid}.txt' in path
 
+    def test_access_switch(self, make_file):
+        old = 'DR16'
+        new = 'DR15'
+        toy = Toy(self.objectid, release=old)
+        assert toy.release == old
+        assert toy.access.release == old.lower()
+        toy = Toy(self.objectid, release=new)
+        assert toy.release == new
+        assert toy.access.release == new.lower()
+
 
 class TestMMAFails(object):
     objectid = 'A'
@@ -70,5 +80,12 @@ class TestMMAFails(object):
                               ('notdict', 'path_params attribute must be a dictionary')])
     def test_bad_access_params(self, bad, exp):
         with pytest.raises(AssertionError) as cm:
+            make_badtoy(bad)
+        assert exp in str(cm.value)
+
+    @pytest.mark.parametrize('bad, exp',
+                             [('none', 'no inputs defined. filename and objectid are both None')])
+    def test_bad_parse_inputs(self, bad, exp):
+        with pytest.raises(BrainError) as cm:
             make_badtoy(bad)
         assert exp in str(cm.value)

@@ -3,22 +3,21 @@
 #
 # conftest.py
 
-
 import pytest
-from sdss_brain.mma import MMAMixIn
 from sdss_access import Access
-from sdss_brain.config import config
+
+import sdss_brain.mma as mma
 
 
-class MockMMA(MMAMixIn):
+class MockMMA(mma.MMAMixIn):
     ''' mock MMA mixin to allow additions of fake sdss_access template paths '''
     mock_template = None
 
     @property
+    @mma.set_access
     def access(self):
-        access = Access(public='DR' in config.release, release=config.release.lower())
-        access.templates['toy'] = self.mock_template
-        return access
+        self._access.templates['toy'] = self.mock_template
+        return self._access
 
 
 @pytest.fixture(autouse=True)
@@ -77,5 +76,14 @@ def make_badtoy(bad):
                 self.path_params = None
             elif bad == 'notdict':
                 self.path_params = 'badparams'
+
+        def _parse_input(self, value):
+            if bad == 'none':
+                return         
+
+            if len(value) == 1 and value.isalpha():
+                self.objectid = value
+            else:
+                self.filename = value
 
     return BadToy('A')

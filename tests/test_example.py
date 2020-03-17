@@ -7,7 +7,7 @@
 # Created: Monday, 16th March 2020 11:41:57 am
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 5:49:53 pm
+# Last Modified: Tuesday, 17th March 2020 5:44:57 pm
 # Modified By: Brian Cherinka
 
 
@@ -42,6 +42,12 @@ class Cube(Brain):
     def _load_object_from_file(self, data=None):          
         self.data = load_fits_file(self.filename)
 
+    def _load_object_from_db(self, data=None):
+        pass
+
+    def _load_object_from_api(self, data=None):
+        pass
+
 
 @pytest.fixture(scope='module')
 def cube():
@@ -75,3 +81,9 @@ class TestCube(object):
         cube = Cube('8485-1901', ignore_db=True)
         assert cube.data is not None
         assert isinstance(cube.data, fits.HDUList)
+
+
+def test_bad_brain():
+    with pytest.raises(TypeError) as cm:
+        Brain('A')
+    assert "Can't instantiate abstract class Brain with abstract methods" in str(cm.value)

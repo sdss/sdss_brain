@@ -7,7 +7,7 @@
 # Created: Sunday, 15th March 2020 4:53:35 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 5:38:32 pm
+# Last Modified: Tuesday, 17th March 2020 5:39:55 pm
 # Modified By: Brian Cherinka
 
 
@@ -43,20 +43,20 @@ class Brain(MMAMixIn):
         return (f"<{self.__class__.__name__} {objname}, mode='{self.mode}', "
                 f"data_origin='{self.data_origin}'>")
 
-    def _parse_input(self, value):
-        pass
+    # def _parse_input(self, value):
+    #     pass
 
-    def _set_access_path_params(self):
-        pass
+    # def _set_access_path_params(self):
+    #     pass
 
-    def _load_object_from_file(self, data=None):
-        pass
+    # def _load_object_from_file(self, data=None):
+    #     pass
 
-    def _load_object_from_db(self, data=None):
-        pass
+    # def _load_object_from_db(self, data=None):
+    #     pass
 
-    def _load_object_from_api(self, data=None):
-        pass
+    # def _load_object_from_api(self, data=None):
+    #     pass
 
     def __del__(self):
         ''' Destructor for closing FITS files. '''
