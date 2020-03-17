@@ -7,7 +7,7 @@
 # Created: Friday, 14th February 2020 1:41:34 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 6:38:10 pm
+# Last Modified: Tuesday, 17th March 2020 4:20:37 pm
 # Modified By: Brian Cherinka
 
 
@@ -18,7 +18,7 @@ from sdss_brain.exceptions import BrainError
 
 class Config(object):
     ''' Main configuration class for SDSS '''
-    
+
     def __init__(self):
         self._mode = 'auto'
         self._release = None
@@ -56,14 +56,20 @@ class Config(object):
         if value not in self._allowed_releases:
             raise BrainError('trying to set an invalid release version. Valid releases are: {0}'
                              .format(', '.join(self._allowed_releases)))
+        
+        # replant the tree
+        if value.lower() == 'work':
+            tree.replant_tree('sdsswork')
+        else:
+            tree.replant_tree(value.lower())
 
         self._release = value
 
     def set_release(self, version=None):
         ''' Set a new release
-        
+
         If version not specified, uses the latest public DR
-        
+
         Parameters:
             version (str):
                 The new data release to set

@@ -26,6 +26,10 @@ Multi-Modal Access (MMA)
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: sdss_brain.core
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 .. _api_helpers:
 
