@@ -9,6 +9,7 @@ SDSS product for streamlining and simplifying user experiences around SDSS data 
 It combines the utility of other core SDSS packages, e.g. 
 [sdss-access](https://github.com/sdss/sdss_access), [sdss-tree](https://github.com/sdss/tree), [sdssdb](https://github.com/sdss/sdssdb), [sdsstools](https://github.com/sdss/sdsstools) to enable more high level interaction between the SDSS data products.
 
+**sdss_brain is in active development. Although the code is stable and can be used for production, the implementation of existing features may be changed without previous notice. This will change when we reach version 1.0.0.**
 
 Useful links
 ------------
