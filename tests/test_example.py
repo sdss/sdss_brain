@@ -7,7 +7,7 @@
 # Created: Monday, 16th March 2020 11:41:57 am
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Tuesday, 17th March 2020 5:44:57 pm
+# Last Modified: Wednesday, 18th March 2020 4:04:39 pm
 # Modified By: Brian Cherinka
 
 
@@ -61,10 +61,10 @@ class TestCube(object):
                             [('local', False, 'db'),
                              ('local', True, 'file'),
                              ('remote', False, 'api')])
-    def test_cube_mma(self, mode, db, origin):
-        cube = Cube('8485-1901', mode=mode, ignore_db=db)
+    def test_cube_mma(self, cube, mode, db, origin):
         if cube._db.connected is False:
             pytest.skip('skipping test when no db present')
+        cube = Cube('8485-1901', mode=mode, ignore_db=db)
         assert cube.data_origin == origin
         assert cube.mode == mode
 
