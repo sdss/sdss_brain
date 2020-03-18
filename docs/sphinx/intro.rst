@@ -33,13 +33,19 @@ When subclassing ``MMAMixIn``, there are several abstract methods that you must 
 
 - ``_parse_inputs``: Defines the logic to parse the input string into an object id or filename
 - ``_set_access_path_params``: Defines parameters needed by `sdss_access` to generate filepaths
+
+The ``Brain`` class is a convenience class that creates a basic object template with the ``MMAMixIn`` already
+applied.  It also provides a ``repr`` and some placeholder logic to load objects based on the ``data_origin``.
+When subclassing from ``Brain``, there are several abstract methods that you must define.
+
 - ``_load_object_from_file``: Defines the logic for loading a local file from disk
 - ``_load_object_from_db``: Defines the logic for loading an object from a database
 - ``_load_object_from_api``: Defines the logic for loading an object remotely over an API
 
+.. note:: 
+    Regarding data access via remote API.  The logic for this access mode is not yet implemented.  It will 
+    be unavailable until a SDSS API to serve data has been created.
 
-The ``Brain`` class is a convenience class that creates a basic object template with the ``MMAMixIn`` already
-applied.  It also provides a ``repr`` and some placeholder logic to load objects based on the ``data_origin``.
 
 .. _example:
 
@@ -52,7 +58,7 @@ class, highlighting how to integrate the MMA into a new tool.
 ::
 
     from sdss_brain.core import Brain
-    from sdss_brain.helpers import get_mapped_version
+    from sdss_brain.helpers import get_mapped_version, load_fits_file
     from sdssdb.sqlalchemy.mangadb import database as mangadb
 
     class MangaCube(Brain):
@@ -61,10 +67,8 @@ class, highlighting how to integrate the MMA into a new tool.
 
         def _set_access_path_params(self):
             ''' set sdss_access parameters '''
-            # set path name
+            # set path name and path keyword arguments
             self.path_name = 'mangacube'
-
-            # set path keyword arguments 
             drpver = get_mapped_version(self.mapped_version, key='drpver')
             self.path_params = {'plate': self.plate, 'ifu':self.ifu, 'drpver': drpver}
 
@@ -82,6 +86,15 @@ class, highlighting how to integrate the MMA into a new tool.
             else:
                 self.filename = value
 
+        def _load_object_from_file(self, data=None):          
+            self.data = load_fits_file(self.filename)
+
+        def _load_object_from_db(self, data=None):
+            pass
+
+        def _load_object_from_api(self, data=None):
+            pass
+
 To set up database access for your tool, set the ``_db`` class attribute to the appropriate database containing
 information for.  Since we're creating a tool for MaNGA cubes, we use the `mangadb` database from `sdssdb`.
 
@@ -92,9 +105,15 @@ For MaNGA DRP cubes, the ``sdss_access`` name is **mangacube**, and it takes thr
 an IFU designation, and the DRP version to define a complete filepath.  To understand what the 
 ``get_mapped_version`` function is doing, see :ref:`version mappping <version>`. 
 
-Finally we define the ``_parse_input`` method.  This method defines the logic of determining what kind of input
+We define the ``_parse_input`` method.  This method defines the logic of determining what kind of input
 has been passed, either an object ID or a filepath.  We add some logic to determine if the input string is a 
 plate-IFU designation, otherwise we assume it is a filepath.   
+
+Finally we define the ``_load_object_from_file`` method to load FITS file data using a ``load_fits_file``
+helper function.  These methods can perform any number of tasks related to handling of said data.  In 
+this example, we keep it simple by only loading the data itself.  Note that we must define all abstract 
+methods even if we aren't ready to use them.  Thus we also define placeholders for the `api` and `db` 
+load methods.
 
 Now that we have our class defined, let's see it in use.  If we specified a database to use during class
 definition, the default local action is to attempt to connect via the db.
@@ -133,5 +152,3 @@ Now the ``data_origin`` is set to ``file``.  If we don't have the file locally, 
     >>> cube
         <MangaCube objectid='8485-1902', mode='remote', data_origin='api'>
 
-Note this class does not actually load any data, as we have not yet defined any of the 
-``_load_object_from_xxx`` methods.

@@ -7,7 +7,7 @@
 # Created: Friday, 14th February 2020 2:23:01 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Tuesday, 17th March 2020 4:16:41 pm
+# Last Modified: Wednesday, 18th March 2020 10:43:18 am
 # Modified By: Brian Cherinka
 
 
@@ -85,11 +85,49 @@ def check_access_params(func):
 
 
 class MMAMixIn(abc.ABC):
+    ''' Mixin for implementing multi-modal data access
 
-    def __init__(self, data_input=None, filename=None, objectid=None, mode=None, data=None,
+    This is a mixin class that adds multi-modal data access to any class
+    that subclasses from this one.  The MMA allows toggling between local
+    and remote data access modes, or leaving it on automatic.  Local mode
+    access tries to load data via a database, if one exists, otherwise it loads
+    data via a local filepath.  Remote mode will try to load data over an API.
+    When the mode is set to "auto", it automatically tries to first load things
+    locally, and then remotely.  Depending on the mode and logic, the MMA will
+    set data_origin to either `file`, `db`, or `api`.
+    
+    This mixin contains two abstractmethods you must override when subclassing.
+        - **_set_access_path_params**: sets the arguments needed by `sdss_access`
+        - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid   
+
+    Parameters:
+        data_input (str):
+            The file or name of target data to load
+        filename (str):
+            The absolute filepath to data to load
+        objectid (str):
+            The object identifier of the data to load
+        mode (str):
+            The operating mode: auto, local, or remote
+        release (str):
+            The data release of the object, e.g. "DR16"
+        download (bool):
+            If True, downloads the object locally with sdss_access
+        ignore_db (bool):
+            If True, ignores any database connection for local access
+        use_db (sdssdb.DatabaseConnection):
+            a database connection to override the default with
+
+    Attributes:
+        release (str):
+            The current data release loaded
+        access (sdss_access.Access):
+            An instance of `sdss_access` using for all path creation and file downloads
+            
+    '''
+    def __init__(self, data_input=None, filename=None, objectid=None, mode=None,
                  release=None, download=None, ignore_db=False, use_db=None):
         # data attributes
-        self.data = data
         self._db = use_db
         self.filename = filename
         self.objectid = objectid
@@ -135,7 +173,7 @@ class MMAMixIn(abc.ABC):
 
     @property
     def release(self):
-        """Returns the release."""
+        """ Returns the release. """
 
         return self._release
 
@@ -147,6 +185,7 @@ class MMAMixIn(abc.ABC):
     @property
     @set_access
     def access(self):
+        ''' Returns an instance of `sdss_access.Access` '''
         return self._access
 
     def _do_local(self):
@@ -194,7 +233,7 @@ class MMAMixIn(abc.ABC):
             self.data_origin = 'api'
 
     def _determine_inputs(self, data_input):
-        """Determines what inputs to use in the decision tree."""
+        """ Determines what inputs to use in the decision tree. """
 
         if data_input:
             assert self.filename is None and self.objectid is None, \
@@ -263,7 +302,6 @@ class MMAMixIn(abc.ABC):
         to sdss_access.
 
         Attribute Parameters:
-
             - path_name (str): Required. The sdss_access template path key name.
             - path_params (dict): Required. The keywords needed to fill out the sdss_access template path
         '''
@@ -282,14 +320,3 @@ class MMAMixIn(abc.ABC):
 
         self.filename = paths[0]  # doing this for single files, may need to change
 
-    @abc.abstractmethod
-    def _load_object_from_file(self, data=None):
-        pass
-
-    @abc.abstractmethod
-    def _load_object_from_db(self, data=None):
-        pass
-
-    @abc.abstractmethod
-    def _load_object_from_api(self, data=None):
-        pass
