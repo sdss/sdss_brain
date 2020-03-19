@@ -7,7 +7,7 @@
 # Created: Monday, 16th March 2020 11:41:57 am
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Wednesday, 18th March 2020 4:04:39 pm
+# Last Modified: Thursday, 19th March 2020 12:28:22 pm
 # Modified By: Brian Cherinka
 
 
@@ -77,6 +77,7 @@ class TestCube(object):
         else:
             assert not path.startswith('https://data.sdss.org')
 
+    @pytest.mark.remote_data
     def test_load_from_file(self):
         cube = Cube('8485-1901', ignore_db=True)
         assert cube.data is not None
