@@ -7,7 +7,7 @@
 # Created: Sunday, 15th March 2020 4:53:35 pm
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Wednesday, 18th March 2020 10:28:58 am
+# Last Modified: Wednesday, 18th March 2020 4:08:26 pm
 # Modified By: Brian Cherinka
 
 
@@ -78,6 +78,8 @@ class Brain(Base, MMAMixIn):
                  objectid=None, mode=None, data=None,
                  release=None, download=None,
                  ignore_db=None, use_db=None):
+
+        self.data = data
 
         MMAMixIn.__init__(self, data_input=data_input, filename=filename,
                           objectid=objectid, mode=mode,
