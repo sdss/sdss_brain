@@ -99,23 +99,23 @@ def pytest_runtest_setup(item):
             check_path(item)
 
 
-class Data(object):
-    ''' class to turn data dict into dottable instance '''
-    def __init__(self, data):
-        for k, v in data.items():
-            val = v if not isinstance(v, dict) else Data(v)
-            setattr(self, k, val)
+# class Data(object):
+#     ''' class to turn data dict into dottable instance '''
+#     def __init__(self, data):
+#         for k, v in data.items():
+#             val = v if not isinstance(v, dict) else Data(v)
+#             setattr(self, k, val)
 
-    def __repr__(self):
-        return f'{self.__dict__}'
+#     def __repr__(self):
+#         return f'{self.__dict__}'
 
 
-@pytest.fixture(scope='session', autouse=True)
-def shared_data():
-    path = pathlib.Path('data/objects.yaml')
-    data = yaml.load(path.read_bytes(), yaml.SafeLoader)
-    yield Data(data)
-    data = None
+# @pytest.fixture(scope='session', autouse=True)
+# def shared_data():
+#     path = pathlib.Path('data/objects.yaml')
+#     data = yaml.load(path.read_bytes(), yaml.SafeLoader)
+#     yield Data(data)
+#     data = None
 
 
 @pytest.fixture(scope='session')
