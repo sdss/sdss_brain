@@ -13,6 +13,10 @@ python:
 os:
 - linux
 
+env:
+  global:
+  - SAS_BASE_DIR=/home/travis/sas
+
 matrix:
   fast_finish: true
 

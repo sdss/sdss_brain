@@ -4,9 +4,146 @@
 # conftest.py
 
 import pytest
+import os
+import six
+import inspect
+import yaml
+import pathlib
 from sdss_access import Access
-
+from sdss_brain import tree
+from sdss_brain.config import config
 import sdss_brain.mma as mma
+
+
+def pytest_addoption(parser):
+    """ Add new options to the pytest command-line """
+    # ignore datasources
+    parser.addoption('--ignore-datasources', action='store_true', default=False, 
+                     help='Ignore the datasource marker applied to tests')
+
+
+def check_class(item):
+    ''' Check if argument is a proper class mixed from mma.MMAMixIn '''
+    if inspect.isfunction(item):
+        # check if item is a fxn and return is correct class
+        assert item.__name__.startswith('from_')
+        dataobj = item()
+        assert issubclass(dataobj.__class__, mma.MMAMixIn)
+    else:
+        # check if item is correct class
+        assert issubclass(item.__class__, mma.MMAMixIn)
+        dataobj = item
+    return dataobj
+
+
+def check_path(item):
+    ''' checks if data exists locally '''
+    if isinstance(item, six.string_types):
+        # check if item is string; assume filepath
+        path = item
+    else:
+        dataobj = check_class(item)
+        path = dataobj.get_full_path()
+
+    if not os.path.exists(path):
+        pytest.skip('No local file found.')
+    return path
+
+
+def check_db(item):
+    ''' checks if db exists locally
+    
+    Paramter:
+        item (fxn|object):
+            A function o
+    '''
+    dataobj = check_class(item)
+    if not dataobj._db or dataobj._db.connected is False:
+        pytest.skip('skipping test when no db present')
+
+
+def pytest_runtest_setup(item):
+    ''' pytest runner post setup
+    
+    Currently only runs code for marker.datasource
+
+    '''
+    # look for all "datasource" markers
+    for marker in item.iter_markers(name="datasource"):
+        # skip marker if ignore-datasource is set in options
+        if item.config.getoption('--ignore-datasources'):
+            continue
+
+        # if no argument, generically skip test
+        if not marker.args:
+            pytest.skip('Assuming no local data')
+            continue
+
+        # get the marker argument
+        item = marker.args[0]
+
+        # get marker keyword flags
+        db = marker.kwargs.get('db', None)
+        data = marker.kwargs.get('data', None)
+
+        # if no flag set, runs normally
+        if not db and not data:
+            continue
+
+        # check for db existence
+        if db:
+            check_db(item)
+
+        # check for data filepath existence
+        if data:
+            check_path(item)
+
+
+class Data(object):
+    ''' class to turn data dict into dottable instance '''
+    def __init__(self, data):
+        for k, v in data.items():
+            val = v if not isinstance(v, dict) else Data(v)
+            setattr(self, k, val)
+
+    def __repr__(self):
+        return f'{self.__dict__}'
+
+
+@pytest.fixture(scope='session', autouse=True)
+def shared_data():
+    path = pathlib.Path('data/objects.yaml')
+    data = yaml.load(path.read_bytes(), yaml.SafeLoader)
+    yield Data(data)
+    data = None
+
+
+@pytest.fixture(scope='session')
+def mocksess_sas(tmp_path_factory):
+    ''' session fixture to change the SAA_BASE_DIR to a temp directory '''
+    path = str(tmp_path_factory.mktemp('sas'))
+    orig_env = os.environ.copy()
+    os.environ['SAS_BASE_DIR'] = path
+    tree.replant_tree(config.release)
+    yield None
+    os.environ = orig_env
+
+
+@pytest.fixture()
+def mock_sas(tmp_path, monkeypatch):
+    ''' function fixture to change the SAS_BASE_DIR to a temp directory
+
+        if used, this fixture must come first in test invocation
+
+        also manually monkeypatches os.environ so we can replant the tree
+        environ.
+    '''
+    orig_env = os.environ.copy()
+    path = str(tmp_path / 'sas')
+    monkeypatch.setenv('SAS_BASE_DIR', path)
+    tree.replant_tree(config.release)
+    yield None
+    os.environ = orig_env
 
 
 class MockMMA(mma.MMAMixIn):

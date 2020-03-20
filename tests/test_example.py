@@ -7,17 +7,21 @@
 # Created: Monday, 16th March 2020 11:41:57 am
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Thursday, 19th March 2020 12:28:22 pm
+# Last Modified: Friday, 20th March 2020 4:03:12 pm
 # Modified By: Brian Cherinka
 
 
-from __future__ import print_function, division, absolute_import
-import pytest
+from __future__ import absolute_import, division, print_function
+
+import os
 import re
-from sdss_brain.core import Brain
-from sdssdb.sqlalchemy.mangadb import database
-from sdss_brain.helpers import get_mapped_version, load_fits_file
+
+import pytest
 from astropy.io import fits
+from sdssdb.sqlalchemy.mangadb import database
+
+from sdss_brain.core import Brain
+from sdss_brain.helpers import get_mapped_version, load_fits_file
 
 
 class Cube(Brain):
@@ -39,7 +43,7 @@ class Cube(Brain):
         drpver = get_mapped_version(self.mapped_version, release=self.release, key='drpver')
         self.path_params = {'plate': self.plate, 'ifu': self.ifu, 'drpver': drpver}
 
-    def _load_object_from_file(self, data=None):          
+    def _load_object_from_file(self, data=None):
         self.data = load_fits_file(self.filename)
 
     def _load_object_from_db(self, data=None):
@@ -49,42 +53,80 @@ class Cube(Brain):
         pass
 
 
+def from_cube():
+    ''' function to generate a new cube
+    
+    This function form, "from_xxxx", is needed to pass
+    objects to the datasource marker.
+    '''
+    cube = Cube('8485-1901', release='DR16')
+    return cube
+
+
 @pytest.fixture(scope='module')
 def cube():
-    cube = Cube('8485-1901')
+    ''' create module level cube fixture '''
+    cube = from_cube()
+    yield cube
+    cube = None
+
+
+@pytest.fixture(scope='function')
+def fxncube():
+    ''' create function level cube fixture '''
+    cube = from_cube()
     yield cube
     cube = None
 
 
 class TestCube(object):
+
     @pytest.mark.parametrize('mode, db, origin',
-                            [('local', False, 'db'),
-                             ('local', True, 'file'),
-                             ('remote', False, 'api')])
-    def test_cube_mma(self, cube, mode, db, origin):
-        if cube._db.connected is False:
-            pytest.skip('skipping test when no db present')
+                             [pytest.param('local', False, 'db',
+                                           marks=pytest.mark.datasource(from_cube, db=True)),
+                              pytest.param('local', True, 'file',
+                                           marks=pytest.mark.datasource(from_cube, data=True)),
+                              ('remote', False, 'api')])
+    def test_cube_mma(self, mode, db, origin):
+        ''' test the various mma modes for cube '''
         cube = Cube('8485-1901', mode=mode, ignore_db=db)
         assert cube.data_origin == origin
         assert cube.mode == mode
 
     @pytest.mark.parametrize('url', [(False), (True)], ids=['nourl', 'url'])
     def test_get_full_path(self, cube, url):
+        ''' test to generate correct paths '''
         path = cube.get_full_path(url=url)
         assert '8485/stack/manga-8485-1901-LOGCUBE.fits.gz' in path
         if url:
-            assert path.startswith('https://data.sdss.org')
+            base = 'rsync' if cube.download is True else 'https'
+            assert path.startswith(f'{base}://data.sdss.org')
         else:
             assert not path.startswith('https://data.sdss.org')
 
-    @pytest.mark.remote_data
+    @pytest.mark.datasource(from_cube, data=True)
     def test_load_from_file(self):
-        cube = Cube('8485-1901', ignore_db=True)
+        ''' test to load data from local file '''
+        cube = Cube('8485-1901', ignore_db=True, release='DR16')
+        assert cube.data is not None
+        assert isinstance(cube.data, fits.HDUList)
+
+    @pytest.mark.remote_data
+    def test_download_file(self, mock_sas, fxncube):
+        ''' test for downloading a remote file
+    
+        sets a temporary SDSS sas (sas_base_dir) and downloads into a clean
+        directory
+        '''
+        assert not os.path.exists(fxncube.get_full_path())
+        assert fxncube.data is None
+        cube = Cube('8485-1901', ignore_db=True, release='DR16', download=True)
         assert cube.data is not None
         assert isinstance(cube.data, fits.HDUList)
 
 
 def test_bad_brain():
+    ''' test that abstract class can't be instantiated '''
     with pytest.raises(TypeError) as cm:
         Brain('A')
     assert "Can't instantiate abstract class Brain with abstract methods" in str(cm.value)
