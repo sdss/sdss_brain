@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
+#
 # Filename: mma.py
 # Project: python
 # Author: Brian Cherinka
@@ -45,7 +45,7 @@ def create_new_access(release):
     if not Access:
         raise BrainMissingDependency('sdss_access is not installed')
 
-    return Access(public=is_public, release=rsync_release)    
+    return Access(public=is_public, release=rsync_release)
 
 
 def set_access(func):
@@ -95,10 +95,10 @@ class MMAMixIn(abc.ABC):
     When the mode is set to "auto", it automatically tries to first load things
     locally, and then remotely.  Depending on the mode and logic, the MMA will
     set data_origin to either `file`, `db`, or `api`.
-    
+
     This mixin contains two abstractmethods you must override when subclassing.
         - **_set_access_path_params**: sets the arguments needed by `sdss_access`
-        - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid   
+        - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
 
     Parameters:
         data_input (str):
@@ -123,7 +123,7 @@ class MMAMixIn(abc.ABC):
             The current data release loaded
         access (sdss_access.Access):
             An instance of `sdss_access` using for all path creation and file downloads
-            
+
     '''
     def __init__(self, data_input=None, filename=None, objectid=None, mode=None,
                  release=None, download=None, ignore_db=False, use_db=None):
@@ -149,7 +149,7 @@ class MMAMixIn(abc.ABC):
         self._access = None
         self.path_name = None
         self.path_params = None
-        self._set_access_path_params()
+        # self._set_access_path_params()
 
         # perform the multi-modal data access
         if self.mode == 'local':
@@ -267,7 +267,7 @@ class MMAMixIn(abc.ABC):
 
         This method must be overridden by each subclass and contains the logic
         to determine the kind of input passed into it, i.e. either a filename or an
-        object identification string. 
+        object identification string.
         '''
 
     @check_access_params

@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
+#
 # Filename: core.py
 # Project: sdss_brain
 # Author: Brian Cherinka
@@ -19,7 +19,7 @@ from astropy.io import fits
 
 class Base(abc.ABC):
     ''' abstract base class for tools '''
-    
+
     @abc.abstractmethod
     def _load_object_from_file(self, data=None):
         pass
@@ -39,7 +39,7 @@ class Brain(Base, MMAMixIn):
     This is a convenience class with the ``MMAMixIn`` already implemented.
     This class initializes the ``MMAMixIn`` and provides logic to load data based
     on the data_origin.  It also provides a simple ``repr``.
-    
+
     This class contains three abstractmethods you must override when subclassing.
         - **_load_object_from_file**: defines data load/handling from a local file
         - **_load_object_from_db**: defines data load/handling from a local database
@@ -102,4 +102,3 @@ class Brain(Base, MMAMixIn):
         ''' Destructor for closing FITS files. '''
         if self.data_origin == 'file' and isinstance(self.data, fits.HDUList):
             self.data.close()
-

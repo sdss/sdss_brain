@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
+#
 # Filename: config.py
 # Project: sdss_brain
 # Author: Brian Cherinka
@@ -56,7 +56,7 @@ class Config(object):
         if value not in self._allowed_releases:
             raise BrainError('trying to set an invalid release version. Valid releases are: {0}'
                              .format(', '.join(self._allowed_releases)))
-        
+
         # replant the tree
         if value.lower() == 'work':
             tree.replant_tree('sdsswork')
@@ -83,6 +83,10 @@ class Config(object):
         ''' get the latest public DR release '''
         drsonly = [i for i in self._allowed_releases if 'DR' in i]
         return max(drsonly, key=lambda t: int(t.rsplit('DR', 1)[-1]))
+
+    def list_allowed_releases(self):
+        ''' list the allowed releases based on the available tree environment configurations '''
+        return self._allowed_releases
 
     def _load_defaults(self):
         ''' Load the Brain config yaml file and update any parameters '''
