@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
+#
 # Filename: mma.py
 # Project: python
 # Author: Brian Cherinka
@@ -45,7 +45,7 @@ def create_new_access(release):
     if not Access:
         raise BrainMissingDependency('sdss_access is not installed')
 
-    return Access(public=is_public, release=rsync_release)    
+    return Access(public=is_public, release=rsync_release)
 
 
 def set_access(func):
@@ -74,7 +74,7 @@ def check_access_params(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         inst = args[0]
-        inst._set_access_path_params()
+        #inst._set_access_path_params()
         assert hasattr(inst, 'path_name'), 'set_access_path_params must set a "path_name" attribute'
         assert hasattr(inst, 'path_params'), 'set_access_path_params must set a "path_params" attribute'
         assert getattr(inst, 'path_name'), 'the path_name attribute cannot be None'
@@ -95,10 +95,10 @@ class MMAMixIn(abc.ABC):
     When the mode is set to "auto", it automatically tries to first load things
     locally, and then remotely.  Depending on the mode and logic, the MMA will
     set data_origin to either `file`, `db`, or `api`.
-    
+
     This mixin contains two abstractmethods you must override when subclassing.
         - **_set_access_path_params**: sets the arguments needed by `sdss_access`
-        - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid   
+        - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
 
     Parameters:
         data_input (str):
@@ -123,8 +123,9 @@ class MMAMixIn(abc.ABC):
             The current data release loaded
         access (sdss_access.Access):
             An instance of `sdss_access` using for all path creation and file downloads
-            
+
     '''
+
     def __init__(self, data_input=None, filename=None, objectid=None, mode=None,
                  release=None, download=None, ignore_db=False, use_db=None):
         # data attributes
@@ -139,17 +140,21 @@ class MMAMixIn(abc.ABC):
         self._forcedownload = download or config.download
         self._ignore_db = ignore_db or config.ignore_db
 
+        # sdss_access attributes
+        self._access = None
+        #self.path_name = None
+        #self.path_params = None
+
+        self._setup_access()
+
         # determine the input
         self._determine_inputs(data_input)
 
         assert self.mode in ['auto', 'local', 'remote']
         assert self.filename is not None or self.objectid is not None, 'no inputs set.'
 
-        # sdss_access attributes
-        self._access = None
-        self.path_name = None
-        self.path_params = None
-        self._set_access_path_params()
+
+        #self._set_access_path_params()
 
         # perform the multi-modal data access
         if self.mode == 'local':
@@ -248,6 +253,14 @@ class MMAMixIn(abc.ABC):
         if self.filename is None and self.objectid is None:
             raise BrainError('no inputs defined. filename and objectid are both None')
 
+        # attempt to extract access path parameters from the filename
+        if self.filename and self.path_name:
+            params = self.access.extract(self.path_name, self.filename)
+            if params:
+                self.path_params = params
+        elif self.objectid and self.path_name:
+            self._set_access_path_params()
+
         # check for any misaligments and misassignments
         if self.filename:
             self.objectid = None
@@ -267,7 +280,7 @@ class MMAMixIn(abc.ABC):
 
         This method must be overridden by each subclass and contains the logic
         to determine the kind of input passed into it, i.e. either a filename or an
-        object identification string. 
+        object identification string.
         '''
 
     @check_access_params
@@ -305,6 +318,19 @@ class MMAMixIn(abc.ABC):
             - path_name (str): Required. The sdss_access template path key name.
             - path_params (dict): Required. The keywords needed to fill out the sdss_access template path
         '''
+
+    def _setup_access(self):
+        ''' Set up the initial access parameters '''
+        if not self.path_name:
+            return
+
+        # look up the access keys and create attributes
+        keys = self.access.lookup_keys(self.path_name)
+        for k in keys:
+            setattr(self, k, None)
+
+        # create a default path params dictionary
+        self.path_params = {k: getattr(self, k) for k in keys}
 
     @check_access_params
     def download(self):

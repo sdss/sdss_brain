@@ -7,9 +7,6 @@ import pytest
 import os
 import six
 import inspect
-import yaml
-import pathlib
-from sdss_access import Access
 from sdss_brain import tree
 from sdss_brain.config import config
 import sdss_brain.mma as mma
@@ -18,7 +15,7 @@ import sdss_brain.mma as mma
 def pytest_addoption(parser):
     """ Add new options to the pytest command-line """
     # ignore datasources
-    parser.addoption('--ignore-datasources', action='store_true', default=False, 
+    parser.addoption('--ignore-datasources', action='store_true', default=False,
                      help='Ignore the datasource marker applied to tests')
 
 
@@ -52,7 +49,7 @@ def check_path(item):
 
 def check_db(item):
     ''' checks if db exists locally
-    
+
     Paramter:
         item (fxn|object):
             A function o
@@ -64,7 +61,7 @@ def check_db(item):
 
 def pytest_runtest_setup(item):
     ''' pytest runner post setup
-    
+
     Currently only runs code for marker.datasource
 
     '''
@@ -147,7 +144,9 @@ def mock_mma(tmp_path):
 
 class Toy(MockMMA):
     ''' toy object to utilize in tests '''
-    def __init__(self, data_input=None, filename=None, objectid=None, mode=None, 
+    path_name = 'toy'
+
+    def __init__(self, data_input=None, filename=None, objectid=None, mode=None,
                  release=None):
         MockMMA.__init__(self, data_input=data_input, filename=filename,
                          objectid=objectid, mode=mode, release=release)
@@ -159,7 +158,6 @@ class Toy(MockMMA):
             self.filename = value
 
     def _set_access_path_params(self):
-        self.path_name = 'toy'
         self.path_params = {'object': self.objectid}
 
     def _load_object_from_file(self, data=None):
@@ -185,8 +183,9 @@ def make_file(tmp_path):
 def make_badtoy(bad):
     ''' creates a bad version of the Toy object '''
     class BadToy(Toy):
+        path_name = 'toy'
+
         def _set_access_path_params(self):
-            self.path_name = 'toy'
             self.path_params = {'object': self.objectid}
             if bad == 'noname':
                 self.path_name = None
@@ -197,7 +196,7 @@ def make_badtoy(bad):
 
         def _parse_input(self, value):
             if bad == 'none':
-                return         
+                return
 
             if len(value) == 1 and value.isalpha():
                 self.objectid = value
