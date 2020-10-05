@@ -257,9 +257,10 @@ class MMAMixIn(abc.ABC):
         if self.filename and self.path_name:
             params = self.access.extract(self.path_name, self.filename)
             if params:
-                self.path_params = params
+                self._setup_access(params)
         elif self.objectid and self.path_name:
             self._set_access_path_params()
+            self._setup_access(self.path_params)
 
         # check for any misaligments and misassignments
         if self.filename:
@@ -319,7 +320,7 @@ class MMAMixIn(abc.ABC):
             - path_params (dict): Required. The keywords needed to fill out the sdss_access template path
         '''
 
-    def _setup_access(self):
+    def _setup_access(self, params=None):
         ''' Set up the initial access parameters '''
         if not self.path_name:
             return
@@ -327,7 +328,10 @@ class MMAMixIn(abc.ABC):
         # look up the access keys and create attributes
         keys = self.access.lookup_keys(self.path_name)
         for k in keys:
-            setattr(self, k, None)
+            if params:
+                setattr(self, k, params.get(k, None))
+            else:
+                setattr(self, k, None)
 
         # create a default path params dictionary
         self.path_params = {k: getattr(self, k) for k in keys}

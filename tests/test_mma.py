@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
+#
 # Filename: test_mma.py
 # Project: tests
 # Author: Brian Cherinka
@@ -21,6 +21,15 @@ from .conftest import Toy, make_badtoy
 class TestMMA(object):
     objectid = 'A'
 
+    def assert_paths(self, toy):
+        assert toy.path_name == 'toy'
+        assert toy.path_params is not None
+        assert 'object' in toy.path_params
+        assert toy.path_params['object'] == 'A'
+        assert hasattr(toy, 'object')
+        print(toy.object, toy.path_params)
+        assert toy.object == 'A'
+
     @pytest.mark.parametrize('data', [('filename'), ('objectid')])
     def test_local_input(self, make_file, data):
         if data == 'filename':
@@ -30,6 +39,7 @@ class TestMMA(object):
         toy = Toy(exp)
         assert toy.mode == 'local'
         assert getattr(toy, data) == exp
+        self.assert_paths(toy)
 
     def test_remote(self):
         toy = Toy(self.objectid)
@@ -49,6 +59,7 @@ class TestMMA(object):
         assert toy.mode == 'local'
         assert getattr(toy, data) == exp
         assert toy.data_origin == 'file'
+        self.assert_paths(toy)
 
     def test_get_full_path(self, make_file):
         toy = Toy(self.objectid)
