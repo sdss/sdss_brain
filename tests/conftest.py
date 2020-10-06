@@ -183,13 +183,20 @@ def make_file(tmp_path):
 def make_badtoy(bad):
     ''' creates a bad version of the Toy object '''
     class BadToy(Toy):
-        path_name = 'toy'
+        if bad == 'nonename':
+            path_name = None
+        elif bad == 'noname':
+            @property
+            def path_name(self):
+                raise AttributeError
+        elif bad == 'badpath':
+            path_name = 'stuff'
+        else:
+            path_name = 'toy'
 
         def _set_access_path_params(self):
             self.path_params = {'object': self.objectid}
-            if bad == 'noname':
-                self.path_name = None
-            elif bad == 'noparam':
+            if bad == 'noparam':
                 self.path_params = None
             elif bad == 'notdict':
                 self.path_params = 'badparams'

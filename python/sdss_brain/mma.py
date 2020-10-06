@@ -12,6 +12,7 @@
 
 
 from __future__ import print_function, division, absolute_import
+from sdss_brain.helpers import get_mapped_version
 import abc
 import os
 import time
@@ -74,8 +75,7 @@ def check_access_params(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         inst = args[0]
-        #inst._set_access_path_params()
-        assert hasattr(inst, 'path_name'), 'set_access_path_params must set a "path_name" attribute'
+        assert hasattr(inst, 'path_name'), f'{inst.__class__.__name__} must have a "path_name" class attribute'
         assert hasattr(inst, 'path_params'), 'set_access_path_params must set a "path_params" attribute'
         assert getattr(inst, 'path_name'), 'the path_name attribute cannot be None'
         assert getattr(inst, 'path_params'), 'the path_params attribute cannot be None'
@@ -142,9 +142,7 @@ class MMAMixIn(abc.ABC):
 
         # sdss_access attributes
         self._access = None
-        #self.path_name = None
-        #self.path_params = None
-
+        self.path_params = None
         self._setup_access()
 
         # determine the input
@@ -152,9 +150,6 @@ class MMAMixIn(abc.ABC):
 
         assert self.mode in ['auto', 'local', 'remote']
         assert self.filename is not None or self.objectid is not None, 'no inputs set.'
-
-
-        #self._set_access_path_params()
 
         # perform the multi-modal data access
         if self.mode == 'local':
@@ -254,13 +249,14 @@ class MMAMixIn(abc.ABC):
             raise BrainError('no inputs defined. filename and objectid are both None')
 
         # attempt to extract access path parameters from the filename
-        if self.filename and self.path_name:
-            params = self.access.extract(self.path_name, self.filename)
-            if params:
-                self._setup_access(params)
-        elif self.objectid and self.path_name:
-            self._set_access_path_params()
-            self._setup_access(self.path_params)
+        if hasattr(self, 'path_name') and self.path_name:
+            if self.filename:
+                params = self.access.extract(self.path_name, self.filename)
+                if params:
+                    self._setup_access(params)
+            elif self.objectid:
+                self._set_access_path_params()
+                self._setup_access(self.path_params)
 
         # check for any misaligments and misassignments
         if self.filename:
@@ -322,16 +318,26 @@ class MMAMixIn(abc.ABC):
 
     def _setup_access(self, params=None):
         ''' Set up the initial access parameters '''
-        if not self.path_name:
+
+        # do nothing if no path_name set
+        if not hasattr(self, 'path_name') or not self.path_name:
             return
 
         # look up the access keys and create attributes
         keys = self.access.lookup_keys(self.path_name)
         for k in keys:
+            # skip if a class attribute already exists
+            if hasattr(self.__class__, k):
+                continue
+
+            # look for a default value
+            default = self._path_defaults.get(k, None) if hasattr(
+                self, '_path_defaults') else None
             if params:
-                setattr(self, k, params.get(k, None))
+                assert type(params) == dict, 'the path_params attribute must be a dictionary'
+                setattr(self, k, params.get(k, default))
             else:
-                setattr(self, k, None)
+                setattr(self, k, default)
 
         # create a default path params dictionary
         self.path_params = {k: getattr(self, k) for k in keys}

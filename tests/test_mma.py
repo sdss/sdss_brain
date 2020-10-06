@@ -27,7 +27,6 @@ class TestMMA(object):
         assert 'object' in toy.path_params
         assert toy.path_params['object'] == 'A'
         assert hasattr(toy, 'object')
-        print(toy.object, toy.path_params)
         assert toy.object == 'A'
 
     @pytest.mark.parametrize('data', [('filename'), ('objectid')])
@@ -86,8 +85,9 @@ class TestMMAFails(object):
         assert 'filename not allowed in remote mode' in str(cm.value)
 
     @pytest.mark.parametrize('bad, exp',
-                             [('noname', 'path_name attribute cannot be None'),
-                              ('noparam', 'path_params attribute cannot be None'),
+                             [('noname', 'must have a "path_name" class attribute'),
+                              ('nonename', 'path_name attribute cannot be None'),
+                              ('badpath', 'must be defined in the path templates'),
                               ('notdict', 'path_params attribute must be a dictionary')])
     def test_bad_access_params(self, bad, exp):
         with pytest.raises(AssertionError) as cm:
