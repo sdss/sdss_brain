@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
+#
 # Filename: helpers.py
 # Project: sdss_brain
 # Author: Brian Cherinka
@@ -13,6 +13,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import re
 import pathlib
 from astropy.io import fits
 from sdss_brain import log
@@ -41,7 +42,7 @@ def get_mapped_version(name, release=None, key=None):
         >>> # access the MaNGA versions for release DR16
         >>> get_mapped_version('manga', release='DR16')
         >>> {'drpver': 'v2_4_3', 'dapver': '2.2.1'}
-        >>> 
+        >>>
         >>> # access specific key
         >>> get_mapped_version('manga', release='DR16', key='drpver')
         >>> 'v2_4_3'
@@ -99,4 +100,116 @@ def load_fits_file(filename):
         raise BrainError(f'Failed to open FITS files {filename}: {err}')
     else:
         return hdulist
+
+
+def create_object_pattern(regex=None, keys=None, delimiter='-', exclude=None, include=None,
+                          order=None):
+    """ Create a regex pattern to parse data input by
+
+    Parameters
+    ----------
+        regex : str
+            A custom regex pattern
+        keys : list
+            A list of (access) names to build a pattern out of
+        delimiter : str
+            The delimiter to use when joining the keys.  Default is "-".
+        exclude : list
+            A list of names to exclude from the keys
+        include : list
+            A list of names to only include from the keys
+        order : list
+            A list of names specifying the order in which create the keyed pattern
+
+    Returns
+    -------
+        pattern : str
+            A regex pattern to use for parsing an objectid
+    """
+
+    # use a custom regex pattern
+    if regex:
+        pattern = rf'(?P<objectid>(?![/$.])({regex}))'
+        return pattern
+
+    # if no keys, use a greedy default
+    if not keys:
+        pattern = r'(?P<objectid>^[^/$.](.+)?)'
+        return pattern
+
+    # exclude the named keys
+    if exclude:
+        keys = list(set(keys) - set(exclude))
+
+    # only include the named keys
+    if include or order:
+        good = order or include
+        keys = list(set(good) & set(keys))
+
+    # order the keys
+    if order:
+        keys.sort(key=lambda i: order.index(i))
+
+    patts = []
+    for k in keys:
+        patts.append(fr'(?P<{k}>(.+)?)')
+
+    # join into a single pattern
+    pattern = rf'(?P<objectid>(?![/$.])({delimiter.join(patts)}))'
+
+    return pattern
+
+
+def parse_data_input(value, regex=None, keys=None, delimiter='-', exclude=None, include=None,
+                     order=None):
+    ''' Parse data input for a filename or an object id
+
+    Parameters
+    ----------
+        value : str
+            The input string to perform a pattern match on
+        regex : str
+            A custom regex pattern
+        keys : list
+            A list of (access) names to build a pattern out of
+        delimiter : str
+            The delimiter to use when joining the keys.  Default is "-".
+        exclude : list
+            A list of names to exclude from the keys
+        include : list
+            A list of names to only include from the keys
+        order : list
+            A list of names specifying the order in which create the keyed pattern
+
+
+    Returns
+    -------
+        matches : dict
+            A dict with keys "filename", "objectid", and any other matches
+    '''
+
+    assert isinstance(value, (str, pathlib.Path)), 'input value must be a str or pathlib.Path'
+
+    # set default file pattern
+    file_pattern = r'(?P<filename>^[/$.](.+)?(.[a-z]+))'
+
+    # create an object id regex pattern using a specified pattern or generate a default one
+    obj_pattern = create_object_pattern(regex=regex, keys=keys, delimiter=delimiter,
+                                        exclude=exclude, include=include,
+                                        order=order)
+
+    # final pattern
+    pattern = fr'^{file_pattern}|{obj_pattern}$'
+
+    # compile and match the patterm
+    comp_pattern = re.compile(pattern)
+    pattern_match = re.match(comp_pattern, str(value))
+
+    # if no match, assume value is a filename and return nothing
+    if not pattern_match:
+        return None
+
+    # check for named group, then any groups, then a match without groups
+    matches = pattern_match.groupdict() or pattern_match.groups() or pattern_match.group()
+    return matches
 

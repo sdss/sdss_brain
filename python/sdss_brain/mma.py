@@ -12,9 +12,9 @@
 
 
 from __future__ import print_function, division, absolute_import
-from sdss_brain.helpers import get_mapped_version
 import abc
 import os
+import pathlib
 import time
 import warnings
 
@@ -23,6 +23,7 @@ from functools import wraps
 from sdss_brain import log
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError, BrainMissingDependency, BrainUserWarning
+from sdss_brain.helpers import get_mapped_version
 
 try:
     from sdss_access import Access
@@ -271,7 +272,7 @@ class MMAMixIn(abc.ABC):
         if self.filename:
 
             # check if the file exists locally
-            if os.path.exists(self.filename):
+            if self.filename.exists():
                 self.mode = 'local'
                 self.data_origin = 'file'
             else:
@@ -316,14 +317,26 @@ class MMAMixIn(abc.ABC):
             assert self.filename is None and self.objectid is None, \
                 'if input is set, filename and objectid cannot be set.'
 
-            assert isinstance(data_input, six.string_types), 'input must be a string.'
+            assert isinstance(data_input, (six.string_types, pathlib.Path)), \
+                'input must be a string or pathlib.Path'
 
-            # parse the input data
-            self._parse_input(data_input)
+            # parse the input data into either a filename or objectid
+            #self._parse_input(data_input)
+            parsed_input = self._parse_input(data_input)
+            if not parsed_input:
+                self.filename = data_input
+            else:
+                assert isinstance(parsed_input, dict), 'return value of _parse_input must be a dict'
+                self.filename = parsed_input.get('filename', None)
+                self.objectid = parsed_input.get('objectid', None)
 
         # ensure either filename or objectid is specified
         if self.filename is None and self.objectid is None:
             raise BrainError('no inputs defined. filename and objectid are both None')
+
+        # convert filename to a pathlib.Path and resolve a relative name
+        if self.filename:
+            self.filename = pathlib.Path(self.filename).resolve()
 
         # attempt to extract access path parameters from the filename
         if hasattr(self, 'path_name') and self.path_name:
@@ -342,7 +355,7 @@ class MMAMixIn(abc.ABC):
             if self.mode == 'remote':
                 raise BrainError('filename not allowed in remote mode.')
 
-            assert os.path.exists(self.filename), \
+            assert self.filename.exists, \
                 'filename {} does not exist.'.format(str(self.filename))
 
         elif self.objectid:
