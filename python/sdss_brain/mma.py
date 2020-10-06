@@ -84,6 +84,69 @@ def check_access_params(func):
     return wrapper
 
 
+def _set_access_path_params(self):
+    ''' Default set_access_path_params applied with the decorator'''
+    keys = self.access.lookup_keys(self.path_name)
+    self.path_params = {k: getattr(self, k) for k in keys}
+
+
+def create_mapped_properties(kls, mapped_version):
+    ''' Create new read-only properties on a given class
+
+    Creates new read-only properties that extracts a specific version id to an input
+    release.  This allows the version id to be updated when the global "release" is
+    changed.  See `~sdss_brain.helpers.get_mapped_version` for more details.
+    ``mapped_version`` is a mapping key, "[mapping]:[property,]", where [mapping]
+    is the name of the key in the "mapped_version" attribute in the brain configuration yaml file,
+    and [property,] is a list of version ids to become properties.
+
+    For example a key of "manga:drpver" creates a new read-only property called "drpver" and uses
+    `get_mapped_version` to extract the correct version number for a given release from the
+    "mapped_version['manga']" key in ~sdss_brain.yaml.
+
+    Parameters:
+        kls : Type
+            The class object
+        mapped_version : str
+            The mapping key to map a specific version onto a release
+    '''
+    mapkey, attrkey = mapped_version.split(':')
+    # set the mapped_version class attribute
+    kls.mapped_version = mapkey
+    if attrkey:
+        # loop over all named values found
+        for attr in attrkey.split(','):
+            # create read-only property that extracts the correct version number
+            # for a given release
+            setattr(kls, attr, property(lambda self: get_mapped_version(
+                kls.mapped_version, release=self.release, key=attr)))
+
+
+def access_loader(kls=None, *, name=None, defaults={}, mapped_version='manga:drpver'):
+    """ Decorator to reduce boilerplate around setting of sdss_access parameters
+    """
+    def wrap(kls):
+        # add the path_name class attribute and add defaults for path_params
+        kls.path_name = name
+        kls._path_defaults = defaults
+
+        # create new properties for mapped versions
+        if mapped_version:
+            create_mapped_properties(kls, mapped_version)
+
+        # attach the default set_access_path_params
+        setattr(kls, '_set_access_path_params', _set_access_path_params)
+
+        # update the __abstractmethod__ with the boilerplate set
+        method_set = ['_set_access_path_params']
+        kls.__abstractmethods__ = kls.__abstractmethods__.symmetric_difference(method_set)
+        return kls
+
+    if not kls:
+        return wrap
+    return wrap(kls)
+
+
 class MMAMixIn(abc.ABC):
     ''' Mixin for implementing multi-modal data access
 
