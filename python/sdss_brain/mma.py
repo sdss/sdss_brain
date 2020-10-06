@@ -35,8 +35,9 @@ __all__ = ['MMAMixIn']
 def create_new_access(release):
     ''' create a new sdss_access instance
 
-    Parameters:
-        release (str):
+    Parameters
+    ----------
+        release : str
             The sdss data release
     '''
     # check for public release
@@ -104,7 +105,8 @@ def create_mapped_properties(kls, mapped_version):
     `get_mapped_version` to extract the correct version number for a given release from the
     "mapped_version['manga']" key in ~sdss_brain.yaml.
 
-    Parameters:
+    Parameters
+    ----------
         kls : Type
             The class object
         mapped_version : str
@@ -124,6 +126,16 @@ def create_mapped_properties(kls, mapped_version):
 
 def access_loader(kls=None, *, name=None, defaults={}, mapped_version='manga:drpver'):
     """ Decorator to reduce boilerplate around setting of sdss_access parameters
+
+    Parameters
+    ----------
+        name : str
+        defaults : dict
+        mapped_version : str
+
+    Returns
+    -------
+        The decorated class
     """
     def wrap(kls):
         # add the path_name class attribute and add defaults for path_params
@@ -163,28 +175,30 @@ class MMAMixIn(abc.ABC):
         - **_set_access_path_params**: sets the arguments needed by `sdss_access`
         - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
 
-    Parameters:
-        data_input (str):
+    Parameters
+    ----------
+        data_input : str
             The file or name of target data to load
-        filename (str):
+        filename : str
             The absolute filepath to data to load
-        objectid (str):
+        objectid : str
             The object identifier of the data to load
-        mode (str):
+        mode : str
             The operating mode: auto, local, or remote
-        release (str):
+        release : str
             The data release of the object, e.g. "DR16"
-        download (bool):
+        download : bool
             If True, downloads the object locally with sdss_access
-        ignore_db (bool):
+        ignore_db : bool
             If True, ignores any database connection for local access
-        use_db (sdssdb.DatabaseConnection):
+        use_db : sdssdb.DatabaseConnection
             a database connection to override the default with
 
-    Attributes:
-        release (str):
+    Attributes
+    ----------
+        release : str
             The current data release loaded
-        access (sdss_access.Access):
+        access : sdss_access.Access
             An instance of `sdss_access` using for all path creation and file downloads
 
     '''
@@ -347,11 +361,13 @@ class MMAMixIn(abc.ABC):
     def get_full_path(self, url=None):
         """ Returns the full path of the file in the tree.
 
-        Parameters:
-            url (bool):
+        Parameters
+        ----------
+            url : bool
                 If True, specifies the url location rather than the local file location
 
-        Returns:
+        Returns
+        -------
             The full path as built by sdss_access
         """
 
@@ -374,13 +390,27 @@ class MMAMixIn(abc.ABC):
         parameters, "path_name", and "path_params", which specify parameters to be passed
         to sdss_access.
 
-        Attribute Parameters:
-            - path_name (str): Required. The sdss_access template path key name.
-            - path_params (dict): Required. The keywords needed to fill out the sdss_access template path
+        Attributes
+        ----------
+            path_name : str
+                Required. The sdss_access template path key name.
+            path_params : dict
+                Required. The keywords needed to fill out the sdss_access template path
         '''
 
     def _setup_access(self, params=None):
-        ''' Set up the initial access parameters '''
+        ''' Set up the initial access parameters
+
+        Sets up an initial default path_params dictionary.  Given a provided `path_name`
+        class attribute, looks up the path keyword arguments and creates instance properties,
+        as well as a default `path_params` dictionary.  If "params" is specified then properties
+        and `path_params` is updated from that input.
+
+        Parameters
+        ----------
+            params : dict
+                A dictionary of access path params
+        '''
 
         # do nothing if no path_name set
         if not hasattr(self, 'path_name') or not self.path_name:
