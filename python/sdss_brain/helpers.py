@@ -16,6 +16,7 @@ from __future__ import absolute_import, division, print_function
 import re
 import pathlib
 from astropy.io import fits
+from itertools import groupby
 from sdss_brain import log
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError
@@ -161,7 +162,7 @@ def create_object_pattern(regex=None, keys=None, delimiter='-', exclude=None, in
 
 
 def parse_data_input(value, regex=None, keys=None, delimiter='-', exclude=None, include=None,
-                     order=None):
+                     order=None, inputs=False):
     ''' Parse data input for a filename or an object id
 
     Parameters
@@ -180,7 +181,8 @@ def parse_data_input(value, regex=None, keys=None, delimiter='-', exclude=None, 
             A list of names to only include from the keys
         order : list
             A list of names specifying the order in which create the keyed pattern
-
+        inputs : bool
+            If True, returns the parser inputs.  Default is False.
 
     Returns
     -------
@@ -189,6 +191,9 @@ def parse_data_input(value, regex=None, keys=None, delimiter='-', exclude=None, 
     '''
 
     assert isinstance(value, (str, pathlib.Path)), 'input value must be a str or pathlib.Path'
+
+    # check if regex has named groups
+    # is_named = re.findall(r'\?P<(.*?)>', regex) if regex else None
 
     # set default file pattern
     file_pattern = r'(?P<filename>^[/$.](.+)?(.[a-z]+))'
@@ -207,9 +212,41 @@ def parse_data_input(value, regex=None, keys=None, delimiter='-', exclude=None, 
 
     # if no match, assume value is a filename and return nothing
     if not pattern_match:
-        return None
+        return {'filename': value}
 
     # check for named group, then any groups, then a match without groups
     matches = pattern_match.groupdict() or pattern_match.groups() or pattern_match.group()
+
+    # add the groups to a new key (remove None and duplicate values)
+    matches['parsed_groups'] = [k for k, _ in groupby(sorted(pattern_match.groups(),
+                                                      key=lambda x: pattern_match.groups().index(x))) if k] \
+        if not matches.get('filename', None) else None
+
+    # store the parser inputs
+    if inputs:
+        matches['parsed_inputs'] = {'pattern': pattern, 'input_regex': regex,
+                                    'object_pattern': obj_pattern, 'file_pattern': file_pattern}
     return matches
 
+
+def raw_parse(value, regex=None):
+    ''' Match a string via a regex pattern with no frills
+
+    Parameters
+    ----------
+        value : str
+            The input string to match on
+        regex : str
+            The regex pattern to use for matching
+
+    Returns
+    -------
+        A matched group
+
+    '''
+    pattern = re.compile(regex)
+    match = re.match(pattern, value)
+    if not match:
+        return None
+
+    return match.groupdict() or match.groups() or match.group()

@@ -23,7 +23,7 @@ from functools import wraps
 from sdss_brain import log
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError, BrainMissingDependency, BrainUserWarning
-from sdss_brain.helpers import get_mapped_version
+from sdss_brain.helpers import get_mapped_version, parse_data_input
 
 try:
     from sdss_access import Access
@@ -82,6 +82,8 @@ def check_access_params(func):
         assert getattr(inst, 'path_name'), 'the path_name attribute cannot be None'
         assert getattr(inst, 'path_params'), 'the path_params attribute cannot be None'
         assert type(inst.path_params) == dict, 'the path_params attribute must be a dictionary'
+        if not all(inst.path_params.values()):
+            log.warn('Not all path_params are set.  Check any data parsing or how path_params are set.')
         return func(*args, **kwargs)
     return wrapper
 
@@ -90,6 +92,20 @@ def _set_access_path_params(self):
     ''' Default set_access_path_params applied with the decorator'''
     keys = self.access.lookup_keys(self.path_name)
     self.path_params = {k: getattr(self, k) for k in keys}
+
+
+def get_parse_input(regex=None, include=None, exclude=None, order=None, delimiter=None):
+    def _parse_input(self, value):
+        ''' Default parse_input applied with the decorator '''
+        keys = self.access.lookup_keys(self.path_name)
+        data = parse_data_input(value, regex=regex, keys=keys,
+                                include=include, exclude=exclude, order=order, delimiter=delimiter)
+
+        for k, v in data.items():
+            if k != ['filename', 'objectid']:
+                setattr(self, k, v)
+        return data
+    return _parse_input
 
 
 def create_mapped_properties(kls, mapped_version):
@@ -125,7 +141,8 @@ def create_mapped_properties(kls, mapped_version):
                 kls.mapped_version, release=self.release, key=attr)))
 
 
-def access_loader(kls=None, *, name=None, defaults={}, mapped_version='manga:drpver'):
+def access_loader(kls=None, *, name=None, defaults={}, mapped_version='manga:drpver', pattern=None,
+                  include=None, exclude=None, order=None, delimiter=None):
     """ Decorator to reduce boilerplate around setting of sdss_access parameters
 
     Parameters
@@ -150,8 +167,18 @@ def access_loader(kls=None, *, name=None, defaults={}, mapped_version='manga:drp
         # attach the default set_access_path_params
         setattr(kls, '_set_access_path_params', _set_access_path_params)
 
+        # setup and attach the default parse_input function
+        parser = any([pattern, include, exclude, order])
+        if parser:
+            parse_input = get_parse_input(regex=pattern, include=include, exclude=exclude,
+                                          order=order, delimiter=delimiter)
+            setattr(kls, '_parse_input', parse_input)
+
         # update the __abstractmethod__ with the boilerplate set
         method_set = ['_set_access_path_params']
+        if parser:
+            method_set.append('_parse_input')
+
         kls.__abstractmethods__ = kls.__abstractmethods__.symmetric_difference(method_set)
         return kls
 
@@ -321,7 +348,6 @@ class MMAMixIn(abc.ABC):
                 'input must be a string or pathlib.Path'
 
             # parse the input data into either a filename or objectid
-            #self._parse_input(data_input)
             parsed_input = self._parse_input(data_input)
             if not parsed_input:
                 self.filename = data_input
@@ -367,7 +393,8 @@ class MMAMixIn(abc.ABC):
 
         This method must be overridden by each subclass and contains the logic
         to determine the kind of input passed into it, i.e. either a filename or an
-        object identification string.
+        object identification string.  This method must at least return a dictionary
+        containing keys for "filename" and "objectid".
         '''
 
     @check_access_params
