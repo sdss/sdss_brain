@@ -152,10 +152,12 @@ class Toy(MockMMA):
                          objectid=objectid, mode=mode, release=release)
 
     def _parse_input(self, value):
-        if len(value) == 1 and value.isalpha():
-            self.objectid = value
+        data = {'filename': None, 'objectid': None}
+        if len(str(value)) == 1 and str(value).isalpha():
+            data['objectid'] = value
         else:
-            self.filename = value
+            data['filename'] = value
+        return data
 
     def _set_access_path_params(self):
         self.path_params = {'object': self.objectid}
@@ -203,11 +205,15 @@ def make_badtoy(bad):
 
         def _parse_input(self, value):
             if bad == 'none':
-                return
+                return {}
+            elif bad == 'empty':
+                return {'filename': None, 'objectid': None}
 
-            if len(value) == 1 and value.isalpha():
-                self.objectid = value
+            data = {'filename': None, 'objectid': None}
+            if len(str(value)) == 1 and str(value).isalpha():
+                data['objectid'] = value
             else:
-                self.filename = value
+                data['filename'] = value
+            return data
 
     return BadToy('A')

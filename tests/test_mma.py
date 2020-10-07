@@ -32,7 +32,7 @@ class TestMMA(object):
     @pytest.mark.parametrize('data', [('filename'), ('objectid')])
     def test_local_input(self, make_file, data):
         if data == 'filename':
-            exp = str(make_file)
+            exp = make_file
         else:
             exp = self.objectid
         toy = Toy(exp)
@@ -49,7 +49,7 @@ class TestMMA(object):
     @pytest.mark.parametrize('data', [('filename'), ('objectid')])
     def test_explicit_input(self, make_file, data):
         if data == 'filename':
-            filename = str(make_file)
+            filename = make_file
             toy = Toy(filename=filename)
             exp = filename
         else:
@@ -95,8 +95,9 @@ class TestMMAFails(object):
         assert exp in str(cm.value)
 
     @pytest.mark.parametrize('bad, exp',
-                             [('none', 'no inputs defined. filename and objectid are both None')])
+                             [('empty', 'no inputs defined. filename and objectid are both None'),
+                              ('none', 'input file not found')])
     def test_bad_parse_inputs(self, bad, exp):
         with pytest.raises(BrainError) as cm:
             make_badtoy(bad)
-        assert exp in str(cm.value)
+        assert exp in str(cm.value) or set(exp).issubset(set(str(cm.value)))

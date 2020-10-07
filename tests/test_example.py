@@ -32,12 +32,14 @@ class Cube(Brain):
     def _parse_input(self, value):
         plateifu_pattern = re.compile(r'([0-9]{4,5})-([0-9]{4,9})')
         plateifu_match = re.match(plateifu_pattern, value)
+        data = {'filename': None, 'objectid': None}
         if plateifu_match is not None:
-            self.objectid = value
+            data['objectid'] = value
             self.plateifu = plateifu_match.group(0)
             self.plate, self.ifu = plateifu_match.groups(0)
         else:
-            self.filename = value
+            data['filename'] = value
+        return data
 
     def _set_access_path_params(self):
         drpver = get_mapped_version(self.mapped_version, release=self.release, key='drpver')
