@@ -15,6 +15,7 @@ from __future__ import print_function, division, absolute_import
 import re
 import pathlib
 from itertools import groupby
+from sdss_brain import log
 
 
 def create_object_pattern(regex=None, keys=None, delimiter='-', exclude=None, include=None,
@@ -52,6 +53,9 @@ def create_object_pattern(regex=None, keys=None, delimiter='-', exclude=None, in
         pattern = r'(?P<objectid>^[^/$.](.+)?)'
         return pattern
 
+    # make a copy of the original key order
+    keys_copy = keys.copy()
+
     # exclude the named keys
     if exclude:
         keys = list(set(keys) - set(exclude))
@@ -60,6 +64,9 @@ def create_object_pattern(regex=None, keys=None, delimiter='-', exclude=None, in
     if include or order:
         good = order or include
         keys = list(set(good) & set(keys))
+
+    # resort the keys by the original key order
+    keys.sort(key=lambda i: keys_copy.index(i))
 
     # order the keys
     if order:
@@ -126,6 +133,7 @@ def parse_data_input(value, regex=None, keys=None, delimiter='-', exclude=None, 
 
     # if no match, assume value is a filename and return nothing
     if not pattern_match:
+        log.warning('No pattern match found.  Defaulting to input value as a filename.')
         return {'filename': value}
 
     # check for named group, then any groups, then a match without groups
