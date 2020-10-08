@@ -18,8 +18,8 @@ from itertools import groupby
 from sdss_brain import log
 
 
-def create_object_pattern(regex=None, keys=None, delimiter=None, exclude=None, include=None,
-                          order=None):
+def create_object_pattern(regex: str = None, keys: list = None, delimiter: str = '-',
+                          exclude: list = None, include: list = None, order: list = None) -> str:
     """ Create a regex pattern to parse data input by
 
     Parameters
@@ -83,8 +83,9 @@ def create_object_pattern(regex=None, keys=None, delimiter=None, exclude=None, i
     return pattern
 
 
-def parse_data_input(value, regex=None, keys=None, delimiter='-', exclude=None, include=None,
-                     order=None, inputs=False):
+def parse_data_input(value: str, regex: str = None, keys: list = None, delimiter: str = '-',
+                     exclude: list = None, include: list = None, order: list = None,
+                     inputs: bool = False) -> dict:
     ''' Parse data input for a filename or an object id
 
     Parameters
@@ -110,6 +111,31 @@ def parse_data_input(value, regex=None, keys=None, delimiter='-', exclude=None, 
     -------
         matches : dict
             A dict with keys "filename", "objectid", and any other matches
+
+    Example
+    -------
+        >>> # parse a filename
+        >>> parse_data_input('/path/to/a/file.txt')
+            {'filename': '/path/to/a/file.txt', 'objectid': None, 'parsed_groups': None}
+
+        >>> # parse an objectid as is
+        >>> parse_data_input('8485-1901')
+            {'filename': None, 'objectid': '8485-1901', 'parsed_groups': ['8485-1901', '485-1901']}
+
+        >>> # parse an objectid using a custom pattern
+        >>> parse_data_input('8485-1901', regex=r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
+            {'filename': None, 'objectid': '8485-1901', 'plate': '8485', 'ifu': '1901', 'parsed_groups': ['8485-1901', '8485', '1901']}
+
+        >>> # parse an objectid using access keywords
+        >>> keys=['drpver', 'plate', 'ifu', 'wave']
+        >>> parse_data_input('v1-8485-1901-LOG', keys=keys)
+            {'filename': None, 'objectid': 'v1-8485-1901-LOG', 'drpver': 'v1', 'plate': '8485',
+             'ifu': '1901', 'wave': 'LOG', 'parsed_groups': ['v1-8485-1901-LOG', 'v1', '8485', '1901', 'LOG']}
+
+        >>> # parse an objectid specifying the input order of the keys
+        >>> parse_data_input('8485-1901', keys=keys, order=['plate', 'ifu'])
+            {'filename': None, 'objectid': '8485-1901', 'plate': '8485', 'ifu': '1901', 'parsed_groups': ['8485-1901', '8485', '1901']}
+
     '''
 
     assert isinstance(value, (str, pathlib.Path)), 'input value must be a str or pathlib.Path'
@@ -152,7 +178,7 @@ def parse_data_input(value, regex=None, keys=None, delimiter='-', exclude=None, 
     return matches
 
 
-def raw_parse(value, regex=None):
+def raw_parse(value: str, regex: str = None) -> dict:
     ''' Match a string via a regex pattern with no frills
 
     Parameters

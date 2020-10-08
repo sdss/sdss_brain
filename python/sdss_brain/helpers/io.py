@@ -13,13 +13,14 @@
 
 from __future__ import print_function, division, absolute_import
 import pathlib
+from typing import Union
 from astropy.io import fits
 from sdss_brain import log
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError
 
 
-def get_mapped_version(name, release=None, key=None):
+def get_mapped_version(name: str, release: str = None, key: str = None) -> Union[dict, str]:
     ''' Get a version id mapped to a release number
 
     For a given named category, looks up the "mapped_versions" attribute from
@@ -39,18 +40,18 @@ def get_mapped_version(name, release=None, key=None):
 
     Returns
     -------
-        version : str
+        version : dict|str
             A version number corresponding to a given release
 
     Example
     -------
         >>> # access the MaNGA versions for release DR16
         >>> get_mapped_version('manga', release='DR16')
-        >>> {'drpver': 'v2_4_3', 'dapver': '2.2.1'}
-        >>>
+            {'drpver': 'v2_4_3', 'dapver': '2.2.1'}
+
         >>> # access specific key
         >>> get_mapped_version('manga', release='DR16', key='drpver')
-        >>> 'v2_4_3'
+            'v2_4_3'
     '''
 
     # get the mapped_versions attribute from the configuration
@@ -80,7 +81,7 @@ def get_mapped_version(name, release=None, key=None):
     return version
 
 
-def load_fits_file(filename):
+def load_fits_file(filename: str) -> fits.HDUList:
     ''' Load a FITS file
 
     Opens and loads a FITS file with astropy.io.fits.

@@ -145,7 +145,7 @@ def access_loader(kls=None, *, name=None, defaults={}, mapped_version=None):
     """ Class decorator to reduce boilerplate around setting of sdss_access parameters
 
     Decorator to generate a default `_set_access_path_params` method given a template
-    path name.  The default method creates an empty `path_params dictionary using the
+    path name.  The default method creates an empty `path_params` dictionary using the
     template keywords given a path name.  Default values for template kwargs can be specified
     using the "defaults" argument.
 
