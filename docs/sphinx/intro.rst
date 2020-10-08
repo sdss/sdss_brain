@@ -176,5 +176,5 @@ Conveniences for the MMA
 Regex Pattern Parser
 ^^^^^^^^^^^^^^^^^^^^
 
-Decorator
-^^^^^^^^^
+Decorators
+^^^^^^^^^^

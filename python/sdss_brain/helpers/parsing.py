@@ -18,7 +18,7 @@ from itertools import groupby
 from sdss_brain import log
 
 
-def create_object_pattern(regex=None, keys=None, delimiter='-', exclude=None, include=None,
+def create_object_pattern(regex=None, keys=None, delimiter=None, exclude=None, include=None,
                           order=None):
     """ Create a regex pattern to parse data input by
 
@@ -77,6 +77,7 @@ def create_object_pattern(regex=None, keys=None, delimiter='-', exclude=None, in
         patts.append(fr'(?P<{k}>(.+)?)')
 
     # join into a single pattern
+    delimiter = '-' if not delimiter else delimiter
     pattern = rf'(?P<objectid>(?![/$.])({delimiter.join(patts)}))'
 
     return pattern

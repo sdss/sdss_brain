@@ -28,15 +28,22 @@ def get_mapped_version(name, release=None, key=None):
     and dapver='2.2.1'. This can be useful when needing to specify certain versions
     when defining paths to files.
 
-    Parameters:
-        name (str):
+    Parameters
+    ----------
+        name : str
             The name of the set of versions to access
-        release (str):
+        release : str
             The SDSS release.  Default is config.release.
-        key (str):
+        key : str
             Optional name of dictionary key to access specific value
 
-    Example:
+    Returns
+    -------
+        version : str
+            A version number corresponding to a given release
+
+    Example
+    -------
         >>> # access the MaNGA versions for release DR16
         >>> get_mapped_version('manga', release='DR16')
         >>> {'drpver': 'v2_4_3', 'dapver': '2.2.1'}
@@ -78,12 +85,15 @@ def load_fits_file(filename):
 
     Opens and loads a FITS file with astropy.io.fits.
 
-    Parameters:
-        filename (str):
+    Parameters
+    ----------
+        filename : str
             A FITS filen to open
 
-    Returns:
-        an Astropy HDUList
+    Returns
+    -------
+        hdulist : `~astropy.io.fits.HDUList`
+            an Astropy HDUList
     '''
 
     path = pathlib.Path(filename)

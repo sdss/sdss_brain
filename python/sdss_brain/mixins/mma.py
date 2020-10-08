@@ -39,9 +39,13 @@ class MMAMixIn(abc.ABC):
     locally, and then remotely.  Depending on the mode and logic, the MMA will
     set data_origin to either `file`, `db`, or `api`.
 
-    This mixin contains two abstractmethods you must override when subclassing.
-        - **_set_access_path_params**: sets the arguments needed by `sdss_access`
+    Note that this class does not provide the logic for loading data from a db, over an API,
+    or from a file.  The user must provide that logic in a subclass.
+
+    This mixin contains three abstractmethods you must override when subclassing.
         - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
+        - **download**: a method for downloading a data file to a local disk
+        - **get_full_path**: a method for generating the absolute file path on disk to a file
 
     Parameters
     ----------
@@ -66,8 +70,6 @@ class MMAMixIn(abc.ABC):
     ----------
         release : str
             The current data release loaded
-        access : sdss_access.Access
-            An instance of `sdss_access` using for all path creation and file downloads
 
     '''
 
@@ -233,7 +235,7 @@ class MMAMixIn(abc.ABC):
 
     @property
     def is_access_mixedin(self):
-        ''' Checks if the sdss AccessMixIn is included '''
+        ''' Checks if the `~sdss_brain.mixins.access.AccessMixIn` is included '''
         return hasattr(self, 'path_name') and hasattr(self, 'access')
 
     def _update_access_params(self):
@@ -249,5 +251,49 @@ class MMAMixIn(abc.ABC):
 
 
 class MMAccess(AccessMixIn, MMAMixIn):
-    """ Class that mixes in the sdss_access functionality with the MMA """
+    """ Class that mixes in the sdss_access functionality with the MMA
+
+    This is a mixin class that adds multi-modal data access to any class
+    that subclasses from this one.  The MMA allows toggling between local
+    and remote data access modes, or leaving it on automatic.  Local mode
+    access tries to load data via a database, if one exists, otherwise it loads
+    data via a local filepath.  Remote mode will try to load data over an API.
+    When the mode is set to "auto", it automatically tries to first load things
+    locally, and then remotely.  Depending on the mode and logic, the MMA will
+    set data_origin to either `file`, `db`, or `api`.
+
+    Note that this class does not provide the logic for loading data from a db, over an API,
+    or from a file.  The user must provide that logic in a subclass.
+
+    This mixin contains two abstractmethods you must override when subclassing.
+        - **_set_access_path_params**: sets the arguments needed by `sdss_access`
+        - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
+
+    Parameters
+    ----------
+        data_input : str
+            The file or name of target data to load
+        filename : str
+            The absolute filepath to data to load
+        objectid : str
+            The object identifier of the data to load
+        mode : str
+            The operating mode: auto, local, or remote
+        release : str
+            The data release of the object, e.g. "DR16"
+        download : bool
+            If True, downloads the object locally with sdss_access
+        ignore_db : bool
+            If True, ignores any database connection for local access
+        use_db : sdssdb.DatabaseConnection
+            a database connection to override the default with
+
+    Attributes
+    ----------
+        release : str
+            The current data release loaded
+        access : sdss_access.Access
+            An instance of `sdss_access` using for all path creation and file downloads
+
+    """
     pass

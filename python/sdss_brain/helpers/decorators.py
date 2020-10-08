@@ -33,6 +33,8 @@ def register(func):
 
 
 def get_parse_input(regex=None, include=None, exclude=None, order=None, delimiter=None):
+    """ Generate a default parse_input method to be attached to a class """
+
     def _parse_input(self, value):
         ''' Default parse_input applied with the decorator '''
         keys = None
@@ -86,13 +88,35 @@ def create_mapped_properties(kls, mapped_version):
 def parser_loader(kls=None, *, pattern=None, include=None, exclude=None, order=None, delimiter=None):
     """ Class decorator to reduce boilerplate around definition of parse_input method
 
+    Decorator to generate a default `_parse_input` method to be attached to a class.
+    The created default method uses `~sdss_brain.helpers.parsing.parse_data_input` to
+    match the input string value against the provided regex pattern and returns a dictionary
+    containing the parsed "filename" or "objectid". If the pattern is a named-group regex pattern
+    the method extracts the names and adds them as attributes on the class.  If no pattern is
+    specified, the method checks for available sdss_access template keys and, if found, constructs
+    a regex matching pattern from them.  Otherwise, if no keys are found, it performs a greedy
+    match and sets the result as the objectid.  The return dictonary adds a `parsed_groups`
+    attribute to the instance containing the match group output from the regex match.  This allows
+    the user to access the extracted matches when the input pattern is simple, i.e. containing
+    no named groups or grouping regex structure.
+
     Parameters
     ----------
-
+    pattern : str
+        The regex pattern to match with
+    include : list
+        A list of access keywords to include in the objectid pattern creation
+    exclude: list
+        A list of access keywords to exclude in the objectid pattern creation
+    order : list
+        A list of access keywords to order the objectid pattern by
+    delimiter : str
+        The delimiter to use when joining keys for the objectid pattern creation
 
     Returns
     -------
-        The decorated class
+        kls: class
+            The decorated class
     """
     def wrap(kls):
         # setup and attach the default parse_input function
@@ -120,15 +144,33 @@ def _set_access_path_params(self):
 def access_loader(kls=None, *, name=None, defaults={}, mapped_version=None):
     """ Class decorator to reduce boilerplate around setting of sdss_access parameters
 
+    Decorator to generate a default `_set_access_path_params` method given a template
+    path name.  The default method creates an empty `path_params dictionary using the
+    template keywords given a path name.  Default values for template kwargs can be specified
+    using the "defaults" argument.
+
+    ``mapped_version`` is a mapping key, "[mapping]:[property,]",
+    where [mapping] is the name of the key in the "mapped_version" attribute in the brain
+    configuration yaml file, and [property,] is a list of version ids to become properties.  See
+    `~sdss_brain.helpers.get_mapped_version` for more details.
+
+    For example a key of "manga:drpver" creates a new read-only property called "drpver" and uses
+    `get_mapped_version` to extract the correct version number for a given release from the
+    "mapped_version['manga']" key in ~sdss_brain.yaml.
+
     Parameters
     ----------
         name : str
+            The sdss_access template path name
         defaults : dict
+            Default values for the sdss_access template keyword arguments
         mapped_version : str
+            A mapping key to map a specific version onto a release, e.g. "manga:drpver"
 
     Returns
     -------
-        The decorated class
+        kls: class
+            The decorated class
     """
     def wrap(kls):
         # add the path_name class attribute and add defaults for path_params

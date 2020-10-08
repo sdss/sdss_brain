@@ -36,8 +36,8 @@ class Base(abc.ABC):
 class Brain(Base, MMAccess):
     ''' Convenience class for utilizing the MMA mixin
 
-    This is a convenience class with the ``MMAMixIn`` already implemented.
-    This class initializes the ``MMAMixIn`` and provides logic to load data based
+    This is a convenience class with the `~sdss_brain.mixins.mma.MMAccess` already implemented.
+    This class initializes the ``MMAccess`` and provides logic to load data based
     on the data_origin.  It also provides a simple ``repr``.
 
     This class contains three abstractmethods you must override when subclassing.

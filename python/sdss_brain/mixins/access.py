@@ -91,7 +91,36 @@ def check_access_params(func):
 
 
 class AccessMixIn(abc.ABC):
-    path_name = None
+    ''' Mixin for implementing multi-modal data access
+
+    This is a class that adds support for dynamic path operations using
+    `sdss_access`.  Given a template path name and a defined set of
+    template keyword argument, provides convenience methods for constructing
+    the full local or url-based pathname, downloading the file with `sdss_access`.
+    Also provides the complete `~sdss_access.sync.access.Access` object as a property
+    for full range of functionality.  The ``access`` property automatically reconfigures
+    itself according to the specified data release on each call.
+
+    This mixin contains one abstractmethod you must override when subclassing.
+        - **_set_access_path_params**: sets the arguments needed by `sdss_access`
+
+    Parameters
+    ----------
+        release : str
+            The data release of the object, e.g. "DR16"
+
+    Attributes
+    ----------
+        path_name : str
+            The `sdss_access` template path name
+        path_params : dict
+            The set of `sdss_access` template path keyword arguments
+        access : ~sdss_access.sync.access.Access
+            An instance of `sdss_access` using for all path creation and file downloads
+
+    '''
+
+    path_name: str = None
 
     def __init__(self, *args, **kwargs):
         self._release = kwargs.get('release', None) or config.release
@@ -107,21 +136,21 @@ class AccessMixIn(abc.ABC):
     @property
     @set_access
     def access(self):
-        ''' Returns an instance of `sdss_access.Access` '''
+        ''' Returns an instance of `~sdss_access.sync.access.Access` '''
         return self._access
 
     @abc.abstractmethod
     def _set_access_path_params(self):
         ''' Return the sdss_access path parameters
 
-        This method must be overridden by each subclass and must set at least two
-        parameters, "path_name", and "path_params", which specify parameters to be passed
-        to sdss_access.
+        This method must be overridden by each subclass and must set at least one
+        parameter, "path_params", which specify parameters to be passed
+        to sdss_access.  "path_name" must also be specified as a class attribute.
 
         Attributes
         ----------
             path_name : str
-                Required. The sdss_access template path key name.
+                Required. The sdss_access template path key name.  Must be set on the class.
             path_params : dict
                 Required. The keywords needed to fill out the sdss_access template path
         '''
@@ -134,10 +163,14 @@ class AccessMixIn(abc.ABC):
         ----------
             url : bool
                 If True, specifies the url location rather than the local file location
+            force_file : bool
+                If True, explicitly returns any set filename attribute instead of constructing
+                a path from keyword arguments.
 
         Returns
         -------
-            The full path as built by sdss_access
+            fullpath : str
+                The full path as built by sdss_access
         """
 
         if force_file:
