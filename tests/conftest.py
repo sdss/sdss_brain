@@ -9,7 +9,8 @@ import six
 import inspect
 from sdss_brain import tree
 from sdss_brain.config import config
-import sdss_brain.mma as mma
+import sdss_brain.mixins.mma as mma
+import sdss_brain.mixins.access as access
 
 
 def pytest_addoption(parser):
@@ -25,10 +26,10 @@ def check_class(item):
         # check if item is a fxn and return is correct class
         assert item.__name__.startswith('from_')
         dataobj = item()
-        assert issubclass(dataobj.__class__, mma.MMAMixIn)
+        assert issubclass(dataobj.__class__, (mma.MMAMixIn, mma.MMAccess))
     else:
         # check if item is correct class
-        assert issubclass(item.__class__, mma.MMAMixIn)
+        assert issubclass(item.__class__, (mma.MMAMixIn, mma.MMAccess))
         dataobj = item
     return dataobj
 
@@ -124,12 +125,12 @@ def mock_sas(tmp_path, monkeypatch):
     os.environ = orig_env
 
 
-class MockMMA(mma.MMAMixIn):
+class MockMMA(mma.MMAccess):
     ''' mock MMA mixin to allow additions of fake sdss_access template paths '''
     mock_template = None
 
     @property
-    @mma.set_access
+    @access.set_access
     def access(self):
         self._access.templates['toy'] = self.mock_template
         return self._access
@@ -146,10 +147,10 @@ class Toy(MockMMA):
     ''' toy object to utilize in tests '''
     path_name = 'toy'
 
-    def __init__(self, data_input=None, filename=None, objectid=None, mode=None,
-                 release=None):
-        MockMMA.__init__(self, data_input=data_input, filename=filename,
-                         objectid=objectid, mode=mode, release=release)
+    # def __init__(self, data_input=None, filename=None, objectid=None, mode=None,
+    #              release=None):
+    #     MockMMA.__init__(self, data_input=data_input, filename=filename,
+    #                      objectid=objectid, mode=mode, release=release)
 
     def _parse_input(self, value):
         data = {'filename': None, 'objectid': None}

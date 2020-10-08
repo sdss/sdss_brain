@@ -18,15 +18,25 @@ Config
 
 .. _api_mma:
 
-Multi-Modal Access (MMA)
-------------------------
+Core
+----
 
-.. automodule:: sdss_brain.mma
+.. automodule:: sdss_brain.core
    :members:
    :undoc-members:
    :show-inheritance:
 
-.. automodule:: sdss_brain.core
+.. _mixins:
+
+Mixins
+------
+
+.. automodule:: sdss_brain.mixins.mma
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: sdss_brain.mixins.access
    :members:
    :undoc-members:
    :show-inheritance:
@@ -36,7 +46,17 @@ Multi-Modal Access (MMA)
 Helpers
 -------
 
-.. automodule:: sdss_brain.helpers
+.. automodule:: sdss_brain.helpers.io
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: sdss_brain.helpers.parsing
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: sdss_brain.helpers.decorators
    :members:
    :undoc-members:
    :show-inheritance:

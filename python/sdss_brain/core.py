@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
+#
 # Filename: core.py
 # Project: sdss_brain
 # Author: Brian Cherinka
@@ -13,13 +13,13 @@
 
 from __future__ import print_function, division, absolute_import
 import abc
-from sdss_brain.mma import MMAMixIn
+from sdss_brain.mixins.mma import MMAccess
 from astropy.io import fits
 
 
 class Base(abc.ABC):
     ''' abstract base class for tools '''
-    
+
     @abc.abstractmethod
     def _load_object_from_file(self, data=None):
         pass
@@ -33,13 +33,13 @@ class Base(abc.ABC):
         pass
 
 
-class Brain(Base, MMAMixIn):
+class Brain(Base, MMAccess):
     ''' Convenience class for utilizing the MMA mixin
 
     This is a convenience class with the ``MMAMixIn`` already implemented.
     This class initializes the ``MMAMixIn`` and provides logic to load data based
     on the data_origin.  It also provides a simple ``repr``.
-    
+
     This class contains three abstractmethods you must override when subclassing.
         - **_load_object_from_file**: defines data load/handling from a local file
         - **_load_object_from_db**: defines data load/handling from a local database
@@ -81,7 +81,7 @@ class Brain(Base, MMAMixIn):
 
         self.data = data
 
-        MMAMixIn.__init__(self, data_input=data_input, filename=filename,
+        MMAccess.__init__(self, data_input=data_input, filename=filename,
                           objectid=objectid, mode=mode,
                           release=release, download=download,
                           ignore_db=ignore_db, use_db=use_db or self._db)
