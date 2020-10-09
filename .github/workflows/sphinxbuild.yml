@@ -6,7 +6,7 @@ name: Build Sphinx Documentation
 # events but only for the master branch
 on:
   push:
-    branches: [ master, versions ]
+    branches: [ master, access_fix ]
   pull_request:
     branches: [ master ]
 
