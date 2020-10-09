@@ -4,7 +4,7 @@
 Change Log
 ==========
 
-* :release:`0.1.1 <unknown>`
+* :release:`0.1.1 <2020-10-09>`
 * :feature:`-` added decorators, `access_loader`, `parser_loader, `sdss_loader` to reduce boilerplate for overriding abstract methods
 * :feature:`-` added new ``BrainNoAccess`` class to support non sdss_access paths
 * :feature:`-` added new ``MMAccess`` mixin combining ``AccessMixIn`` and ``MMAMixIn``
