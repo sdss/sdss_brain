@@ -2,86 +2,29 @@
 # -*- coding: utf-8 -*-
 #
 # Filename: mma.py
-# Project: python
+# Project: mixins
 # Author: Brian Cherinka
-# Created: Friday, 14th February 2020 2:23:01 pm
+# Created: Thursday, 8th October 2020 11:23:28 am
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Wednesday, 18th March 2020 4:40:58 pm
+# Last Modified: Thursday, 8th October 2020 11:23:28 am
 # Modified By: Brian Cherinka
 
 
 from __future__ import print_function, division, absolute_import
+
 import abc
-import os
-import time
-import warnings
-
 import six
-from functools import wraps
+import pathlib
+import os
+
 from sdss_brain import log
+from sdss_brain.mixins.access import AccessMixIn
 from sdss_brain.config import config
-from sdss_brain.exceptions import BrainError, BrainMissingDependency, BrainUserWarning
-
-try:
-    from sdss_access import Access
-except ImportError:
-    Access = None
-
-__all__ = ['MMAMixIn']
+from sdss_brain.exceptions import BrainError
 
 
-def create_new_access(release):
-    ''' create a new sdss_access instance
-
-    Parameters:
-        release (str):
-            The sdss data release
-    '''
-    # check for public release
-    is_public = 'DR' in release
-    rsync_release = release.lower() if is_public else None
-
-    if not Access:
-        raise BrainMissingDependency('sdss_access is not installed')
-
-    return Access(public=is_public, release=rsync_release)
-
-
-def set_access(func):
-    ''' Decorator that sets the _access attribute
-
-    Creates a new sdss_access instance if either the _access
-    attribute is None or the object release differs from the access
-    release.  Ensures that a new sdss_access.Access is instantiated
-    when we change releases, e.g. between public DRs or work releases.
-
-    '''
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        inst = args[0]
-        isset = inst._access is not None
-        diffrelease = inst.release.lower() != inst._access.release if isset else None
-        if not isset or diffrelease:
-            inst._access = create_new_access(inst.release)
-        return func(*args, **kwargs)
-    return wrapper
-
-
-def check_access_params(func):
-    '''Decorator that checks for correct output from set_access_path_params '''
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        inst = args[0]
-        inst._set_access_path_params()
-        assert hasattr(inst, 'path_name'), 'set_access_path_params must set a "path_name" attribute'
-        assert hasattr(inst, 'path_params'), 'set_access_path_params must set a "path_params" attribute'
-        assert getattr(inst, 'path_name'), 'the path_name attribute cannot be None'
-        assert getattr(inst, 'path_params'), 'the path_params attribute cannot be None'
-        assert type(inst.path_params) == dict, 'the path_params attribute must be a dictionary'
-        return func(*args, **kwargs)
-    return wrapper
+__all__ = ['MMAMixIn', 'MMAccess']
 
 
 class MMAMixIn(abc.ABC):
@@ -96,35 +39,41 @@ class MMAMixIn(abc.ABC):
     locally, and then remotely.  Depending on the mode and logic, the MMA will
     set data_origin to either `file`, `db`, or `api`.
 
-    This mixin contains two abstractmethods you must override when subclassing.
-        - **_set_access_path_params**: sets the arguments needed by `sdss_access`
-        - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
+    Note that this class does not provide the logic for loading data from a db, over an API,
+    or from a file.  The user must provide that logic in a subclass.
 
-    Parameters:
-        data_input (str):
+    This mixin contains three abstractmethods you must override when subclassing.
+
+    - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
+    - **download**: a method for downloading a data file to a local disk
+    - **get_full_path**: a method for generating the absolute file path on disk to a file
+
+    Parameters
+    ----------
+        data_input : str
             The file or name of target data to load
-        filename (str):
+        filename : str
             The absolute filepath to data to load
-        objectid (str):
+        objectid : str
             The object identifier of the data to load
-        mode (str):
+        mode : str
             The operating mode: auto, local, or remote
-        release (str):
+        release : str
             The data release of the object, e.g. "DR16"
-        download (bool):
+        download : bool
             If True, downloads the object locally with sdss_access
-        ignore_db (bool):
+        ignore_db : bool
             If True, ignores any database connection for local access
-        use_db (sdssdb.DatabaseConnection):
+        use_db : `~sdssdb.connection.DatabaseConnection`
             a database connection to override the default with
 
-    Attributes:
-        release (str):
+    Attributes
+    ----------
+        release : str
             The current data release loaded
-        access (sdss_access.Access):
-            An instance of `sdss_access` using for all path creation and file downloads
 
     '''
+
     def __init__(self, data_input=None, filename=None, objectid=None, mode=None,
                  release=None, download=None, ignore_db=False, use_db=None):
         # data attributes
@@ -144,12 +93,6 @@ class MMAMixIn(abc.ABC):
 
         assert self.mode in ['auto', 'local', 'remote']
         assert self.filename is not None or self.objectid is not None, 'no inputs set.'
-
-        # sdss_access attributes
-        self._access = None
-        self.path_name = None
-        self.path_params = None
-        # self._set_access_path_params()
 
         # perform the multi-modal data access
         if self.mode == 'local':
@@ -182,19 +125,13 @@ class MMAMixIn(abc.ABC):
         """Fails when trying to set the release after instantiation."""
         raise BrainError('the release cannot be changed once the object has been instantiated.')
 
-    @property
-    @set_access
-    def access(self):
-        ''' Returns an instance of `sdss_access.Access` '''
-        return self._access
-
     def _do_local(self):
         """ Check if it's possible to load the data locally."""
 
         if self.filename:
 
             # check if the file exists locally
-            if os.path.exists(self.filename):
+            if self.filename.exists():
                 self.mode = 'local'
                 self.data_origin = 'file'
             else:
@@ -207,7 +144,8 @@ class MMAMixIn(abc.ABC):
                 self.mode = 'local'
                 self.data_origin = 'db'
             else:
-                # retrieve the full local access path
+
+                # retrieve the full local sdss_access path
                 fullpath = self.get_full_path()
 
                 if fullpath and os.path.exists(fullpath):
@@ -239,14 +177,29 @@ class MMAMixIn(abc.ABC):
             assert self.filename is None and self.objectid is None, \
                 'if input is set, filename and objectid cannot be set.'
 
-            assert isinstance(data_input, six.string_types), 'input must be a string.'
+            assert isinstance(data_input, (six.string_types, pathlib.Path)), \
+                'input must be a string or pathlib.Path'
 
-            # parse the input data
-            self._parse_input(data_input)
+            # parse the input data into either a filename or objectid
+            parsed_input = self._parse_input(data_input)
+            if not parsed_input:
+                self.filename = data_input
+            else:
+                assert isinstance(
+                    parsed_input, dict), 'return value of _parse_input must be a dict'
+                self.filename = parsed_input.get('filename', None)
+                self.objectid = parsed_input.get('objectid', None)
 
         # ensure either filename or objectid is specified
         if self.filename is None and self.objectid is None:
             raise BrainError('no inputs defined. filename and objectid are both None')
+
+        # convert filename to a pathlib.Path and resolve a relative name
+        if self.filename:
+            self.filename = pathlib.Path(self.filename).resolve()
+
+        # attempt to update the access path parameters from the filename or parsed data input
+        self._update_access_params()
 
         # check for any misaligments and misassignments
         if self.filename:
@@ -255,7 +208,7 @@ class MMAMixIn(abc.ABC):
             if self.mode == 'remote':
                 raise BrainError('filename not allowed in remote mode.')
 
-            assert os.path.exists(self.filename), \
+            assert self.filename.exists, \
                 'filename {} does not exist.'.format(str(self.filename))
 
         elif self.objectid:
@@ -267,56 +220,83 @@ class MMAMixIn(abc.ABC):
 
         This method must be overridden by each subclass and contains the logic
         to determine the kind of input passed into it, i.e. either a filename or an
-        object identification string.
+        object identification string.  This method accepts a single argument which is the
+        string `data_input` and must return a dictionary containing at least keys
+        for "filename" and "objectid".
         '''
-
-    @check_access_params
-    def get_full_path(self, url=None):
-        """ Returns the full path of the file in the tree.
-
-        Parameters:
-            url (bool):
-                If True, specifies the url location rather than the local file location
-
-        Returns:
-            The full path as built by sdss_access
-        """
-
-        try:
-            if url:
-                fullpath = self.access.url(self.path_name, **self.path_params)
-            else:
-                fullpath = self.access.full(self.path_name, **self.path_params)
-        except Exception as ee:
-            warnings.warn('sdss_access was not able to retrieve the full path of the file. '
-                          'Error message is: {0}'.format(str(ee)), BrainUserWarning)
-            fullpath = None
-        return fullpath
 
     @abc.abstractmethod
-    def _set_access_path_params(self):
-        ''' Return the sdss_access path parameters
-
-        This method must be overridden by each subclass and must set at least two
-        parameters, "path_name", and "path_params", which specify parameters to be passed
-        to sdss_access.
-
-        Attribute Parameters:
-            - path_name (str): Required. The sdss_access template path key name.
-            - path_params (dict): Required. The keywords needed to fill out the sdss_access template path
-        '''
-
-    @check_access_params
     def download(self):
-        """ Download the file using sdss_access """
+        ''' Abstract method to download a file '''
+        pass
 
-        self.access.remote()
-        self.access.add(self.path_name, **self.path_params)
-        self.access.set_stream()
-        self.access.commit()
-        paths = self.access.get_paths()
-        # adding a millisecond pause for download to finish and file existence to register
-        time.sleep(0.001)
+    @abc.abstractmethod
+    def get_full_path(self):
+        ''' Abstract method to return a full local file path '''
+        pass
 
-        self.filename = paths[0]  # doing this for single files, may need to change
+    @property
+    def is_access_mixedin(self):
+        ''' Checks if the `~sdss_brain.mixins.access.AccessMixIn` is included '''
+        return hasattr(self, 'path_name') and hasattr(self, 'access')
 
+    def _update_access_params(self):
+        ''' Updates the path_params attribute with extracted parameters '''
+        if self.is_access_mixedin and self.path_name:
+            if self.filename:
+                params = self.access.extract(self.path_name, self.filename)
+                if params:
+                    self._setup_access(params)
+            elif self.objectid:
+                self._set_access_path_params()
+                self._setup_access(self.path_params)
+
+
+class MMAccess(AccessMixIn, MMAMixIn):
+    """ Class that mixes in the sdss_access functionality with the MMA
+
+    This is a mixin class that adds multi-modal data access to any class
+    that subclasses from this one.  The MMA allows toggling between local
+    and remote data access modes, or leaving it on automatic.  Local mode
+    access tries to load data via a database, if one exists, otherwise it loads
+    data via a local filepath.  Remote mode will try to load data over an API.
+    When the mode is set to "auto", it automatically tries to first load things
+    locally, and then remotely.  Depending on the mode and logic, the MMA will
+    set data_origin to either `file`, `db`, or `api`.
+
+    Note that this class does not provide the logic for loading data from a db, over an API,
+    or from a file.  The user must provide that logic in a subclass.
+
+    This mixin contains two abstractmethods you must override when subclassing.
+
+    - **_set_access_path_params**: sets the arguments needed by `sdss_access`
+    - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
+
+    Parameters
+    ----------
+        data_input : str
+            The file or name of target data to load
+        filename : str
+            The absolute filepath to data to load
+        objectid : str
+            The object identifier of the data to load
+        mode : str
+            The operating mode: auto, local, or remote
+        release : str
+            The data release of the object, e.g. "DR16"
+        download : bool
+            If True, downloads the object locally with sdss_access
+        ignore_db : bool
+            If True, ignores any database connection for local access
+        use_db : `~sdssdb.connection.DatabaseConnection`
+            a database connection to override the default with
+
+    Attributes
+    ----------
+        release : str
+            The current data release loaded
+        access : `~sdss_access.sync.Access`
+            An instance of ``sdss_access`` using for all path creation and file downloads
+
+    """
+    pass

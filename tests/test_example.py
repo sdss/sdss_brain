@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
+#
 # Filename: test_example.py
 # Project: tests
 # Author: Brian Cherinka
@@ -27,21 +27,23 @@ from sdss_brain.helpers import get_mapped_version, load_fits_file
 class Cube(Brain):
     _db = database
     mapped_version = 'manga'
+    path_name = 'mangacube'
 
     def _parse_input(self, value):
         plateifu_pattern = re.compile(r'([0-9]{4,5})-([0-9]{4,9})')
         plateifu_match = re.match(plateifu_pattern, value)
+        data = {'filename': None, 'objectid': None}
         if plateifu_match is not None:
-            self.objectid = value
+            data['objectid'] = value
             self.plateifu = plateifu_match.group(0)
             self.plate, self.ifu = plateifu_match.groups(0)
         else:
-            self.filename = value
+            data['filename'] = value
+        return data
 
     def _set_access_path_params(self):
-        self.path_name = 'mangacube'
         drpver = get_mapped_version(self.mapped_version, release=self.release, key='drpver')
-        self.path_params = {'plate': self.plate, 'ifu': self.ifu, 'drpver': drpver}
+        self.path_params = {'plate': self.plate, 'ifu': self.ifu, 'drpver': drpver, 'wave': 'LOG'}
 
     def _load_object_from_file(self, data=None):
         self.data = load_fits_file(self.filename)
@@ -55,7 +57,7 @@ class Cube(Brain):
 
 def from_cube():
     ''' function to generate a new cube
-    
+
     This function form, "from_xxxx", is needed to pass
     objects to the datasource marker.
     '''
@@ -80,6 +82,7 @@ def fxncube():
 
 
 class TestCube(object):
+    release = 'DR15'
 
     @pytest.mark.parametrize('mode, db, origin',
                              [pytest.param('local', False, 'db',
@@ -89,7 +92,7 @@ class TestCube(object):
                               ('remote', False, 'api')])
     def test_cube_mma(self, mode, db, origin):
         ''' test the various mma modes for cube '''
-        cube = Cube('8485-1901', mode=mode, ignore_db=db)
+        cube = Cube('8485-1901', mode=mode, ignore_db=db, release=self.release)
         assert cube.data_origin == origin
         assert cube.mode == mode
 
@@ -114,7 +117,7 @@ class TestCube(object):
     @pytest.mark.remote_data
     def test_download_file(self, mock_sas, fxncube):
         ''' test for downloading a remote file
-    
+
         sets a temporary SDSS sas (sas_base_dir) and downloads into a clean
         directory
         '''

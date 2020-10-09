@@ -9,6 +9,7 @@ mapped_versions:
     DR15: {drpver: v2_4_3, dapver: 2.2.1}
     DR14: {drpver: v2_1_2, dapver: null}
     DR13: {drpver: v1_5_4, dapver: null}
+    MPL10: {drpver: v3_0_1, dapver: 3.0.1}
     MPL9: {drpver: v2_7_1, dapver: 2.4.1}
     MPL8: {drpver: v2_5_3, dapver: 2.3.0}
     MPL7: {drpver: v2_4_3, dapver: 2.2.1}
@@ -32,3 +33,4 @@ mapped_versions:
     DR12: r5
     DR11: r4
     DR10: r3
+    MPL4: {drpver: v1_5_1, dapver: 1.1.1}

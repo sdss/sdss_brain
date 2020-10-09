@@ -1,30 +1,26 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Filename: helpers.py
-# Project: sdss_brain
+# Filename: io.py
+# Project: helpers
 # Author: Brian Cherinka
-# Created: Monday, 16th March 2020 1:00:14 pm
+# Created: Wednesday, 7th October 2020 10:54:12 am
 # License: BSD 3-clause "New" or "Revised" License
 # Copyright (c) 2020 Brian Cherinka
-# Last Modified: Monday, 16th March 2020 5:29:39 pm
+# Last Modified: Wednesday, 7th October 2020 10:54:12 am
 # Modified By: Brian Cherinka
 
 
-from __future__ import absolute_import, division, print_function
-
+from __future__ import print_function, division, absolute_import
 import pathlib
-import re
-import six
-import requests
-from io import BytesIO
+from typing import Union
 from astropy.io import fits
 from sdss_brain import log
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError
 
 
-def get_mapped_version(name: str, release: str = None, key: str = None) -> str:
+def get_mapped_version(name: str, release: str = None, key: str = None) -> Union[dict, str]:
     ''' Get a version id mapped to a release number
 
     For a given named category, looks up the "mapped_versions" attribute from
@@ -33,22 +29,29 @@ def get_mapped_version(name: str, release: str = None, key: str = None) -> str:
     and dapver='2.2.1'. This can be useful when needing to specify certain versions
     when defining paths to files.
 
-    Parameters:
-        name (str):
+    Parameters
+    ----------
+        name : str
             The name of the set of versions to access
-        release (str):
+        release : str
             The SDSS release.  Default is config.release.
-        key (str):
+        key : str
             Optional name of dictionary key to access specific value
 
-    Example:
+    Returns
+    -------
+        version : dict|str
+            A version number corresponding to a given release
+
+    Example
+    -------
         >>> # access the MaNGA versions for release DR16
         >>> get_mapped_version('manga', release='DR16')
-        >>> {'drpver': 'v2_4_3', 'dapver': '2.2.1'}
-        >>>
+            {'drpver': 'v2_4_3', 'dapver': '2.2.1'}
+
         >>> # access specific key
         >>> get_mapped_version('manga', release='DR16', key='drpver')
-        >>> 'v2_4_3'
+            'v2_4_3'
     '''
 
     # get the mapped_versions attribute from the configuration
@@ -83,12 +86,15 @@ def load_fits_file(filename: str) -> fits.HDUList:
 
     Opens and loads a FITS file with astropy.io.fits.
 
-    Parameters:
-        filename (str):
+    Parameters
+    ----------
+        filename : str
             A FITS filen to open
 
-    Returns:
-        an Astropy HDUList
+    Returns
+    -------
+        hdulist : `~astropy.io.fits.HDUList`
+            an Astropy HDUList
     '''
 
     path = pathlib.Path(filename)
@@ -103,70 +109,3 @@ def load_fits_file(filename: str) -> fits.HDUList:
         raise BrainError(f'Failed to open FITS files {filename}: {err}')
     else:
         return hdulist
-
-
-def load_from_url(url: str) -> fits.HDUList:
-    ''' load a file from a remote url using a get requests
-
-    Performs a request.get to a given url and streams response contents
-    into an Astropy hdu.
-
-    Parameters:
-        url (str):
-            A url path to a filename
-
-    Returns:
-        an Astropy HDUList
-    '''
-    r = requests.get(url)
-    if not r.ok:
-        msg = f'Could not retrive file: {url}'
-        log.error(msg)
-        raise BrainError(msg)
-
-    return fits.open(BytesIO(r.content))
-
-
-def parse_by_regex_pattern(pattern: str, value: str, obj: object = None):
-    ''' parse an input value by a regex pattern
-
-    Matches a given string value against a regex pattern.
-
-    Parameters:
-        pattern (str):
-            A regex pattern to match with
-        value (str):
-            The string value to match on
-        obj (instance):
-            Optional object to assign matched attributes to
-
-    Returns:
-
-
-    '''
-    assert isinstance(pattern, six.string_types), 'pattern must be a string'
-    comp_pattern = re.compile(pattern)
-    pattern_match = re.match(comp_pattern, value)
-
-    # if no object given:
-    if not obj:
-        if not pattern_match:
-            return value
-        else:
-            # return the named group first or the groups second
-            return pattern_match.groupdict() or pattern_match.groups()
-
-    if not pattern_match:
-        obj.filename = value
-        return value
-    else:
-        # check for a named match
-        match_dict = pattern_match.groupdict()
-        if match_dict:
-            for name, val in match_dict.items():
-                setattr(obj, name, val)
-            return match_dict
-        else:
-            log.warning('Pattern match is not a named group. Cannot set object attributes. '
-                        'Returning only values')
-            return pattern_match.groups()

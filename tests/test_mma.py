@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
+#
 # Filename: test_mma.py
 # Project: tests
 # Author: Brian Cherinka
@@ -15,21 +15,30 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 from sdss_brain.exceptions import BrainError
-from .conftest import Toy, make_badtoy
+from .conftest import Toy, make_badtoy, ToyNoAccess
 
 
 class TestMMA(object):
     objectid = 'A'
 
+    def assert_paths(self, toy):
+        assert toy.path_name == 'toy'
+        assert toy.path_params is not None
+        assert 'object' in toy.path_params
+        assert toy.path_params['object'] == 'A'
+        assert hasattr(toy, 'object')
+        assert toy.object == 'A'
+
     @pytest.mark.parametrize('data', [('filename'), ('objectid')])
     def test_local_input(self, make_file, data):
         if data == 'filename':
-            exp = str(make_file)
+            exp = make_file
         else:
             exp = self.objectid
         toy = Toy(exp)
         assert toy.mode == 'local'
         assert getattr(toy, data) == exp
+        self.assert_paths(toy)
 
     def test_remote(self):
         toy = Toy(self.objectid)
@@ -40,7 +49,7 @@ class TestMMA(object):
     @pytest.mark.parametrize('data', [('filename'), ('objectid')])
     def test_explicit_input(self, make_file, data):
         if data == 'filename':
-            filename = str(make_file)
+            filename = make_file
             toy = Toy(filename=filename)
             exp = filename
         else:
@@ -49,6 +58,7 @@ class TestMMA(object):
         assert toy.mode == 'local'
         assert getattr(toy, data) == exp
         assert toy.data_origin == 'file'
+        self.assert_paths(toy)
 
     def test_get_full_path(self, make_file):
         toy = Toy(self.objectid)
@@ -75,8 +85,9 @@ class TestMMAFails(object):
         assert 'filename not allowed in remote mode' in str(cm.value)
 
     @pytest.mark.parametrize('bad, exp',
-                             [('noname', 'path_name attribute cannot be None'),
-                              ('noparam', 'path_params attribute cannot be None'),
+                             [('noname', 'must have a "path_name" class attribute'),
+                              ('nonename', 'path_name attribute cannot be None'),
+                              ('badpath', 'must be defined in the path templates'),
                               ('notdict', 'path_params attribute must be a dictionary')])
     def test_bad_access_params(self, bad, exp):
         with pytest.raises(AssertionError) as cm:
@@ -84,8 +95,16 @@ class TestMMAFails(object):
         assert exp in str(cm.value)
 
     @pytest.mark.parametrize('bad, exp',
-                             [('none', 'no inputs defined. filename and objectid are both None')])
+                             [('empty', 'no inputs defined. filename and objectid are both None'),
+                              ('none', 'input file not found')])
     def test_bad_parse_inputs(self, bad, exp):
         with pytest.raises(BrainError) as cm:
             make_badtoy(bad)
-        assert exp in str(cm.value)
+        assert exp in str(cm.value) or set(exp).issubset(set(str(cm.value)))
+
+
+class TestMMAMixin(object):
+
+    def test_noaccess(self):
+        toy = ToyNoAccess('A')
+        assert not toy.is_access_mixedin
