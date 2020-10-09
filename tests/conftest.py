@@ -7,18 +7,16 @@ import pytest
 import os
 import six
 import inspect
-import yaml
-import pathlib
-from sdss_access import Access
 from sdss_brain import tree
 from sdss_brain.config import config
-import sdss_brain.mma as mma
+import sdss_brain.mixins.mma as mma
+import sdss_brain.mixins.access as access
 
 
 def pytest_addoption(parser):
     """ Add new options to the pytest command-line """
     # ignore datasources
-    parser.addoption('--ignore-datasources', action='store_true', default=False, 
+    parser.addoption('--ignore-datasources', action='store_true', default=False,
                      help='Ignore the datasource marker applied to tests')
 
 
@@ -28,10 +26,10 @@ def check_class(item):
         # check if item is a fxn and return is correct class
         assert item.__name__.startswith('from_')
         dataobj = item()
-        assert issubclass(dataobj.__class__, mma.MMAMixIn)
+        assert issubclass(dataobj.__class__, (mma.MMAMixIn, mma.MMAccess))
     else:
         # check if item is correct class
-        assert issubclass(item.__class__, mma.MMAMixIn)
+        assert issubclass(item.__class__, (mma.MMAMixIn, mma.MMAccess))
         dataobj = item
     return dataobj
 
@@ -52,7 +50,7 @@ def check_path(item):
 
 def check_db(item):
     ''' checks if db exists locally
-    
+
     Paramter:
         item (fxn|object):
             A function o
@@ -64,7 +62,7 @@ def check_db(item):
 
 def pytest_runtest_setup(item):
     ''' pytest runner post setup
-    
+
     Currently only runs code for marker.datasource
 
     '''
@@ -127,12 +125,12 @@ def mock_sas(tmp_path, monkeypatch):
     os.environ = orig_env
 
 
-class MockMMA(mma.MMAMixIn):
+class MockMMA(mma.MMAccess):
     ''' mock MMA mixin to allow additions of fake sdss_access template paths '''
     mock_template = None
 
     @property
-    @mma.set_access
+    @access.set_access
     def access(self):
         self._access.templates['toy'] = self.mock_template
         return self._access
@@ -145,31 +143,31 @@ def mock_mma(tmp_path):
     MockMMA.mock_template = str(path / 'toy_object_{object}.txt')
 
 
-class Toy(MockMMA):
-    ''' toy object to utilize in tests '''
-    def __init__(self, data_input=None, filename=None, objectid=None, mode=None, 
-                 release=None):
-        MockMMA.__init__(self, data_input=data_input, filename=filename,
-                         objectid=objectid, mode=mode, release=release)
+class ToyNoAccess(mma.MMAMixIn):
+    def download(self):
+        pass
 
     def _parse_input(self, value):
-        if len(value) == 1 and value.isalpha():
-            self.objectid = value
+        return {'objectid': value}
+
+    def get_full_path(self):
+        pass
+
+
+class Toy(MockMMA):
+    ''' toy object to utilize in tests '''
+    path_name = 'toy'
+
+    def _parse_input(self, value):
+        data = {'filename': None, 'objectid': None}
+        if len(str(value)) == 1 and str(value).isalpha():
+            data['objectid'] = value
         else:
-            self.filename = value
+            data['filename'] = value
+        return data
 
     def _set_access_path_params(self):
-        self.path_name = 'toy'
         self.path_params = {'object': self.objectid}
-
-    def _load_object_from_file(self, data=None):
-        pass
-
-    def _load_object_from_db(self, data=None):
-        pass
-
-    def _load_object_from_api(self, data=None):
-        pass
 
 
 @pytest.fixture()
@@ -185,23 +183,35 @@ def make_file(tmp_path):
 def make_badtoy(bad):
     ''' creates a bad version of the Toy object '''
     class BadToy(Toy):
+        if bad == 'nonename':
+            path_name = None
+        elif bad == 'noname':
+            @property
+            def path_name(self):
+                raise AttributeError
+        elif bad == 'badpath':
+            path_name = 'stuff'
+        else:
+            path_name = 'toy'
+
         def _set_access_path_params(self):
-            self.path_name = 'toy'
             self.path_params = {'object': self.objectid}
-            if bad == 'noname':
-                self.path_name = None
-            elif bad == 'noparam':
+            if bad == 'noparam':
                 self.path_params = None
             elif bad == 'notdict':
                 self.path_params = 'badparams'
 
         def _parse_input(self, value):
             if bad == 'none':
-                return         
+                return {}
+            elif bad == 'empty':
+                return {'filename': None, 'objectid': None}
 
-            if len(value) == 1 and value.isalpha():
-                self.objectid = value
+            data = {'filename': None, 'objectid': None}
+            if len(str(value)) == 1 and str(value).isalpha():
+                data['objectid'] = value
             else:
-                self.filename = value
+                data['filename'] = value
+            return data
 
     return BadToy('A')

@@ -4,6 +4,13 @@
 Change Log
 ==========
 
+* :release:`0.1.1 <unknown>`
+* :feature:`-` added decorators, `access_loader`, `parser_loader, `sdss_loader` to reduce boilerplate for overriding abstract methods
+* :feature:`-` added new ``BrainNoAccess`` class to support non sdss_access paths
+* :feature:`-` added new ``MMAccess`` mixin combining ``AccessMixIn`` and ``MMAMixIn``
+* :feature:`-` split out `sdss_access` parts into new ``AccessMixIn``.
+* :bug:`2` fixed conflict between loading files and `sdss_access` necessary path parameters
+
 * :release:`0.1.0 <2020-03-20>`
 * :feature:`-` Initial release of `sdss_brain`
 * :feature:`-` new mixin class, ``MMAMixIn``, aids implementation of multi-modal data access
