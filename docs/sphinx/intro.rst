@@ -45,7 +45,7 @@ When subclassing from ``Brain``, there are several abstract methods that you mus
 The ``Brain`` and ``MMAccess`` are designed to build classes that contain valid entries in `~sdss_access`.
 Multi-modal data access can still be provided to files without defined paths in `sdss_access` using the
 `~sdss_brain.mixins.MMAMixIn` class instead of ``MMAccess``.  The main difference is, when using the
-`MMAMixIn` class instead, you will need to define two additional abstract methods:
+``MMAMixIn`` class instead, you will need to define two additional abstract methods:
 
 - ``get_full_path``: Returns a local filepath to a data file
 - ``download``: Downloads a file from a remote location to a local path on disk
@@ -159,7 +159,7 @@ We can provide the filename directly.
     >>> cube = MangaCube(f, release='DR15')
     <MangaCube filename='/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz', mode='local', data_origin='file'>
 
-We defined the `_parse_input` method to instruct the `Brain` on what kind of "objectid" to expect, in this case
+We defined the ``_parse_input`` method to instruct the ``Brain`` on what kind of "objectid" to expect, in this case
 a "plateifu" id designation, which is 4-5 digit plate id and and 3-5 digit IFU bundle number.  Now we can
 directly input a "plateifu" as input.  If we specified a database to use during class
 definition, the default local action is to attempt to connect via the db.
@@ -216,7 +216,7 @@ creating new classes from the ``Brain``.  Available class decorators are:
 - `~sdss_brain.helpers.decorators.parser_loader`: decorator to aid in defining `_parse_input`
 - `~sdss_brain.helpers.decorators.sdss_loader`: all-purpose loader combining the others
 
-Using the `sdss_loader` decorator, we can rewrite the above example as
+Using the ``sdss_loader`` decorator, we can rewrite the above example as
 ::
 
     @sdss_loader(name='mangacube', defaults={'wave':'LOG'}, mapped_version='manga:drpver', pattern=r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
@@ -266,7 +266,7 @@ sdss_access template keys:
     self.wave - the default sdss_access key value set to "LOG"
     self.parsed_group - a list of all matched group parameters extracted from the regex parsing function
 
-The `sdss_loader` decorator is equivalent to stacking multiple decorators, for example
+The ``sdss_loader`` decorator is equivalent to stacking multiple decorators, for example
 ::
 
     @access_loader(name='mangacube', defaults={'wave':'LOG'}, mapped_version='manga:drpver')
@@ -289,10 +289,10 @@ Regex Pattern Parser
 ^^^^^^^^^^^^^^^^^^^^
 
 To simplify the boilerplate code needed to determine the propert data input and parse an object identifier
-within the `_parse_input` method, there is a convenience function, `parse_data_input` which will attempt
-to determine the type of input and parse it using :doc:`regex <python:library/re>`.  It minimally returns a dictionary
-with keys `filename` and `objectid`.  If the objectid can be further parsed to extract named parameters, it
-will include those parameters as key-values in the dictionary.
+within the ``_parse_input`` method, there is a convenience function, `~sdss_brain.helpers.parsing.parse_data_input`
+which will attempt to determine the type of input and parse it using :doc:`regex <python:library/re>`.
+It minimally returns a dictionary with keys ``filename`` and ``objectid``.  If the objectid can be further
+parsed to extract named parameters, it will include those parameters as key-values in the dictionary.
 
 ::
 

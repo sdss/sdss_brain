@@ -4,7 +4,7 @@
 Parsing the Data Input Argument
 -------------------------------
 
-The ``Brain`` accepts a single string `data_input` argument which can be either a filename or a shorthand
+The `~sdss_brain.core.Brain` accepts a single string ``data_input`` argument which can be either a filename or a shorthand
 object identiier.  If the input is a shorthand object id, it must additionally be converted into parameters
 that can be used to load data from a file, database or remote location.  To determine the type of input,
 extract necessary parameters, or convert to a filename, you need to define some logic that instructs the
@@ -13,9 +13,9 @@ extract necessary parameters, or convert to a filename, you need to define some 
 Overloading the `_parse_input` method
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Each subclass of ``Brain``, must define a `_parse_input` method.  This method accepts as input a single
-argument containing the string `data_input` passed into it.  It can contain any custom logic
-but must return a dictionary containing at least two keys: `filename` and `objectid`.
+Each subclass of ``Brain``, must define a ``_parse_input`` method.  This method accepts as input a single
+argument containing the string ``data_input`` passed into it.  It can contain any custom logic
+but must return a dictionary containing at least two keys: ``filename`` and ``objectid``.
 ::
 
     # simple conditional logic - is a file or else
@@ -29,11 +29,11 @@ but must return a dictionary containing at least two keys: `filename` and `objec
 
         return data
 
-It is common to have an object id that is made up of other relevant parameters, e.g `plate`, `mjd`, `ifu`,
-etc that are needed to construct accurate filepaths or for further analysis.  In these cases, you can use
-regex pattern matching to parse the object id into components.  Let's see an example of parsing the string
-"plate-ifu", e.g. "8454-1901", which is a 4-5 digit number, followed by a 3-5 digit number, separated by a
-hyphen.  To learn more about regex, see :doc:`python:library/re` or try the
+It is common to have an object id that is made up of other relevant parameters, e.g ``plate``, ``mjd``,
+``ifu``, etc that are needed to construct accurate filepaths or for further analysis.  In these cases,
+you can use regex pattern matching to parse the object id into components.  Let's see an example of parsing
+the string "plate-ifu", e.g. "8454-1901", which is a 4-5 digit number, followed by a 3-5 digit number,
+separated by a hyphen.  To learn more about regex, see :doc:`python:library/re` or try the
 `Regex Explorer <https://regex101.com/?flavor=python>`_.
 ::
 
@@ -60,7 +60,7 @@ Creating an objectid regex pattern
 
 In the above example, we had to manually parse the regex matched group and assign it to object id.  To
 simply the creation of a regex pattern, we can use `~sdss_brain.helpers.parsing.create_object_pattern`
-which helps create a named group regex patterns for the objectid.  It returns a named group `objectid`,
+which helps create a named group regex patterns for the objectid.  It returns a named group ``objectid``,
 with a custom pattern.  By default, it returns a greedy match on anything.
 ::
 
@@ -94,7 +94,7 @@ We can also change the delimiter for joining the keys.
     '(?P<objectid>(?![/$.])((?P<plate>(.+)?)---(?P<ifu>(.+)?)))'
 
 We can create a named group using specific patterns for each name by passing a dictionary into
-the `keymap` keyword argument.
+the ``keymap`` keyword argument.
 ::
 
     >>> # create a named group pattern
@@ -102,11 +102,11 @@ the `keymap` keyword argument.
     >>> create_object_pattern(keymap=keymap)
     '(?P<objectid>(?![/$.])((?P<plate>\\d{4,5})-(?P<ifu>\\d{3,5})))'
 
-Using the `parse_data_input` function
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Using the ``parse_data_input`` function
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 To take full advantage of the pattern creation and the data input attribute extraction, we can use
-`~sdss_brain.helpers.parsing.parse_data_input` to parse the `data_input` directly into a dictionary
+`~sdss_brain.helpers.parsing.parse_data_input` to parse the ``data_input`` directly into a dictionary
 containing a filename, objectid, or any extracted named parameters.  This function takes a string value
 as input to parse and a number of options related to the creation of the object pattern.
 ::
@@ -131,7 +131,7 @@ in the dictionary.
         {'filename': None, 'objectid': '8485-1901', 'plate': '8485', 'ifu': '1901', 'parsed_groups': ['8485-1901', '8485', '1901']}
 
 We can specify a list of keys to use as the names.  These can be any names or it can be useful to use the
-`sdss_access` template keys.
+``sdss_access`` template keys.
 ::
 
     >>> # parse an objectid using sdss_access template keywords
@@ -157,7 +157,7 @@ Or we can exclude certain keys if we no they are never part of the input object 
     {'filename': None, 'objectid': 'v1-1901-LOG', 'drpver': 'v1', 'ifu': '1901', 'wave': 'LOG', 'parsed_groups': ['v1-1901-LOG', 'v1', '1901', 'LOG']}
 
 For simple patterns of unnamed groups or non-groups, the output of the regex match object is placed
-in a `parsed_group` key where the extracted groups can be accessed.
+in a ``parsed_group`` key where the extracted groups can be accessed.
 ::
 
     >>> parse_data_input('abc123', regex='[a-z0-9]+')
