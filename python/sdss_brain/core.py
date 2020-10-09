@@ -13,12 +13,20 @@
 
 from __future__ import print_function, division, absolute_import
 import abc
-from sdss_brain.mixins.mma import MMAccess
+from sdss_brain.mixins.mma import MMAccess, MMAMixIn
 from astropy.io import fits
 
 
 class Base(abc.ABC):
     ''' abstract base class for tools '''
+
+    def __new__(cls, *args, **kwargs):
+        if MMAccess in cls.mro():
+            cls._mma = MMAccess
+        else:
+            cls._mma = MMAMixIn
+        cls.__abstractmethods__ = {}
+        return super().__new__(cls)
 
     @abc.abstractmethod
     def _load_object_from_file(self, data=None):
@@ -33,42 +41,46 @@ class Base(abc.ABC):
         pass
 
 
-class Brain(Base, MMAccess):
-    ''' Convenience class for utilizing the MMA mixin
+class HindBrain(Base):
+    ''' Base class for utilizing the MMA mixin
 
     This is a convenience class with the `~sdss_brain.mixins.mma.MMAccess` already implemented.
     This class initializes the ``MMAccess`` and provides logic to load data based
     on the data_origin.  It also provides a simple ``repr``.
 
-    This class contains three abstractmethods you must override when subclassing.
-        - **_load_object_from_file**: defines data load/handling from a local file
-        - **_load_object_from_db**: defines data load/handling from a local database
-        - **_load_object_from_api**: defines data load/handling from a remote API
+    In addition to any abstractmethod from the MMA, this class contains three abstractmethods you
+    must override when subclassing.
 
-    Parameters:
-        data_input (str):
+    - **_load_object_from_file**: defines data load/handling from a local file
+    - **_load_object_from_db**: defines data load/handling from a local database
+    - **_load_object_from_api**: defines data load/handling from a remote API
+
+    Parameters
+    ----------
+        data_input : str
             The file or name of target data to load
-        filename (str):
+        filename : str
             The absolute filepath to data to load
-        objectid (str):
+        objectid : str
             The object identifier of the data to load
-        mode (str):
+        mode : str
             The operating mode: auto, local, or remote
-        release (str):
+        release : str
             The data release of the object, e.g. "DR16"
-        data (object):
+        data : object
             Optional data to instantiate the object with
-        download (bool):
+        download : bool
             If True, downloads the object locally with sdss_access
-        ignore_db (bool):
+        ignore_db : bool
             If True, ignores any database connection for local access
-        use_db (sdssdb.DatabaseConnection):
+        use_db : `~sdssdb.connection.DatabaseConnection`
             a database connection to override the default with
 
-    Attributes:
-        _db (sdssdb.DatabaseConnection):
+    Attributes
+    ----------
+        _db : `~sdssdb.connection.DatabaseConnection`
             A relevant sdssdb database connection for the object
-        mapped_version (str):
+        mapped_version : str
             The name of survey/category in the mapped_versions dictionary
     '''
     _db = None
@@ -80,11 +92,10 @@ class Brain(Base, MMAccess):
                  ignore_db=None, use_db=None):
 
         self.data = data
-
-        MMAccess.__init__(self, data_input=data_input, filename=filename,
-                          objectid=objectid, mode=mode,
-                          release=release, download=download,
-                          ignore_db=ignore_db, use_db=use_db or self._db)
+        self._mma.__init__(self, data_input=data_input, filename=filename,
+                           objectid=objectid, mode=mode,
+                           release=release, download=download,
+                           ignore_db=ignore_db, use_db=use_db or self._db)
 
         if self.data_origin == 'file':
             self._load_object_from_file(data=data)
@@ -102,3 +113,21 @@ class Brain(Base, MMAccess):
         ''' Destructor for closing FITS files. '''
         if self.data_origin == 'file' and isinstance(self.data, fits.HDUList):
             self.data.close()
+
+
+class Brain(HindBrain, MMAccess):
+    """ The hind Brain with support for ``sdss_access``
+
+    See `~HindBrain`, `~sdss_brain.mixins.mma.MMAccess`, and `~sdss_brain.mixins.access.AccessMixIn`
+    for detailed information.
+
+    """
+
+
+class BrainNoAccess(HindBrain, MMAMixIn):
+    """ A version of `~Brain` without support for ``sdss_access``
+
+    See `~HindBrain` and `~sdss_brain.mixins.mma.MMAMixIn` for detailed
+    information.
+
+    """

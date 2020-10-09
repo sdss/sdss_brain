@@ -43,9 +43,10 @@ class MMAMixIn(abc.ABC):
     or from a file.  The user must provide that logic in a subclass.
 
     This mixin contains three abstractmethods you must override when subclassing.
-        - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
-        - **download**: a method for downloading a data file to a local disk
-        - **get_full_path**: a method for generating the absolute file path on disk to a file
+
+    - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
+    - **download**: a method for downloading a data file to a local disk
+    - **get_full_path**: a method for generating the absolute file path on disk to a file
 
     Parameters
     ----------
@@ -63,7 +64,7 @@ class MMAMixIn(abc.ABC):
             If True, downloads the object locally with sdss_access
         ignore_db : bool
             If True, ignores any database connection for local access
-        use_db : sdssdb.DatabaseConnection
+        use_db : `~sdssdb.connection.DatabaseConnection`
             a database connection to override the default with
 
     Attributes
@@ -267,8 +268,9 @@ class MMAccess(AccessMixIn, MMAMixIn):
     or from a file.  The user must provide that logic in a subclass.
 
     This mixin contains two abstractmethods you must override when subclassing.
-        - **_set_access_path_params**: sets the arguments needed by `sdss_access`
-        - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
+
+    - **_set_access_path_params**: sets the arguments needed by `sdss_access`
+    - **_parse_inputs**: provides logic to parse ``data_input`` into either filename or objectid
 
     Parameters
     ----------
@@ -286,15 +288,15 @@ class MMAccess(AccessMixIn, MMAMixIn):
             If True, downloads the object locally with sdss_access
         ignore_db : bool
             If True, ignores any database connection for local access
-        use_db : sdssdb.DatabaseConnection
+        use_db : `~sdssdb.connection.DatabaseConnection`
             a database connection to override the default with
 
     Attributes
     ----------
         release : str
             The current data release loaded
-        access : sdss_access.Access
-            An instance of `sdss_access` using for all path creation and file downloads
+        access : `~sdss_access.sync.Access`
+            An instance of ``sdss_access`` using for all path creation and file downloads
 
     """
     pass

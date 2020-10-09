@@ -44,11 +44,15 @@ When subclassing from ``Brain``, there are several abstract methods that you mus
 
 The ``Brain`` and ``MMAccess`` are designed to build classes that contain valid entries in `~sdss_access`.
 Multi-modal data access can still be provided to files without defined paths in `sdss_access` using the
-`~sdss_brain.mixins.MMAMixIn` class instead of ``MMAccess``.  The main difference is, when using the
+`~sdss_brain.mixins.mma.MMAMixIn` class instead of ``MMAccess``.  The main difference is, when using the
 ``MMAMixIn`` class instead, you will need to define two additional abstract methods:
 
 - ``get_full_path``: Returns a local filepath to a data file
 - ``download``: Downloads a file from a remote location to a local path on disk
+
+There exists a version of the ``Brain`` with with standard MMA mixed in.  Sub-classing from
+`~sdss_brain.core.BrainNoAccess` will give you functionality of the ``Brain`` but without reliance on
+``sdss_access`` paths.
 
 .. note::
     The MMA by itself does not contain the logic for accessing data from a filename, database, or over an API.

@@ -102,7 +102,8 @@ class AccessMixIn(abc.ABC):
     itself according to the specified data release on each call.
 
     This mixin contains one abstractmethod you must override when subclassing.
-        - **_set_access_path_params**: sets the arguments needed by `sdss_access`
+
+    - **_set_access_path_params**: sets the arguments needed by `sdss_access`
 
     Parameters
     ----------
