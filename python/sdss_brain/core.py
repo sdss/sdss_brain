@@ -25,7 +25,6 @@ class Base(abc.ABC):
             cls._mma = MMAccess
         else:
             cls._mma = MMAMixIn
-        cls.__abstractmethods__ = {}
         return super().__new__(cls)
 
     @abc.abstractmethod
