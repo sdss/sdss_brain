@@ -15,3 +15,4 @@ from __future__ import print_function, division, absolute_import
 
 from .io import *
 from .parsing import *
+from .decorators import *

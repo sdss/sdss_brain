@@ -11,7 +11,7 @@ SDSS user experience.
 
 This package provides the following:
 
-- Multi-Modal data access with the ``MMAMixIn`` and ``Brain`` classes
+- Multi-Modal data access with the `~sdss_brain.mixins.mma.MMAccess` and `~sdss_brain.core.Brain` classes
 -
 
 .. _mma:
@@ -19,7 +19,7 @@ This package provides the following:
 Multi-Modal Data Access System (MMA)
 ------------------------------------
 
-The ``MMAMixIn`` is a bare-bones class to be mixed with any other class.  When mixed in, it adds MMA
+The ``MMAccess`` is a bare-bones class to be mixed with any other class.  When mixed in, it adds MMA
 functionality to that class. The MMA provides three operating modes: `auto`, `local`, and `remote`.
 
 - **auto**: Automatically tries to load objects locally, and upon failure loads object remotely.
@@ -29,12 +29,12 @@ functionality to that class. The MMA provides three operating modes: `auto`, `lo
 Depending on the mode and the logic preformed, the MMA will load data from origin `file`, `db`, or `api`.
 See the :ref:`Mode Decision Tree <mma_tree>` for a workflow diagram.
 
-When subclassing ``MMAMixIn``, there are several abstract methods that you must define.  These methods are
+When subclassing ``MMAccess``, there are several abstract methods that you must define.  These methods are
 
 - ``_parse_inputs``: Defines the logic to parse the input string into an object id or filename
 - ``_set_access_path_params``: Defines parameters needed by `sdss_access` to generate filepaths
 
-The ``Brain`` class is a convenience class that creates a basic object template with the ``MMAMixIn`` already
+The ``Brain`` class is a convenience class that creates a basic object template with the ``MMAccess`` already
 applied.  It also provides a ``repr`` and some placeholder logic to load objects based on the ``data_origin``.
 When subclassing from ``Brain``, there are several abstract methods that you must define.
 
@@ -42,8 +42,18 @@ When subclassing from ``Brain``, there are several abstract methods that you mus
 - ``_load_object_from_db``: Defines the logic for loading an object from a database
 - ``_load_object_from_api``: Defines the logic for loading an object remotely over an API
 
+The ``Brain`` and ``MMAccess`` are designed to build classes that contain valid entries in `~sdss_access`.
+Multi-modal data access can still be provided to files without defined paths in `sdss_access` using the
+`~sdss_brain.mixins.MMAMixIn` class instead of ``MMAccess``.  The main difference is, when using the
+`MMAMixIn` class instead, you will need to define two additional abstract methods:
+
+- ``get_full_path``: Returns a local filepath to a data file
+- ``download``: Downloads a file from a remote location to a local path on disk
+
 .. note::
-    Regarding data access via remote API.  The logic for this access mode is not yet implemented.  It will
+    The MMA by itself does not contain the logic for accessing data from a filename, database, or over an API.
+    That logic must be created by the user.  Methods and classes containing default logic will be provided
+    at a later time.  The logic for the remote API access mode is not yet implemented.  It will
     be unavailable until a SDSS API to serve data has been created.
 
 
@@ -59,28 +69,30 @@ class, highlighting how to integrate the MMA into a new tool.
 
     import re
     from sdss_brain.core import Brain
-    from sdss_brain.helpers import get_mapped_version, load_fits_file, parse_data_input
+    from sdss_brain.helpers import get_mapped_version, load_fits_file
     from sdssdb.sqlalchemy.mangadb import database as mangadb
 
     class MangaCube(Brain):
         _db = mangadb
-        mapped_version = 'manga'
+        mapped_version = 'manga' # set the release mapping key
         path_name = 'mangacube'  # set path name for sdss_access
 
         def _set_access_path_params(self):
             ''' set sdss_access parameters '''
+
             # set path keyword arguments
             drpver = get_mapped_version(self.mapped_version, key='drpver')
             self.path_params = {'plate': self.plate, 'ifu':self.ifu, 'drpver': drpver}
 
         def _parse_input(self, value):
             ''' parse the input value string into a filename or objectid '''
+
             # match for plate-ifu designation, e.g. 8485-1901
-            plateifu_pattern = re.compile(r'([0-9]{4,5})-([0-9]{4,9})')
+            plateifu_pattern = re.compile(r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
             plateifu_match = re.match(plateifu_pattern, value)
 
             # create the output dictionary
-            data = {'filename': None, 'objectid': None}
+            data = dict.fromkeys(['filename', 'objectid'])
 
             # match on plate-ifu or else assume a filename
             if plateifu_match is not None:
@@ -119,8 +131,10 @@ has been passed, either an object ID or a filepath.  We add some logic to determ
 plate-IFU designation, otherwise we assume it is a filepath.  This method **must** return a dictionary
 containing at minimum keys for either `filename` and `objectid`.
 
-There are convenience helpers available to simpify the boilerplate process of defining logic for
-``_parse_input`` and ``_set_access_path_params``.  See :ref:`helpers` for more information.
+These two methods combine to instruct the ``Brain`` how to take a custom input "object id" and turn it into
+a valid filename path, database entry, or remote API call.  There are convenience helpers available to
+simpify the boilerplate process of defining logic for ``_parse_input`` and ``_set_access_path_params``.
+See :ref:`helpers` for more information.
 
 Finally we define the ``_load_object_from_file`` method to load FITS file data using a ``load_fits_file``
 helper function.  These methods can perform any number of tasks related to handling of said data.  In
@@ -128,7 +142,26 @@ this example, we keep it simple by only loading the data itself.  Note that we m
 methods even if we aren't ready to use them.  Thus we also define placeholders for the `api` and `db`
 load methods.
 
-Now that we have our class defined, let's see it in use.  If we specified a database to use during class
+Now that we have our class defined, let's see it in use.  We can explicitly load a filename.
+::
+
+    >>> ff = '/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz'
+    >>> cube = MangaCube(filename=ff)
+    >>> cube
+    <MangaCube filename='/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz', mode='local', data_origin='file'>
+
+The ``data_origin`` has been set to `file` and the mode is ``local``.  The ``Brain`` takes one direct
+argument as any "data_input".  It will attempt to determine if the input is a valid filename or an object id.
+We can provide the filename directly.
+::
+
+    >>> ff = '/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz'
+    >>> cube = MangaCube(f)
+    <MangaCube filename='/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz', mode='local', data_origin='file'>
+
+We defined the `_parse_input` method to instruct the `Brain` on what kind of "objectid" to expect, in this case
+a "plateifu" id designation, which is 4-5 digit plate id and and 3-5 digit IFU bundle number.  Now we can
+directly input a "plateifu" as input.  If we specified a database to use during class
 definition, the default local action is to attempt to connect via the db.
 ::
 
@@ -171,10 +204,61 @@ Now the ``data_origin`` is set to ``file``.  If we don't have the file locally, 
 Conveniences for the MMA
 ------------------------
 
+Decorators
+^^^^^^^^^^
 
+A few class decorators are provided as a convenience to help reduce boilerplate code when
+creating new classes from the ``Brain``.  Available class decorators are:
+
+- `~sdss_brain.helpers.decorators.access_loader`: decorator to aid in defining `_set_access_path_params`
+- `~sdss_brain.helpers.decorators.parser_loader`: decorator to aid in defining `_parse_input`
+- `~sdss_brain.helpers.decorators.sdss_loader`: all-purpose loader combining the others
+
+Using the `sdss_loader` decorator, the above example would
+::
+
+    import re
+    from sdss_brain.core import Brain
+    from sdss_brain.helpers import sdss_loader, load_fits_file
+    from sdssdb.sqlalchemy.mangadb import database as mangadb
+
+    @sdss_loader(name='mangacube', defaults={'wave':'LOG'}, mapped_version='manga:drpver', pattern=r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
+    class MangaCube(Brain):
+        _db = mangadb
+
+        def _load_object_from_file(self, data=None):
+            self.data = load_fits_file(self.filename)
+
+        def _load_object_from_db(self, data=None):
+            pass
+
+        def _load_object_from_api(self, data=None):
+            pass
+
+The `sdss_loader` decorator is equivalent to stacking multiple decorators, for example
+::
+
+    import re
+    from sdss_brain.core import Brain
+    from sdss_brain.helpers import access_loader, parser_loader, load_fits_file
+    from sdssdb.sqlalchemy.mangadb import database as mangadb
+
+    @access_loader(name='mangacube', defaults={'wave':'LOG'}, mapped_version='manga:drpver')
+    @parser_loader(pattern=r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
+    class MangaCube(Brain):
+        _db = mangadb
+
+        def _load_object_from_file(self, data=None):
+            self.data = load_fits_file(self.filename)
+
+        def _load_object_from_db(self, data=None):
+            pass
+
+        def _load_object_from_api(self, data=None):
+            pass
 
 Regex Pattern Parser
 ^^^^^^^^^^^^^^^^^^^^
 
-Decorators
-^^^^^^^^^^
+
+
