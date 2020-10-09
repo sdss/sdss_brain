@@ -32,16 +32,18 @@ def register(func):
     return wrapper
 
 
-def get_parse_input(regex=None, include=None, exclude=None, order=None, delimiter=None):
+def get_parse_input(regex=None, keys=None, keymap=None, include=None, exclude=None,
+                    order=None, delimiter=None):
     """ Generate a default parse_input method to be attached to a class """
 
     def _parse_input(self, value):
         ''' Default parse_input applied with the decorator '''
-        keys = None
+        akeys = None
         if self.is_access_mixedin and self.path_name is not None:
-            keys = self.access.lookup_keys(self.path_name)
+            akeys = self.access.lookup_keys(self.path_name)
+        pkeys = keys or akeys or None
 
-        data = parse_data_input(value, regex=regex, keys=keys,
+        data = parse_data_input(value, regex=regex, keys=pkeys, keymap=keymap,
                                 include=include, exclude=exclude, order=order, delimiter=delimiter)
 
         for k, v in data.items():
@@ -85,7 +87,8 @@ def create_mapped_properties(kls, mapped_version):
 
 
 @register
-def parser_loader(kls=None, *, pattern=None, include=None, exclude=None, order=None, delimiter=None):
+def parser_loader(kls=None, *, pattern=None, keys=None, keymap=None, include=None, exclude=None,
+                  order=None, delimiter=None):
     """ Class decorator to reduce boilerplate around definition of parse_input method
 
     Decorator to generate a default `_parse_input` method to be attached to a class.
@@ -104,6 +107,10 @@ def parser_loader(kls=None, *, pattern=None, include=None, exclude=None, order=N
     ----------
     pattern : str
         The regex pattern to match with
+    keys : list
+        Optional list of names to construct a named pattern.  Default is to use any sdss_access keys.
+    keymap : dict
+        Optional dict mapping names to specific patterns to use. Default is None.
     include : list
         A list of access keywords to include in the objectid pattern creation
     exclude: list
@@ -120,8 +127,8 @@ def parser_loader(kls=None, *, pattern=None, include=None, exclude=None, order=N
     """
     def wrap(kls):
         # setup and attach the default parse_input function
-        parse_input = get_parse_input(regex=pattern, include=include, exclude=exclude,
-                                      order=order, delimiter=delimiter)
+        parse_input = get_parse_input(regex=pattern, keys=keys, keymap=keymap, include=include,
+                                      exclude=exclude, order=order, delimiter=delimiter)
         setattr(kls, '_parse_input', parse_input)
 
         # update the __abstractmethod__ with the boilerplate set

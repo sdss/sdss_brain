@@ -219,8 +219,9 @@ class MMAMixIn(abc.ABC):
 
         This method must be overridden by each subclass and contains the logic
         to determine the kind of input passed into it, i.e. either a filename or an
-        object identification string.  This method must at least return a dictionary
-        containing keys for "filename" and "objectid".
+        object identification string.  This method accepts a single argument which is the
+        string `data_input` and must return a dictionary containing at least keys
+        for "filename" and "objectid".
         '''
 
     @abc.abstractmethod

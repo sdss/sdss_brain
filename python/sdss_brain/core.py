@@ -102,4 +102,3 @@ class Brain(Base, MMAccess):
         ''' Destructor for closing FITS files. '''
         if self.data_origin == 'file' and isinstance(self.data, fits.HDUList):
             self.data.close()
-

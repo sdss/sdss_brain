@@ -81,7 +81,7 @@ class, highlighting how to integrate the MMA into a new tool.
             ''' set sdss_access parameters '''
 
             # set path keyword arguments
-            drpver = get_mapped_version(self.mapped_version, key='drpver')
+            drpver = get_mapped_version(self.mapped_version, release=self.release, key='drpver')
             self.path_params = {'plate': self.plate, 'ifu':self.ifu, 'drpver': drpver}
 
         def _parse_input(self, value):
@@ -146,7 +146,7 @@ Now that we have our class defined, let's see it in use.  We can explicitly load
 ::
 
     >>> ff = '/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz'
-    >>> cube = MangaCube(filename=ff)
+    >>> cube = MangaCube(filename=ff, release='DR15')
     >>> cube
     <MangaCube filename='/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz', mode='local', data_origin='file'>
 
@@ -156,7 +156,7 @@ We can provide the filename directly.
 ::
 
     >>> ff = '/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz'
-    >>> cube = MangaCube(f)
+    >>> cube = MangaCube(f, release='DR15')
     <MangaCube filename='/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz', mode='local', data_origin='file'>
 
 We defined the `_parse_input` method to instruct the `Brain` on what kind of "objectid" to expect, in this case
@@ -204,6 +204,8 @@ Now the ``data_origin`` is set to ``file``.  If we don't have the file locally, 
 Conveniences for the MMA
 ------------------------
 
+.. _decorators:
+
 Decorators
 ^^^^^^^^^^
 
@@ -214,20 +216,15 @@ creating new classes from the ``Brain``.  Available class decorators are:
 - `~sdss_brain.helpers.decorators.parser_loader`: decorator to aid in defining `_parse_input`
 - `~sdss_brain.helpers.decorators.sdss_loader`: all-purpose loader combining the others
 
-Using the `sdss_loader` decorator, the above example would
+Using the `sdss_loader` decorator, we can rewrite the above example as
 ::
-
-    import re
-    from sdss_brain.core import Brain
-    from sdss_brain.helpers import sdss_loader, load_fits_file
-    from sdssdb.sqlalchemy.mangadb import database as mangadb
 
     @sdss_loader(name='mangacube', defaults={'wave':'LOG'}, mapped_version='manga:drpver', pattern=r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
     class MangaCube(Brain):
         _db = mangadb
 
         def _load_object_from_file(self, data=None):
-            self.data = load_fits_file(self.filename)
+            pass
 
         def _load_object_from_db(self, data=None):
             pass
@@ -235,13 +232,41 @@ Using the `sdss_loader` decorator, the above example would
         def _load_object_from_api(self, data=None):
             pass
 
-The `sdss_loader` decorator is equivalent to stacking multiple decorators, for example
+which effectively converts to the following:
 ::
 
-    import re
-    from sdss_brain.core import Brain
-    from sdss_brain.helpers import access_loader, parser_loader, load_fits_file
-    from sdssdb.sqlalchemy.mangadb import database as mangadb
+    class MangaCube(Brain):
+        _db = mangadb
+        mapped_version = 'manga'
+        path_name = 'mangacube'
+
+        @property
+        def drpver(self):
+            return get_mapped_version(self.mapped_version, release=self.release, key='drpver')
+
+        def _set_access_path_params(self):
+            ''' set sdss_access parameters '''
+
+            keys = self.access.lookup_keys(self.path_name)
+            self.path_params = {k: getattr(self, k) for k in keys}
+
+        def _parse_input(self, value):
+            ''' parse the input value string into a filename or objectid '''
+
+            keys = self.access.lookup_keys(self.path_name)
+            data = parse_data_input(value, regex=pattern, keys=keys)
+            return data
+
+with the following added attributes, extracted from the parsed input and the sdss_access template keys:
+::
+
+    self.plate - the extacted plate ID
+    self.ifu - the extract IFU bundle designation
+    self.wave - the default sdss_access key value set to "LOG"
+    self.parsed_group - a list of all matched group parameters extracted from the regex parsing function
+
+The `sdss_loader` decorator is equivalent to stacking multiple decorators, for example
+::
 
     @access_loader(name='mangacube', defaults={'wave':'LOG'}, mapped_version='manga:drpver')
     @parser_loader(pattern=r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
@@ -257,8 +282,25 @@ The `sdss_loader` decorator is equivalent to stacking multiple decorators, for e
         def _load_object_from_api(self, data=None):
             pass
 
+.. _regex:
+
 Regex Pattern Parser
 ^^^^^^^^^^^^^^^^^^^^
 
+To simplify the boilerplate code needed to determine the propert data input and parse an object identifier
+within the `_parse_input` method, there is a convenience function, `parse_data_input` which will attempt
+to determine the type of input and parse it using :doc:`regex <python:library/re>`.  It minimally returns a dictionary
+with keys `filename` and `objectid`.  If the objectid can be further parsed to extract named parameters, it
+will include those parameters as key-values in the dictionary.
 
+::
 
+    >>> # passing a filename to the parser
+    >>> parse_data_input('/path/to/a/file.txt')
+        {'filename': '/path/to/a/file.txt', 'objectid': None, 'parsed_groups': None}
+
+    >>> # passing a custom regex pattern to parse an object id
+    >>> parse_data_input('8485-1901', regex=r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
+        {'filename': None, 'objectid': '8485-1901', 'plate': '8485', 'ifu': '1901', 'parsed_groups': ['8485-1901', '8485', '1901']}
+
+To read more, see :ref:`parsing`.

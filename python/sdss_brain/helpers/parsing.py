@@ -14,12 +14,14 @@
 from __future__ import print_function, division, absolute_import
 import re
 import pathlib
+from typing import Union
 from itertools import groupby
 from sdss_brain import log
 
 
-def create_object_pattern(regex: str = None, keys: list = None, delimiter: str = '-',
-                          exclude: list = None, include: list = None, order: list = None) -> str:
+def create_object_pattern(regex: str = None, keys: list = None, keymap: dict = None,
+                          delimiter: str = '-', exclude: list = None, include: list = None,
+                          order: list = None) -> str:
     """ Create a regex pattern to parse data input by
 
     Parameters
@@ -28,6 +30,8 @@ def create_object_pattern(regex: str = None, keys: list = None, delimiter: str =
             A custom regex pattern
         keys : list
             A list of (access) names to build a pattern out of
+        keymap : dict
+            A dict of key name and pattern to build a pattern out of
         delimiter : str
             The delimiter to use when joining the keys.  Default is "-".
         exclude : list
@@ -35,7 +39,7 @@ def create_object_pattern(regex: str = None, keys: list = None, delimiter: str =
         include : list
             A list of names to only include from the keys
         order : list
-            A list of names specifying the order in which create the keyed pattern
+            A list of names specifying the order in which to create the keyed pattern
 
     Returns
     -------
@@ -48,10 +52,16 @@ def create_object_pattern(regex: str = None, keys: list = None, delimiter: str =
         pattern = rf'(?P<objectid>(?![/$.])({regex}))'
         return pattern
 
-    # if no keys, use a greedy default
-    if not keys:
+    # if no keys or keymap, use a greedy default
+    if not keys and not keymap:
         pattern = r'(?P<objectid>^[^/$.](.+)?)'
         return pattern
+
+    assert keys or keymap, 'Either a list of keys or a keymap must be specified.'
+    assert isinstance(keys, (list, type(None))), 'keys must be a list'
+    assert isinstance(keymap, (dict, type(None))), 'keymap must be a dict'
+    if not keys and keymap:
+        keys = list(keymap.keys())
 
     # make a copy of the original key order
     keys_copy = keys.copy()
@@ -74,7 +84,10 @@ def create_object_pattern(regex: str = None, keys: list = None, delimiter: str =
 
     patts = []
     for k in keys:
-        patts.append(fr'(?P<{k}>(.+)?)')
+        if not keymap:
+            patts.append(fr'(?P<{k}>(.+)?)')
+        else:
+            patts.append(fr'(?P<{k}>{keymap[k]})')
 
     # join into a single pattern
     delimiter = '-' if not delimiter else delimiter
@@ -83,9 +96,9 @@ def create_object_pattern(regex: str = None, keys: list = None, delimiter: str =
     return pattern
 
 
-def parse_data_input(value: str, regex: str = None, keys: list = None, delimiter: str = '-',
-                     exclude: list = None, include: list = None, order: list = None,
-                     inputs: bool = False) -> dict:
+def parse_data_input(value: str, regex: str = None, keys: list = None, keymap: dict = None,
+                     delimiter: str = '-', exclude: list = None, include: list = None,
+                     order: list = None, inputs: bool = False) -> dict:
     ''' Parse data input for a filename or an object id
 
     Parameters
@@ -96,6 +109,8 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, delimiter
             A custom regex pattern
         keys : list
             A list of (access) names to build a pattern out of
+        keymap : dict
+            A dict of key name and pattern to build a pattern out of
         delimiter : str
             The delimiter to use when joining the keys.  Default is "-".
         exclude : list
@@ -103,7 +118,7 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, delimiter
         include : list
             A list of names to only include from the keys
         order : list
-            A list of names specifying the order in which create the keyed pattern
+            A list of names specifying the order in which to create the keyed pattern
         inputs : bool
             If True, returns the parser inputs.  Default is False.
 
@@ -147,9 +162,8 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, delimiter
     file_pattern = r'(?P<filename>^[/$.](.+)?(.[a-z]+))'
 
     # create an object id regex pattern using a specified pattern or generate a default one
-    obj_pattern = create_object_pattern(regex=regex, keys=keys, delimiter=delimiter,
-                                        exclude=exclude, include=include,
-                                        order=order)
+    obj_pattern = create_object_pattern(regex=regex, keys=keys, keymap=keymap, delimiter=delimiter,
+                                        exclude=exclude, include=include, order=order)
 
     # final pattern
     pattern = fr'^{file_pattern}|{obj_pattern}$'
@@ -178,7 +192,7 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, delimiter
     return matches
 
 
-def raw_parse(value: str, regex: str = None) -> dict:
+def raw_parse(value: str, regex: str = None) -> Union[dict, tuple]:
     ''' Match a string via a regex pattern with no frills
 
     Parameters

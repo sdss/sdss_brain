@@ -123,7 +123,7 @@ pygments_style = 'sphinx'
 todo_include_todos = False
 
 # Intersphinx mappings
-intersphinx_mapping = {'python': ('https://docs.python.org/3.6', None),
+intersphinx_mapping = {'python': ('https://docs.python.org/3.7', None),
                        'astropy': ('http://docs.astropy.org/en/latest', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None),
                        'sdss_access': ('https://sdss-tree.rtfd.io/en/latest', None),
