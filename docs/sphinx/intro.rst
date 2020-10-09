@@ -257,7 +257,8 @@ which effectively converts to the following:
             data = parse_data_input(value, regex=pattern, keys=keys)
             return data
 
-with the following added attributes, extracted from the parsed input and the sdss_access template keys:
+with the following automatically added attributes, extracted from the parsed input and the
+sdss_access template keys:
 ::
 
     self.plate - the extacted plate ID
