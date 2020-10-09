@@ -143,14 +143,20 @@ def mock_mma(tmp_path):
     MockMMA.mock_template = str(path / 'toy_object_{object}.txt')
 
 
+class ToyNoAccess(mma.MMAMixIn):
+    def download(self):
+        pass
+
+    def _parse_input(self, value):
+        return {'objectid': value}
+
+    def get_full_path(self):
+        pass
+
+
 class Toy(MockMMA):
     ''' toy object to utilize in tests '''
     path_name = 'toy'
-
-    # def __init__(self, data_input=None, filename=None, objectid=None, mode=None,
-    #              release=None):
-    #     MockMMA.__init__(self, data_input=data_input, filename=filename,
-    #                      objectid=objectid, mode=mode, release=release)
 
     def _parse_input(self, value):
         data = {'filename': None, 'objectid': None}
@@ -162,15 +168,6 @@ class Toy(MockMMA):
 
     def _set_access_path_params(self):
         self.path_params = {'object': self.objectid}
-
-    def _load_object_from_file(self, data=None):
-        pass
-
-    def _load_object_from_db(self, data=None):
-        pass
-
-    def _load_object_from_api(self, data=None):
-        pass
 
 
 @pytest.fixture()

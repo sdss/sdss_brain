@@ -15,7 +15,7 @@ from __future__ import absolute_import, division, print_function
 
 import pytest
 from sdss_brain.exceptions import BrainError
-from .conftest import Toy, make_badtoy
+from .conftest import Toy, make_badtoy, ToyNoAccess
 
 
 class TestMMA(object):
@@ -101,3 +101,10 @@ class TestMMAFails(object):
         with pytest.raises(BrainError) as cm:
             make_badtoy(bad)
         assert exp in str(cm.value) or set(exp).issubset(set(str(cm.value)))
+
+
+class TestMMAMixin(object):
+
+    def test_noaccess(self):
+        toy = ToyNoAccess('A')
+        assert not toy.is_access_mixedin

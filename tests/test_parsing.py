@@ -144,3 +144,13 @@ class TestParsing(object):
             else:
                 assert out['mangaid'] == value
                 assert out['plateifu'] is None
+
+    def test_keymap(self):
+        keymap = {'plate': r'\d{4,5}', 'ifu': r'\d{3,5}'}
+        out = parse_data_input('8485-1901', keymap=keymap, inputs=True)
+        obj_patt = out['parsed_inputs']['object_pattern']
+
+        assert out['plate'] == '8485'
+        assert out['ifu'] == '1901'
+        assert '(?P<plate>\\d{4,5})-(?P<ifu>\\d{3,5}))' in obj_patt
+        assert '(?P<plate>(.+)?)-(?P<ifu>(.+)?))' not in obj_patt

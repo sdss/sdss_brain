@@ -166,3 +166,15 @@ in a ``parsed_group`` key where the extracted groups can be accessed.
 
     >>> parse_data_input('abc123', regex='([a-z]+)([0-9]+)')
     {'filename': None, 'objectid': 'abc123', 'parsed_groups': ['abc123', 'abc', '123']}
+
+You can see the input filter and constructed patterns using the ``input`` keyword.  A ``parsed_inputs`` key
+is added to the output containing a dictionary of the created patterns used.
+::
+
+    >>> parse_data_input('abc123', regex='([a-z]+)([0-9]+)', inputs=True)
+    {'filename': None, 'objectid': 'abc123', 'parsed_groups': ['abc123', 'abc', '123'],
+     'parsed_inputs': {'pattern': '^(?P<filename>^[/$.](.+)?(.[a-z]+))|(?P<objectid>(?![/$.])(([a-z]+)([0-9]+)))$',
+                       'input_regex': '([a-z]+)([0-9]+)',
+                       'object_pattern': '(?P<objectid>(?![/$.])(([a-z]+)([0-9]+)))',
+                       'file_pattern': '(?P<filename>^[/$.](.+)?(.[a-z]+))'}}
+
