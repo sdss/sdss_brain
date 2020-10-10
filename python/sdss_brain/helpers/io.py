@@ -57,25 +57,25 @@ def get_mapped_version(name: str, release: str = None, key: str = None) -> Union
     # get the mapped_versions attribute from the configuration
     mapped_versions = config._custom_config.get('mapped_versions', None)
     assert mapped_versions, 'mapped_versions must be defined'
-    assert type(mapped_versions) == dict, 'mapped_versions must be a dictionary'
+    if type(mapped_versions) != dict:
+        raise TypeError('mapped_versions must be a dictionary')
 
     # ensure that the name is a valid entry
-    assert name is not None, 'a valid name must be specified'
-    assert name in mapped_versions, f'{name} not found in mapped_versions dictionary'
+    if name not in mapped_versions:
+        raise ValueError(f'{name} not found in mapped_versions dictionary')
+
     versions = mapped_versions.get(name, None)
-    assert type(versions) == dict, f'release versions for {name} must be a dictionary'
+    if type(versions) != dict:
+        raise TypeError(f'release versions for {name} must be a dictionary')
 
     # ensure that the release is a valid entry
     release = release or config.release
-    assert release in versions, f'release {release} not found in list of {name} versions'
     version = versions.get(release, None)
     if not version:
-        raise BrainError(f'no version found for release {release} in {name}')
+        raise ValueError(f'no version found for release {release} in {name}')
 
     # check for a specific key in the version dictionary
-    if key:
-        assert type(version) == dict, f'version must be a dictionary to access a key,value pair'
-        assert key in version, f'key {key} not found in version'
+    if key and type(version) == dict:
         version = version.get(key, None)
 
     return version
@@ -98,7 +98,8 @@ def load_fits_file(filename: str) -> fits.HDUList:
     '''
 
     path = pathlib.Path(filename)
-    assert path.exists() and path.is_file(), 'input filename must exist and be a file'
+    if not path.exists() and path.is_file():
+        raise FileNotFoundError('input filename must exist and be a file')
 
     assert '.fits' in path.suffixes, 'filename is not a valid FITS file'
 
@@ -106,6 +107,6 @@ def load_fits_file(filename: str) -> fits.HDUList:
         hdulist = fits.open(path)
     except (IOError, OSError) as err:
         log.error(f'Cannot open FITS file {filename}: {err}')
-        raise BrainError(f'Failed to open FITS files {filename}: {err}')
+        raise BrainError(f'Failed to open FITS files {filename}: {err}') from err
     else:
         return hdulist

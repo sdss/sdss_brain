@@ -58,8 +58,8 @@ def create_object_pattern(regex: str = None, keys: list = None, keymap: dict = N
         return pattern
 
     assert keys or keymap, 'Either a list of keys or a keymap must be specified.'
-    assert isinstance(keys, (list, type(None))), 'keys must be a list'
-    assert isinstance(keymap, (dict, type(None))), 'keymap must be a dict'
+    if not isinstance(keys, (list, type(None))) or not isinstance(keymap, (dict, type(None))):
+        raise TypeError('keys must be list; keymap must be a dict')
     if not keys and keymap:
         keys = list(keymap.keys())
 
@@ -153,7 +153,8 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, keymap: d
 
     '''
 
-    assert isinstance(value, (str, pathlib.Path)), 'input value must be a str or pathlib.Path'
+    if not isinstance(value, (str, pathlib.Path)):
+        return ValueError('input value must be a str or pathlib.Path')
 
     # check if regex has named groups
     # is_named = re.findall(r'\?P<(.*?)>', regex) if regex else None
