@@ -31,8 +31,8 @@ class Spectrum(Brain):
         try:
             self.spectrum = Spectrum1D.read(str(self.filename), format=self.specutils_format)
         except IORegistryError:
-            log.error('Could not load Spectrum1D for format '
-                      f'{self.specutils_format}, {self.filename}')
+            log.warning('Could not load Spectrum1D for format '
+                        f'{self.specutils_format}, {self.filename}')
             self.spectrum = None
 
     def _load_object_from_db(self, data=None):

@@ -133,6 +133,7 @@ def load_from_url(url: str) -> fits.HDUList:
 
     b = BytesIO()
     with httpx.stream("GET", url) as r:
+        r.raise_for_status()
         for data in r.iter_bytes():
             b.write(data)
         b.seek(0)
