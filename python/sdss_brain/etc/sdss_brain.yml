@@ -33,4 +33,3 @@ mapped_versions:
     DR12: r5
     DR11: r4
     DR10: r3
-    MPL4: {drpver: v1_5_1, dapver: 1.1.1}

@@ -177,8 +177,8 @@ class MMAMixIn(abc.ABC):
             assert self.filename is None and self.objectid is None, \
                 'if input is set, filename and objectid cannot be set.'
 
-            assert isinstance(data_input, (six.string_types, pathlib.Path)), \
-                'input must be a string or pathlib.Path'
+            if not isinstance(data_input, (six.string_types, pathlib.Path)):
+                raise TypeError('input must be a string or pathlib.Path')
 
             # parse the input data into either a filename or objectid
             parsed_input = self._parse_input(data_input)
