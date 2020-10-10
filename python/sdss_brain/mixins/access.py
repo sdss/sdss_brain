@@ -17,7 +17,7 @@ import time
 from functools import wraps
 
 from sdss_brain import log
-from sdss_brain.exceptions import BrainMissingDependency, BrainUserWarning
+from sdss_brain.exceptions import BrainError, BrainMissingDependency, BrainUserWarning
 from sdss_brain.config import config
 
 try:
@@ -84,8 +84,10 @@ def check_access_params(func):
         assert getattr(inst, 'path_params'), 'the path_params attribute cannot be None'
         assert type(inst.path_params) == dict, 'the path_params attribute must be a dictionary'
         if not all(inst.path_params.values()):
-            log.warning(
-                'Not all path_params are set.  Check any data parsing or how path_params are set.')
+            log.warning('Not all path_params are set.  Check how path_params are set '
+                        'or for a mismatch between path_params and any extracted parameters '
+                        'from _parse_input.  Ensuring any None path_params are set as strings')
+            inst.path_params = dict(zip(inst.path_params.keys(), map(str, inst.path_params.values())))
         return func(*args, **kwargs)
     return wrapper
 
@@ -177,15 +179,19 @@ class AccessMixIn(abc.ABC):
         if force_file:
             return self.filename
 
+        log.debug(f'getting full path for {self.path_name} and params {self.path_params}')
+        msg = 'sdss_access was not able to retrieve the full path of the file.'
+        fullpath = None
         try:
             if url:
                 fullpath = self.access.url(self.path_name, **self.path_params)
             else:
                 fullpath = self.access.full(self.path_name, **self.path_params)
+        except TypeError as ee:
+            log.warning(msg + 'Error: {0}'.format(str(ee)), BrainUserWarning)
+            raise BrainError(f'Bad input type for sdss_access: {ee}') from ee
         except Exception as ee:
-            log.warning('sdss_access was not able to retrieve the full path of the file. '
-                        'Error message is: {0}'.format(str(ee)), BrainUserWarning)
-            fullpath = None
+            log.warning(msg + 'Error: {0}'.format(str(ee)), BrainUserWarning)
         return fullpath
 
     def _setup_access(self, params=None):
@@ -208,6 +214,7 @@ class AccessMixIn(abc.ABC):
 
         # look up the access keys and create attributes
         keys = self.access.lookup_keys(self.path_name)
+        log.debug(f"setting up initial access keys for {keys} for {self.path_name}")
         for k in keys:
             # skip if a class attribute already exists
             if hasattr(self.__class__, k):
