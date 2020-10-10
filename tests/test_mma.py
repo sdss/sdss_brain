@@ -90,7 +90,7 @@ class TestMMAFails(object):
                               ('badpath', 'must be defined in the path templates'),
                               ('notdict', 'path_params attribute must be a dictionary')])
     def test_bad_access_params(self, bad, exp):
-        with pytest.raises(AssertionError) as cm:
+        with pytest.raises((AssertionError, TypeError)) as cm:
             make_badtoy(bad)
         assert exp in str(cm.value)
 
