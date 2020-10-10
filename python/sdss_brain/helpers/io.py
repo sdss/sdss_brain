@@ -12,7 +12,10 @@
 
 
 from __future__ import print_function, division, absolute_import
+import httpx
 import pathlib
+import gzip
+from io import BytesIO
 from typing import Union
 from astropy.io import fits
 from sdss_brain import log
@@ -110,3 +113,31 @@ def load_fits_file(filename: str) -> fits.HDUList:
         raise BrainError(f'Failed to open FITS files {filename}: {err}') from err
     else:
         return hdulist
+
+
+def load_from_url(url: str) -> fits.HDUList:
+    ''' load a file from a remote url using a get requests
+
+    Streams url content with httpx.stream and pipes the response contents
+    into an Astropy FITS file.
+
+    Parameters
+    ----------
+        url : str
+            A url path to a filename
+
+    Returns
+    -------
+        an Astropy `~astropy.io.fits.HDUList`
+    '''
+
+    b = BytesIO()
+    with httpx.stream("GET", url) as r:
+        for data in r.iter_bytes():
+            b.write(data)
+        b.seek(0)
+
+    if url.endswith('.gz'):
+        return fits.open(gzip.open(b, 'rb'))
+    else:
+        return fits.open(b)

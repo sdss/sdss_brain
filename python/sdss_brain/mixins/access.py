@@ -83,7 +83,7 @@ def check_access_params(func):
         assert getattr(inst, 'path_name'), 'the path_name attribute cannot be None'
         assert getattr(inst, 'path_params'), 'the path_params attribute cannot be None'
         assert type(inst.path_params) == dict, 'the path_params attribute must be a dictionary'
-        if not all(inst.path_params.values()):
+        if inst.filename is None and not all(inst.path_params.values()):
             log.warning('Not all path_params are set.  Check how path_params are set '
                         'or for a mismatch between path_params and any extracted parameters '
                         'from _parse_input.  Ensuring any None path_params are set as strings')
