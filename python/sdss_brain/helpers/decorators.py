@@ -16,6 +16,7 @@ from __future__ import print_function, division, absolute_import
 import inspect
 from functools import wraps
 
+from sdss_brain import log
 from sdss_brain.helpers import get_mapped_version, parse_data_input
 
 
@@ -45,6 +46,7 @@ def get_parse_input(regex=None, keys=None, keymap=None, include=None, exclude=No
 
         data = parse_data_input(value, regex=regex, keys=pkeys, keymap=keymap,
                                 include=include, exclude=exclude, order=order, delimiter=delimiter)
+        log.debug(f'parsing data for {value} returns {data}')
 
         for k, v in data.items():
             if k != ['filename', 'objectid']:
@@ -145,6 +147,7 @@ def _set_access_path_params(self):
     ''' Default set_access_path_params applied with the decorator'''
     keys = self.access.lookup_keys(self.path_name)
     self.path_params = {k: getattr(self, k) for k in keys}
+    log.debug(f'setting new access path_params for {self.path_name}: {self.path_params}')
 
 
 @register

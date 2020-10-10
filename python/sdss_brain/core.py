@@ -124,7 +124,7 @@ class HindBrain(Base):
 
     def __enter__(self):
         ''' constructor for context manager '''
-        pass
+        return self
 
     def __exit__(self, type, value, traceback):
         ''' destructor for context manager '''
