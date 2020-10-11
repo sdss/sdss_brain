@@ -43,6 +43,7 @@ class Spectrum(Brain):
         #raise BrainNotImplemented('loading data from API not yet implemented')
 
     def plot(self, **kwargs):
+        ''' A simple quick matplotlib plot '''
         if not self.spectrum:
             return
 
@@ -51,6 +52,7 @@ class Spectrum(Brain):
         return ax
 
 
+# example of using a custom pattern in the sdss_loader
 @sdss_loader(name='spec-lite', mapped_version='eboss:run2d',
              pattern=r'(?P<plateid>\d{4,5})-(?P<mjd>\d{5})-(?P<fiberid>\d{1,4})')
 class Eboss(Spectrum):
@@ -66,56 +68,40 @@ class Eboss(Spectrum):
         return old.replace('>', f', lite={self.lite}>')
 
 
-class Apogee(Spectrum):
+# example of using a access keys to define the pattern in the sdss_loader
+# setting a custom delimiter to "--" since APOGEE field names can have "-" in them.
+@sdss_loader(name='apStar', defaults={'apstar': 'stars', 'prefix': 'ap'}, delimiter='--',
+             mapped_version='apogee:apred', order=['telescope', 'field', 'obj'])
+class ApStar(Spectrum):
+    specutils_format = 'APOGEE apStar'
+
+
+@sdss_loader(name='apVisit', defaults={'prefix': 'ap'}, delimiter='--',
+             mapped_version='apogee:apred', order=['telescope', 'field', 'plate', 'mjd', 'fiber'])
+class ApVisit(Spectrum):
+    specutils_format = 'APOGEE apVisit'
+
+
+# example of overloading the methods manually
+class AspcapStar(Spectrum):
+    specutils_format = 'APOGEE aspcapStar'
+    path_name = 'aspcapStar'
     mapped_version = 'apogee'
 
     def _parse_input(self, value):
-        ''' '''
-        pattern = (r'(?P<telescope>(?:apo|lco)(?:1|25)m)(?:--|;)(?P<field>[a-z0-9A-Z+-_.]+)(?:--|;)'
-                   r'(?P<obj>[a-z0-9A-Z+-_.:]+)')
-        data = parse_data_input(value, regex=pattern)
-        data['objectid'] = data.get('obj', 'objectid')
+        # use the sdss_access keys to form the object id and parse it
+        keys = self.access.lookup_keys(self.path_name)
+        data = parse_data_input(value, keys=keys, delimiter='--',
+                                order=['aspcap', 'telescope', 'field', 'obj'], )
         return data
 
-
-class ApStar(Apogee):
-    specutils_format = 'APOGEE apStar'
-    path_name = 'apStar'
-
     def _set_access_path_params(self):
+        # extract the apred version id based on the data release
         apred = get_mapped_version(self.mapped_version, release=self.release)
-        self.path_params = {'apstar': 'stars', 'prefix': 'ap', 'telescope': self.telescope,
-                            'apred': apred, 'field': self.field, 'obj': self.obj}
 
-
-class ApVisit(Apogee):
-    specutils_format = 'APOGEE apVisit'
-    path_name = 'apVisit'
-
-    def _set_access_path_params(self):
-        apred = get_mapped_version(self.mapped_version, release=self.release)
-        self.path_params = {'prefix': 'ap', 'telescope': self.telescope,
-                            'apred': apred, 'field': self.field, 'plate': self.plate,
-                            'mjd': self.mjd, 'fiber': self.fiberid}
-
-
-class AspcapStar(Apogee):
-    specutils_format = 'APOGEE aspcapStar'
-    path_name = 'aspcapStar'
-
-    def _set_access_path_params(self):
-        apred = get_mapped_version(self.mapped_version, release=self.release)
+        # set the path params using the instance attributes extracted from _parse_input
         self.path_params = {'telescope': self.telescope, 'apred': apred,
                             'field': self.field, 'obj': self.objectid, 'aspcap': self.aspcap}
-
-# In [17]: access.lookup_keys('apStar')
-# Out[17]: ['apred', 'apstar', 'field', 'telescope', 'prefix', 'obj']
-
-# In [18]: access.lookup_keys('apVisit')
-# Out[18]: ['fiber', 'field', 'telescope', 'prefix', 'mjd', 'plate', 'apred']
-
-# In [19]: access.lookup_keys('aspcapStar')
-# Out[19]: ['apred', 'field', 'telescope', 'aspcap', 'obj']
 
 
 @sdss_loader(name='mangacube', defaults={'wave': 'LOG'}, mapped_version='manga:drpver',
