@@ -126,6 +126,7 @@ todo_include_todos = False
 intersphinx_mapping = {'python': ('https://docs.python.org/3.7', None),
                        'astropy': ('http://docs.astropy.org/en/latest', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+                       'specutils': ('https://specutils.readthedocs.io/en/stable', None),
                        'sdss_access': ('https://sdss-tree.rtfd.io/en/latest', None),
                        'sdss_tree': ('https://sdss-access.rtfd.io/en/latest', None),
                        'sdssdb': ('https://sdssdb.rtfd.io/en/latest', None)}

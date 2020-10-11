@@ -15,6 +15,7 @@ from __future__ import print_function, division, absolute_import
 import abc
 import time
 from functools import wraps
+from typing import Type
 
 from sdss_brain import log
 from sdss_brain.exceptions import BrainError, BrainMissingDependency, BrainUserWarning
@@ -28,7 +29,7 @@ except ImportError:
 __all__ = ['AccessMixIn']
 
 
-def create_new_access(release):
+def create_new_access(release: str) -> Type[Access]:
     ''' create a new sdss_access instance
 
     Parameters
@@ -125,7 +126,7 @@ class AccessMixIn(abc.ABC):
 
     path_name: str = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: str, **kwargs: str):
         self._release = kwargs.get('release', None) or config.release
 
         # sdss_access attributes
@@ -138,12 +139,12 @@ class AccessMixIn(abc.ABC):
 
     @property
     @set_access
-    def access(self):
+    def access(self) -> Type[Access]:
         ''' Returns an instance of `~sdss_access.sync.access.Access` '''
         return self._access
 
     @abc.abstractmethod
-    def _set_access_path_params(self):
+    def _set_access_path_params(self) -> None:
         ''' Return the sdss_access path parameters
 
         This method must be overridden by each subclass and must set at least one
@@ -159,7 +160,7 @@ class AccessMixIn(abc.ABC):
         '''
 
     @check_access_params
-    def get_full_path(self, url=None, force_file=None):
+    def get_full_path(self, url: str = None, force_file: bool = None) -> str:
         """ Returns the full path of the file in the tree.
 
         Parameters
@@ -194,7 +195,7 @@ class AccessMixIn(abc.ABC):
             log.warning(msg + 'Error: {0}'.format(str(ee)), BrainUserWarning)
         return fullpath
 
-    def _setup_access(self, params=None):
+    def _setup_access(self, params: dict = None) -> None:
         ''' Set up the initial access parameters
 
         Sets up an initial default path_params dictionary.  Given a provided `path_name`
@@ -236,7 +237,7 @@ class AccessMixIn(abc.ABC):
         self.path_params = {k: getattr(self, k) for k in keys}
 
     @check_access_params
-    def download(self):
+    def download(self) -> None:
         """ Download the file using sdss_access """
 
         self.access.remote()

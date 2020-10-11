@@ -14,12 +14,12 @@
 from __future__ import print_function, division, absolute_import
 import re
 import pathlib
-from typing import Union
+from typing import Match, Pattern, Union
 from itertools import groupby
 from sdss_brain import log
 
 
-def create_object_pattern(regex: str = None, keys: list = None, keymap: dict = None,
+def create_object_pattern(regex: Union[str, Pattern] = None, keys: list = None, keymap: dict = None,
                           delimiter: str = '-', exclude: list = None, include: list = None,
                           order: list = None) -> str:
     """ Create a regex pattern to parse data input by
@@ -203,7 +203,7 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, keymap: d
     return matches
 
 
-def raw_parse(value: str, regex: str = None) -> Union[dict, tuple]:
+def raw_parse(value: str, regex: str = None) -> Match:
     ''' Match a string via a regex pattern with no frills
 
     Parameters

@@ -60,3 +60,18 @@ Helpers
    :members:
    :undoc-members:
    :show-inheritance:
+
+
+Tools
+-----
+
+.. automodule:: sdss_brain.tools.spectra
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: sdss_brain.tools.cubes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+

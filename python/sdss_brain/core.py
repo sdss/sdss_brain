@@ -28,15 +28,15 @@ class Base(abc.ABC):
         return super().__new__(cls)
 
     @abc.abstractmethod
-    def _load_object_from_file(self, data=None):
+    def _load_object_from_file(self, data: object = None) -> None:
         pass
 
     @abc.abstractmethod
-    def _load_object_from_db(self, data=None):
+    def _load_object_from_db(self, data=None) -> None:
         pass
 
     @abc.abstractmethod
-    def _load_object_from_api(self, data=None):
+    def _load_object_from_api(self, data=None) -> None:
         pass
 
 
@@ -85,10 +85,10 @@ class HindBrain(Base):
     _db = None
     mapped_version = None
 
-    def __init__(self, data_input=None, filename=None,
-                 objectid=None, mode=None, data=None,
-                 release=None, download=None,
-                 ignore_db=None, use_db=None):
+    def __init__(self, data_input: str = None, filename: str = None,
+                 objectid: str = None, mode: str = None, data: object = None,
+                 release: str = None, download: bool = None,
+                 ignore_db: bool = None, use_db: bool = None) -> None:
 
         self.data = data
         self._mma.__init__(self, data_input=data_input, filename=filename,

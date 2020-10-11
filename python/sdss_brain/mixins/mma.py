@@ -74,8 +74,9 @@ class MMAMixIn(abc.ABC):
 
     '''
 
-    def __init__(self, data_input=None, filename=None, objectid=None, mode=None,
-                 release=None, download=None, ignore_db=False, use_db=None):
+    def __init__(self, data_input: str = None, filename: str = None, objectid: str = None,
+                 mode: str = None, release: str = None, download: bool = None, ignore_db:
+                 bool = False, use_db: bool = None):
         # data attributes
         self._db = use_db
         self.filename = filename
@@ -115,17 +116,17 @@ class MMAMixIn(abc.ABC):
         assert self.data_origin in ['file', 'db', 'api'], 'data_origin is not properly set.'
 
     @property
-    def release(self):
+    def release(self) -> str:
         """ Returns the release. """
 
         return self._release
 
     @release.setter
-    def release(self, value):
+    def release(self, value: str):
         """Fails when trying to set the release after instantiation."""
         raise BrainError('the release cannot be changed once the object has been instantiated.')
 
-    def _do_local(self):
+    def _do_local(self) -> None:
         """ Check if it's possible to load the data locally."""
 
         if self.filename:
@@ -161,7 +162,7 @@ class MMAMixIn(abc.ABC):
                         raise BrainError('failed to retrieve data using '
                                          'input parameters.')
 
-    def _do_remote(self):
+    def _do_remote(self) -> None:
         """ Check if remote connection is possible."""
 
         if self.filename:
@@ -170,7 +171,7 @@ class MMAMixIn(abc.ABC):
             self.mode = 'remote'
             self.data_origin = 'api'
 
-    def _determine_inputs(self, data_input):
+    def _determine_inputs(self, data_input: str) -> None:
         """ Determines what inputs to use in the decision tree.
 
         Parameters
@@ -223,7 +224,7 @@ class MMAMixIn(abc.ABC):
             assert not self.filename, 'invalid set of inputs.'
 
     @abc.abstractmethod
-    def _parse_input(self, value):
+    def _parse_input(self, value: str) -> dict:
         ''' Parses the input value to determine the kind of input
 
         This method must be overridden by each subclass and contains the logic
@@ -239,21 +240,21 @@ class MMAMixIn(abc.ABC):
         '''
 
     @abc.abstractmethod
-    def download(self):
+    def download(self) -> None:
         ''' Abstract method to download a file '''
         pass
 
     @abc.abstractmethod
-    def get_full_path(self):
+    def get_full_path(self) -> str:
         ''' Abstract method to return a full local file path '''
         pass
 
     @property
-    def is_access_mixedin(self):
+    def is_access_mixedin(self) -> bool:
         ''' Checks if the `~sdss_brain.mixins.access.AccessMixIn` is included '''
         return hasattr(self, 'path_name') and hasattr(self, 'access')
 
-    def _update_access_params(self, params=None):
+    def _update_access_params(self, params: str = None) -> None:
         ''' Updates the path_params attribute with extracted parameters
 
         Parameters
@@ -278,7 +279,7 @@ class MMAMixIn(abc.ABC):
             # for non-access, set attributes from extracted parse_input
             self._set_parsed_attributes(params)
 
-    def _set_parsed_attributes(self, params):
+    def _set_parsed_attributes(self, params: dict) -> None:
         """ Set instance attributes from any extracted params from parse_input
 
         Parameters
