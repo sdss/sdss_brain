@@ -1,5 +1,5 @@
 
 cube:
   objectid: 8485-1901
-  release: DR16
-  path: dr16/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz
+  release: DR15
+  path: $MANGA_SPECTRO_REDUX/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz

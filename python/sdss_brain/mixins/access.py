@@ -223,6 +223,8 @@ class AccessMixIn(abc.ABC):
             # look for a default value
             default = self._path_defaults.get(k, None) if hasattr(
                 self, '_path_defaults') else None
+
+            # set attributes on the instance
             if params:
                 if type(params) != dict:
                     raise TypeError('the path_params attribute must be a dictionary')

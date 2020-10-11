@@ -7,6 +7,7 @@ import pytest
 import os
 import six
 import inspect
+import yaml
 from sdss_brain import tree
 from sdss_brain.config import config
 import sdss_brain.mixins.mma as mma
@@ -99,7 +100,7 @@ def pytest_runtest_setup(item):
 
 @pytest.fixture(scope='session')
 def mocksess_sas(tmp_path_factory):
-    ''' session fixture to change the SAA_BASE_DIR to a temp directory '''
+    ''' session fixture to change the SAS_BASE_DIR to a temp directory '''
     path = str(tmp_path_factory.mktemp('sas'))
     orig_env = os.environ.copy()
     os.environ['SAS_BASE_DIR'] = path
@@ -215,3 +216,27 @@ def make_badtoy(bad):
             return data
 
     return BadToy('A')
+
+
+# read data objects from yaml file
+with open('data/objects.yaml', 'r') as f:
+    objects = yaml.load(f, Loader=yaml.SafeLoader)
+
+
+def get_object(name):
+    ''' Retrieve an object dict from the yaml file '''
+    return objects.get(name, None)
+
+
+@pytest.fixture()
+def make_path(request):
+    """ Fixture to retrieve a path for a given object from objects.yaml """
+    path = None
+    data = get_object(request.param)
+    if data:
+        release = data.get('release', 'DR15')
+        tree.replant_tree(release)
+        path = os.path.expandvars(data.get('path', ''))
+    yield path
+    path = None
+

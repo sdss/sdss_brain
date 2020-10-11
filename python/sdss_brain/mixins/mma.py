@@ -171,7 +171,15 @@ class MMAMixIn(abc.ABC):
             self.data_origin = 'api'
 
     def _determine_inputs(self, data_input):
-        """ Determines what inputs to use in the decision tree. """
+        """ Determines what inputs to use in the decision tree.
+
+        Parameters
+        ----------
+            data_input : str
+                The input string to attempt to parse into a filename or object id
+        """
+
+        parsed_input = None
 
         if data_input:
             assert self.filename is None and self.objectid is None, \
@@ -199,7 +207,7 @@ class MMAMixIn(abc.ABC):
             self.filename = pathlib.Path(self.filename).resolve()
 
         # attempt to update the access path parameters from the filename or parsed data input
-        self._update_access_params()
+        self._update_access_params(params=parsed_input)
 
         # check for any misaligments and misassignments
         if self.filename:
@@ -223,6 +231,11 @@ class MMAMixIn(abc.ABC):
         object identification string.  This method accepts a single argument which is the
         string `data_input` and must return a dictionary containing at least keys
         for "filename" and "objectid".
+
+        Parameters
+        ----------
+            value : str
+                The data_input string to attempt to parse
         '''
 
     @abc.abstractmethod
@@ -240,16 +253,53 @@ class MMAMixIn(abc.ABC):
         ''' Checks if the `~sdss_brain.mixins.access.AccessMixIn` is included '''
         return hasattr(self, 'path_name') and hasattr(self, 'access')
 
-    def _update_access_params(self):
-        ''' Updates the path_params attribute with extracted parameters '''
+    def _update_access_params(self, params=None):
+        ''' Updates the path_params attribute with extracted parameters
+
+        Parameters
+        ----------
+            params : dict
+                The output from the _parse_input method
+        '''
         if self.is_access_mixedin and self.path_name:
             if self.filename:
+                # attempt to extract the path_params from the filename
                 params = self.access.extract(self.path_name, self.filename)
                 if params:
                     self._setup_access(params)
             elif self.objectid:
+                # set attributes from extracted parse_input
+                self._set_parsed_attributes(params)
+                # run the set_access_path_params method
                 self._set_access_path_params()
+                # set attributes from the path_params
                 self._setup_access(self.path_params)
+        elif not self.is_access_mixedin and params:
+            # for non-access, set attributes from extracted parse_input
+            self._set_parsed_attributes(params)
+
+    def _set_parsed_attributes(self, params):
+        """ Set instance attributes from any extracted params from parse_input
+
+        Parameters
+        ----------
+            params : dict
+                The output from the _parse_input method
+        """
+        if not params:
+            return
+
+        if type(params) != dict:
+            raise TypeError('the output of parse_input must be a dictionary')
+        for key, val in params.items():
+            if key in ['filename', 'objectid', 'parsed_groups', 'parsed_inputs']:
+                continue
+
+            # skip if a class attribute already exists
+            if hasattr(self.__class__, key):
+                continue
+
+            setattr(self, key, val)
 
 
 class MMAccess(AccessMixIn, MMAMixIn):
