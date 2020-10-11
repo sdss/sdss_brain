@@ -8,6 +8,11 @@ This is the documentation for the SDSS Python product sdss_brain. The current ve
 
   $ pip install sdss-brain
 
+Or to install with extras
+
+.. code-block:: console
+
+  $ pip install sdss-brain[extras]
 
 Contents
 --------

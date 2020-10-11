@@ -67,6 +67,9 @@ class Spectrum(Brain):
 
         __, ax = plt.subplots()
         ax.plot(self.spectrum.wavelength, self.spectrum.flux, **kwargs)
+        ax.set_ylabel(f'Flux [{self.spectrum.flux.unit}]')
+        ax.set_xlabel(f'Wavelength [{self.spectrum.wavelength.unit}]')
+        ax.set_title(f'Object: {self.objectid}')
         return ax
 
 
