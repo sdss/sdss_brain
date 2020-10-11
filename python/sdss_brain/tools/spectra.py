@@ -34,8 +34,8 @@ class Spectrum(Brain):
         spectrum : `~specutils.Spectrum1D`
             An Astropy specutils Spectrum1D object
     '''
-    spectrum = None
-    specutils_format = None
+    spectrum: str = None
+    specutils_format: str = None
 
     def _load_object_from_file(self, data=None):
         self.data = data or load_fits_file(self.filename)
@@ -75,7 +75,7 @@ class Eboss(Spectrum):
             If True, loads the "spec-lite" spectral data.  When False, loads
             the "full" spectral data.Default is True.
     """
-    specutils_format = 'SDSS-III/IV spec'
+    specutils_format: str = 'SDSS-III/IV spec'
 
     def __init__(self, *args: str, lite: bool = True, **kwargs: str) -> None:
         self.lite = lite
@@ -93,22 +93,22 @@ class Eboss(Spectrum):
              mapped_version='apogee:apred', order=['telescope', 'field', 'obj'])
 class ApStar(Spectrum):
     """ Class representing an APOGEE combined spectrum for a single star """
-    specutils_format = 'APOGEE apStar'
+    specutils_format: str = 'APOGEE apStar'
 
 
 @sdss_loader(name='apVisit', defaults={'prefix': 'ap'}, delimiter='--',
              mapped_version='apogee:apred', order=['telescope', 'field', 'plate', 'mjd', 'fiber'])
 class ApVisit(Spectrum):
     """ Class representing an APOGEE single visit spectrum for a given star """
-    specutils_format = 'APOGEE apVisit'
+    specutils_format: str = 'APOGEE apVisit'
 
 
 # example of overloading the methods manually
 class AspcapStar(Spectrum):
     """ Class representing an APOGEE spectrum for a single star with ASPCAP results """
-    specutils_format = 'APOGEE aspcapStar'
-    path_name = 'aspcapStar'
-    mapped_version = 'apogee'
+    specutils_format: str = 'APOGEE aspcapStar'
+    path_name: str = 'aspcapStar'
+    mapped_version: str = 'apogee'
 
     def _parse_input(self, value):
         # use the sdss_access keys to form the object id and parse it
