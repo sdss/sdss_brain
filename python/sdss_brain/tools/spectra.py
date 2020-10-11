@@ -69,7 +69,7 @@ class Spectrum(Brain):
         ax.plot(self.spectrum.wavelength, self.spectrum.flux, **kwargs)
         ax.set_ylabel(f'Flux [{self.spectrum.flux.unit}]')
         ax.set_xlabel(f'Wavelength [{self.spectrum.wavelength.unit}]')
-        ax.set_title(f'Object: {self.objectid}')
+        ax.set_title(f'Object: {self.objectid or self.filename.stem}')
         return ax
 
 

@@ -151,7 +151,7 @@ class MMAMixIn(abc.ABC):
 
                 if fullpath and os.path.exists(fullpath):
                     self.mode = 'local'
-                    self.filename = fullpath
+                    self.filename = pathlib.Path(fullpath)
                     self.data_origin = 'file'
                 else:
                     # optionally download the file
