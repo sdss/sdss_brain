@@ -12,13 +12,17 @@
 
 
 from __future__ import print_function, division, absolute_import
-import matplotlib.pyplot as plt
+
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    plt = None
 from astropy.io.registry import IORegistryError
 from specutils import Spectrum1D
 
 from sdss_brain import log
 from sdss_brain.core import Brain
-from sdss_brain.exceptions import BrainNotImplemented
+from sdss_brain.exceptions import BrainNotImplemented, BrainMissingDependency
 from sdss_brain.helpers import sdss_loader, get_mapped_version, load_fits_file, parse_data_input
 
 
@@ -57,6 +61,9 @@ class Spectrum(Brain):
         ''' A simple quick matplotlib plot of the spectrum'''
         if not self.spectrum:
             return
+
+        if not plt:
+            raise BrainMissingDependency("Package matplotlib not installed.")
 
         __, ax = plt.subplots()
         ax.plot(self.spectrum.wavelength, self.spectrum.flux, **kwargs)
