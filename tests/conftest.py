@@ -228,15 +228,21 @@ def get_object(name):
     return objects.get(name, None)
 
 
-@pytest.fixture()
-def make_path(request):
-    """ Fixture to retrieve a path for a given object from objects.yaml """
+def get_path(name):
+    ''' Function to return a path name '''
     path = None
-    data = get_object(request.param)
+    data = get_object(name)
     if data:
         release = data.get('release', 'DR15')
         tree.replant_tree(release.lower())
         path = os.path.expandvars(data.get('path', ''))
+    return path
+
+
+@pytest.fixture()
+def make_path(request):
+    """ Fixture to retrieve a path for a given object from objects.yaml """
+    path = get_path(request.param)
     yield path
     path = None
 

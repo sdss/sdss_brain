@@ -16,6 +16,8 @@ import os
 import re
 
 import pytest
+from tests.conftest import get_path
+
 from astropy.io import fits
 
 from sdss_brain.core import Brain, BrainNoAccess
@@ -163,7 +165,13 @@ def asserts(cube):
 
 @pytest.mark.parametrize('name',
                          [('manual_unnamed'), ('manual_named'), ('parse_explicit'),
-                          ('parse_pattern'), ('parse_keys'), ('parse_file'), ('by_file'),
+                          ('parse_pattern'), ('parse_keys'),
+                          pytest.param('parse_file',
+                                       marks=pytest.mark.datasource(
+                                           get_path('cube'), data=True)),
+                          pytest.param('by_file',
+                                       marks=pytest.mark.datasource(
+                                           get_path('cube'), data=True)),
                           ('loader'), ('loader_pattern')])
 @pytest.mark.parametrize('make_path', ['cube'], indirect=True)
 def test_correct_set_params(make_path, name):
