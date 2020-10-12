@@ -65,7 +65,8 @@ class Spectrum(Brain):
             log.warning('Could not load Spectrum1D for format '
                         f'{self.specutils_format}, {self.filename}')
 
-    def plot(self, **kwargs):
+    def plot(self, ax=None, x_label: str = 'Wavelength', y_label: str = 'Flux', title: str = None,
+             **kwargs):
         ''' A simple quick matplotlib plot of the spectrum'''
         if not self.spectrum:
             return
@@ -73,11 +74,14 @@ class Spectrum(Brain):
         if not plt:
             raise BrainMissingDependency("Package matplotlib not installed.")
 
-        __, ax = plt.subplots()
+        if not ax:
+            ax = plt.gca()
+
+        title = title or f'Object: {self.objectid or self.filename.stem}'
         ax.plot(self.spectrum.wavelength, self.spectrum.flux, **kwargs)
-        ax.set_ylabel(f'Flux [{self.spectrum.flux.unit}]')
-        ax.set_xlabel(f'Wavelength [{self.spectrum.wavelength.unit}]')
-        ax.set_title(f'Object: {self.objectid or self.filename.stem}')
+        ax.set_ylabel(f'{y_label} [{self.spectrum.flux.unit.to_string(format="latex_inline")}]')
+        ax.set_xlabel(f'{x_label} [{self.spectrum.wavelength.unit.to_string(format="latex_inline")}]')
+        ax.set_title(title)
         return ax
 
 
