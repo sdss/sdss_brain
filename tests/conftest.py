@@ -235,7 +235,7 @@ def make_path(request):
     data = get_object(request.param)
     if data:
         release = data.get('release', 'DR15')
-        tree.replant_tree(release)
+        tree.replant_tree(release.lower())
         path = os.path.expandvars(data.get('path', ''))
     yield path
     path = None
