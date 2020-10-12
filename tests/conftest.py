@@ -219,7 +219,7 @@ def make_badtoy(bad):
 
 
 # read data objects from yaml file
-with open('data/objects.yaml', 'r') as f:
+with open(os.path.join(os.path.dirname(__file__), 'data/objects.yaml'), 'r') as f:
     objects = yaml.load(f, Loader=yaml.SafeLoader)
 
 
