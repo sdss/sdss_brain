@@ -246,3 +246,8 @@ def make_path(request):
     yield path
     path = None
 
+
+@pytest.fixture(scope='module', autouse=True)
+def reset_tree():
+    ''' resets the tree to the overall config for each module '''
+    tree.replant_tree(config.release.lower())
