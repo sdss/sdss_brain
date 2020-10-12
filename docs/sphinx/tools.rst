@@ -91,7 +91,8 @@ The ``Spectrum`` lets you quickly plot a spectrum to display as a matplotlib plo
 
 Currently there is no SDSS API yet.  However, all tools work remotely by using
 `~sdss_brain.helpers.io.load_from_url`, a function that streams the file via an HTTP get request and loads
-its contents into an in-memory FITS object.
+its contents into an in-memory FITS object.  Let's load a different EBOSS spectral fiber, **550**, one
+that we may not have locally.
 ::
 
     >>> # load eboss fiber 550 remotely

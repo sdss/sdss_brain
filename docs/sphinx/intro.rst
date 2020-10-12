@@ -50,7 +50,7 @@ Multi-modal data access can still be provided to files without defined paths in 
 - ``get_full_path``: Returns a local filepath to a data file
 - ``download``: Downloads a file from a remote location to a local path on disk
 
-There exists a version of the ``Brain`` with with standard MMA mixed in.  Sub-classing from
+There exists a version of the ``Brain`` with the standard MMA mixed in.  Sub-classing from
 `~sdss_brain.core.BrainNoAccess` will give you functionality of the ``Brain`` but without reliance on
 ``sdss_access`` paths.
 
@@ -203,11 +203,16 @@ Now the ``data_origin`` is set to ``file``.  If we don't have the file locally, 
     >>> cube
         <MangaCube objectid='8485-1902', mode='remote', data_origin='api'>
 
+Now that we've seen how to create a tool, take a look at :ref:`tools` for a set of starter tools to begin
+using, aid in advanced science-specific customization, or simply as alternative examples of how to
+create new tools.
 
 .. _helpers:
 
 Conveniences for the MMA
 ------------------------
+
+There are several conveniences available when developing a new tool using the ``Brain``.
 
 .. _decorators:
 
