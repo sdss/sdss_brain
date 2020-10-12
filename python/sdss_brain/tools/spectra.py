@@ -23,7 +23,8 @@ from specutils import Spectrum1D
 from sdss_brain import log
 from sdss_brain.core import Brain
 from sdss_brain.exceptions import BrainNotImplemented, BrainMissingDependency
-from sdss_brain.helpers import sdss_loader, get_mapped_version, load_fits_file, parse_data_input
+from sdss_brain.helpers import (sdss_loader, get_mapped_version, load_fits_file, parse_data_input,
+                                load_from_url)
 
 
 class Spectrum(Brain):
@@ -41,21 +42,28 @@ class Spectrum(Brain):
     spectrum: str = None
     specutils_format: str = None
 
-    def _load_object_from_file(self, data=None):
+    def _load_object_from_file(self, data=None) -> None:
         self.data = data or load_fits_file(self.filename)
         self.header = self.data['PRIMARY'].header
+        self._load_spectrum()
+
+    def _load_object_from_db(self, data=None) -> None:
+        raise BrainNotImplemented('This method must be implemented by the user')
+
+    def _load_object_from_api(self, data=None) -> None:
+        # for now, do a simple get request to grab the file into memory
+        self.data = data or load_from_url(self.get_full_path(url=True))
+        self.header = self.data['PRIMARY'].header
+        self._load_spectrum()
+
+    def _load_spectrum(self) -> None:
+        ''' Load the `~specutils.Spectrum1D` object '''
         try:
+            # change this to self.data when specutils 1.1.1 is released
             self.spectrum = Spectrum1D.read(str(self.filename), format=self.specutils_format)
         except IORegistryError:
             log.warning('Could not load Spectrum1D for format '
                         f'{self.specutils_format}, {self.filename}')
-
-    def _load_object_from_db(self, data=None):
-        raise BrainNotImplemented('This method must be implemented by the user')
-
-    def _load_object_from_api(self, data=None):
-        pass
-        #raise BrainNotImplemented('loading data from API not yet implemented')
 
     def plot(self, **kwargs):
         ''' A simple quick matplotlib plot of the spectrum'''

@@ -92,7 +92,7 @@ class MMAMixIn(abc.ABC):
         # determine the input
         self._determine_inputs(data_input)
 
-        assert self.mode in ['auto', 'local', 'remote']
+        assert self.mode in ['auto', 'local', 'remote'], 'mode must be auto, local, or remote'
         assert self.filename is not None or self.objectid is not None, 'no inputs set.'
 
         # perform the multi-modal data access

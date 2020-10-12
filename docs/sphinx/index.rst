@@ -21,10 +21,10 @@ Contents
   :maxdepth: 2
 
   Introduction to sdss_brain <intro>
+  Convenience Tools <tools>
   About the global configuration <config>
   How to map specific version numbers to Data Release ids <version>
   How to create and parse a custom objectid as valid data input <parsing>
-  Convenience Tools <tools>
 
 Reference
 ---------

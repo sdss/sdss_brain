@@ -12,7 +12,7 @@ SDSS user experience.
 This package provides the following:
 
 - Multi-Modal data access with the `~sdss_brain.mixins.mma.MMAccess` and `~sdss_brain.core.Brain` classes
--
+- Convenient starter tools for spectra with
 
 .. _mma:
 
@@ -142,9 +142,10 @@ See :ref:`helpers` for more information.
 
 Finally we define the ``_load_object_from_file`` method to load FITS file data using a ``load_fits_file``
 helper function.  These methods can perform any number of tasks related to handling of said data.  In
-this example, we keep it simple by only loading the data itself.  Note that we must define all abstract
-methods even if we aren't ready to use them.  Thus we also define placeholders for the `api` and `db`
-load methods.
+this example, we keep it simple by only loading the data itself into the ``data`` attribute.  The ``data``
+attribute is a common attribute to store any data loaded from files, a db, or over the API.  Note that we
+must define all abstract methods even if we aren't ready to use them.  Thus we also define placeholders
+for the `api` and `db` load methods.
 
 Now that we have our class defined, let's see it in use.  We can explicitly load a filename.
 ::

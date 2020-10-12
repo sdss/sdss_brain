@@ -4,8 +4,8 @@
 Convenience Tools
 -----------------
 
-`sdss_brain` offers starter tools that can be further customized and subclassed to enable enhancements
-specific to the science domain.
+`sdss_brain` offers starter tools, based off the ``Brain``, that can be further customized and subclassed
+to enable enhancements specific to the science domain.
 
 Spectral Data
 ^^^^^^^^^^^^^
@@ -13,7 +13,7 @@ Spectral Data
 For spectral data, the ``Spectrum`` helper class exists that loads underlying spectral data.  A few starter
 tools are currently available for SDSS spectral data.  Available sub-tools are:
 
-- `~sdss_brain.tools.spectra.Eboss`:  single fiber SDSS BOSS / EBOSS spectral
+- `~sdss_brain.tools.spectra.Eboss`:  single fiber SDSS BOSS / EBOSS spectra
 - `~sdss_brain.tools.cubes.MangaCube`: SDSS Manga IFU data cubes
 - `~sdss_brain.tools.spectra.ApStar`: SDSS APOGEE-2 combined spectra for a single star
 - `~sdss_brain.tools.spectra.ApVisit`: SDSS APOGEE-2 single visit spectra for a given star
@@ -86,6 +86,33 @@ The ``Spectrum`` lets you quickly plot a spectrum to display as a matplotlib plo
 
 .. image:: _static/eboss_spectrum_example.png
     :width: 600px
-    :align: left
+    :align: center
     :alt: eboss spectrum
 
+Currently there is no SDSS API yet.  However, all tools work remotely by using
+`~sdss_brain.helpers.io.load_from_url`, a function that streams the file via an HTTP get request and loads
+its contents into an in-memory FITS object.
+::
+
+    >>> # load eboss fiber 550 remotely
+    >>> e = Eboss('3606-55182-0550', release='DR14')
+    >>> e
+    <Eboss objectid='3606-55182-0550', mode='remote', data_origin='api', lite=True>
+
+    >>> e.spectrum
+    <Spectrum1D(flux=<Quantity [ 8.872343  ,  0.41632798, -4.9438033 , ...,  1.0025655 ,
+            -1.176005  ,  8.128782  ] 1e-17 erg / (Angstrom cm2 s)>, spectral_axis=<SpectralAxis [ 3571.9065,  3572.7283,  3573.552 , ..., 10358.569 , 10360.958 ,
+    10363.348 ] Angstrom>, uncertainty=InverseVariance([0.00840226, 0.01222116, 0.01264216, ..., 0.04095282,
+                    0.05368033, 0.06472613]))>
+
+
+Context Managers
+^^^^^^^^^^^^^^^^
+
+The ``Brain`` and all subclasses open FITS data and make it directly accessible via the ``data`` attribute.
+Each tool or ``Brain`` subclass comes with a destructor method that should safely close any open files,
+database connections, or remote request sessions.  Alternatively you can use each tool as a contextmanager.
+::
+
+    with Eboss(s, release='DR14') as e:
+        spectrum = e.spectrum
