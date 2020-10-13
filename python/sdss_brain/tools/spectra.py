@@ -59,8 +59,8 @@ class Spectrum(Brain):
     def _load_spectrum(self) -> None:
         ''' Load the `~specutils.Spectrum1D` object '''
         try:
-            # change this to self.data when specutils 1.1.1 is released
-            self.spectrum = Spectrum1D.read(str(self.filename), format=self.specutils_format)
+            # check robustness of this to self.data/self.filename when specutils 1.1.1 is released
+            self.spectrum = Spectrum1D.read(self.data, format=self.specutils_format)
         except IORegistryError:
             log.warning('Could not load Spectrum1D for format '
                         f'{self.specutils_format}, {self.filename}')
