@@ -5,7 +5,7 @@ name: Python application
 
 on:
   push:
-    branches: [ master, access_fix ]
+    branches: [ master, spectrum ]
   pull_request:
     branches: [ master ]
 

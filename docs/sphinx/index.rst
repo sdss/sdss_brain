@@ -8,6 +8,11 @@ This is the documentation for the SDSS Python product sdss_brain. The current ve
 
   $ pip install sdss-brain
 
+Or to install with extras
+
+.. code-block:: console
+
+  $ pip install sdss-brain[extras]
 
 Contents
 --------
@@ -16,6 +21,7 @@ Contents
   :maxdepth: 2
 
   Introduction to sdss_brain <intro>
+  Convenience Tools <tools>
   About the global configuration <config>
   How to map specific version numbers to Data Release ids <version>
   How to create and parse a custom objectid as valid data input <parsing>

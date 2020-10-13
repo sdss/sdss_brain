@@ -14,12 +14,12 @@
 from __future__ import print_function, division, absolute_import
 import re
 import pathlib
-from typing import Union
+from typing import Match, Pattern, Union
 from itertools import groupby
 from sdss_brain import log
 
 
-def create_object_pattern(regex: str = None, keys: list = None, keymap: dict = None,
+def create_object_pattern(regex: Union[str, Pattern] = None, keys: list = None, keymap: dict = None,
                           delimiter: str = '-', exclude: list = None, include: list = None,
                           order: list = None) -> str:
     """ Create a regex pattern to parse data input by
@@ -159,6 +159,10 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, keymap: d
     # check if regex has named groups
     # is_named = re.findall(r'\?P<(.*?)>', regex) if regex else None
 
+    # check if regex is a compiled pattern already; if so, strip out string pattern
+    if regex and type(regex) == re.Pattern:
+        regex = regex.pattern
+
     # set default file pattern
     file_pattern = r'(?P<filename>^[/$.](.+)?(.[a-z]+))'
 
@@ -169,6 +173,10 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, keymap: d
     # final pattern
     pattern = fr'^{file_pattern}|{obj_pattern}$'
 
+    # store pattern inputs
+    input_patts = {'pattern': pattern, 'input_regex': regex,
+                   'object_pattern': obj_pattern, 'file_pattern': file_pattern}
+
     # compile and match the patterm
     comp_pattern = re.compile(pattern)
     pattern_match = re.match(comp_pattern, str(value))
@@ -176,6 +184,8 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, keymap: d
     # if no match, assume value is a filename and return nothing
     if not pattern_match:
         log.warning('No pattern match found.  Defaulting to input value as a filename.')
+        if inputs:
+            return {'filename': value, 'parsed_inputs': input_patts}
         return {'filename': value}
 
     # check for named group, then any groups, then a match without groups
@@ -188,12 +198,12 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, keymap: d
 
     # store the parser inputs
     if inputs:
-        matches['parsed_inputs'] = {'pattern': pattern, 'input_regex': regex,
-                                    'object_pattern': obj_pattern, 'file_pattern': file_pattern}
+        matches['parsed_inputs'] = input_patts
+
     return matches
 
 
-def raw_parse(value: str, regex: str = None) -> Union[dict, tuple]:
+def raw_parse(value: str, regex: str = None) -> Match:
     ''' Match a string via a regex pattern with no frills
 
     Parameters

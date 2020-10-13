@@ -28,15 +28,15 @@ class Base(abc.ABC):
         return super().__new__(cls)
 
     @abc.abstractmethod
-    def _load_object_from_file(self, data=None):
+    def _load_object_from_file(self, data: object = None) -> None:
         pass
 
     @abc.abstractmethod
-    def _load_object_from_db(self, data=None):
+    def _load_object_from_db(self, data=None) -> None:
         pass
 
     @abc.abstractmethod
-    def _load_object_from_api(self, data=None):
+    def _load_object_from_api(self, data=None) -> None:
         pass
 
 
@@ -85,10 +85,10 @@ class HindBrain(Base):
     _db = None
     mapped_version = None
 
-    def __init__(self, data_input=None, filename=None,
-                 objectid=None, mode=None, data=None,
-                 release=None, download=None,
-                 ignore_db=None, use_db=None):
+    def __init__(self, data_input: str = None, filename: str = None,
+                 objectid: str = None, mode: str = None, data: object = None,
+                 release: str = None, download: bool = None,
+                 ignore_db: bool = None, use_db: bool = None) -> None:
 
         self.data = data
         self._mma.__init__(self, data_input=data_input, filename=filename,
@@ -109,9 +109,27 @@ class HindBrain(Base):
                 f"data_origin='{self.data_origin}'>")
 
     def __del__(self):
-        ''' Destructor for closing FITS files. '''
+        ''' Destructor for closing open objects '''
+        self._close()
+
+    def _close(self):
+        ''' close open object for each data_origin '''
+        # close open FITS files
         if self.data_origin == 'file' and isinstance(self.data, fits.HDUList):
             self.data.close()
+        elif self.data_origin == 'db':
+            pass
+        elif self.data_origin == 'api':
+            pass
+
+    def __enter__(self):
+        ''' constructor for context manager '''
+        return self
+
+    def __exit__(self, type, value, traceback):
+        ''' destructor for context manager '''
+        self._close()
+        return True
 
 
 class Brain(HindBrain, MMAccess):

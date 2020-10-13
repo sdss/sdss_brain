@@ -15,9 +15,12 @@ from __future__ import print_function, division, absolute_import
 
 import inspect
 from functools import wraps
+from typing import Callable, Type, TypeVar
 
+from sdss_brain import log
 from sdss_brain.helpers import get_mapped_version, parse_data_input
 
+T = TypeVar('T')
 
 # global registry of decorators
 registry = {}
@@ -32,8 +35,9 @@ def register(func):
     return wrapper
 
 
-def get_parse_input(regex=None, keys=None, keymap=None, include=None, exclude=None,
-                    order=None, delimiter=None):
+def get_parse_input(regex: str = None, keys: list = None, keymap: dict = None,
+                    exclude: list = None, include: list = None,
+                    order: list = None, delimiter: str = None) -> Callable:
     """ Generate a default parse_input method to be attached to a class """
 
     def _parse_input(self, value):
@@ -45,6 +49,7 @@ def get_parse_input(regex=None, keys=None, keymap=None, include=None, exclude=No
 
         data = parse_data_input(value, regex=regex, keys=pkeys, keymap=keymap,
                                 include=include, exclude=exclude, order=order, delimiter=delimiter)
+        log.debug(f'parsing data for {value} returns {data}')
 
         for k, v in data.items():
             if k != ['filename', 'objectid']:
@@ -53,7 +58,7 @@ def get_parse_input(regex=None, keys=None, keymap=None, include=None, exclude=No
     return _parse_input
 
 
-def create_mapped_properties(kls, mapped_version):
+def create_mapped_properties(kls: Type[T], mapped_version: str):
     ''' Create new read-only properties on a given class
 
     Creates new read-only properties that extracts a specific version id to an input
@@ -87,8 +92,9 @@ def create_mapped_properties(kls, mapped_version):
 
 
 @register
-def parser_loader(kls=None, *, pattern=None, keys=None, keymap=None, include=None, exclude=None,
-                  order=None, delimiter=None):
+def parser_loader(kls: Type[T] = None, *, pattern: str = None, keys: list = None,
+                  keymap: dict = None, exclude: list = None, include: list = None,
+                  order: list = None, delimiter: str = None) -> Type[T]:
     """ Class decorator to reduce boilerplate around definition of parse_input method
 
     Decorator to generate a default `_parse_input` method to be attached to a class.
@@ -145,10 +151,12 @@ def _set_access_path_params(self):
     ''' Default set_access_path_params applied with the decorator'''
     keys = self.access.lookup_keys(self.path_name)
     self.path_params = {k: getattr(self, k) for k in keys}
+    log.debug(f'setting new access path_params for {self.path_name}: {self.path_params}')
 
 
 @register
-def access_loader(kls=None, *, name=None, defaults={}, mapped_version=None):
+def access_loader(kls: Type[T] = None, *, name: str = None, defaults: dict = {},
+                  mapped_version: str = None) -> Type[T]:
     """ Class decorator to reduce boilerplate around setting of sdss_access parameters
 
     Decorator to generate a default `_set_access_path_params` method given a template
@@ -239,7 +247,7 @@ def use_decorators(*args):
 
 
 @use_decorators('access_loader', 'parser_loader')
-def sdss_loader(kls=None, *args, **kwargs):
+def sdss_loader(kls: Type[T] = None, *args: str, **kwargs: str) -> Type[T]:
     """ Class decorator that combines and applies other class decorators
 
     This decorator applies the decorators specified in `use_decorators` to

@@ -15,9 +15,10 @@ from __future__ import print_function, division, absolute_import
 import abc
 import time
 from functools import wraps
+from typing import Type
 
 from sdss_brain import log
-from sdss_brain.exceptions import BrainMissingDependency, BrainUserWarning
+from sdss_brain.exceptions import BrainError, BrainMissingDependency, BrainUserWarning
 from sdss_brain.config import config
 
 try:
@@ -28,7 +29,7 @@ except ImportError:
 __all__ = ['AccessMixIn']
 
 
-def create_new_access(release):
+def create_new_access(release: str) -> Type[Access]:
     ''' create a new sdss_access instance
 
     Parameters
@@ -83,9 +84,11 @@ def check_access_params(func):
         assert getattr(inst, 'path_name'), 'the path_name attribute cannot be None'
         assert getattr(inst, 'path_params'), 'the path_params attribute cannot be None'
         assert type(inst.path_params) == dict, 'the path_params attribute must be a dictionary'
-        if not all(inst.path_params.values()):
-            log.warning(
-                'Not all path_params are set.  Check any data parsing or how path_params are set.')
+        if inst.filename is None and not all(inst.path_params.values()):
+            log.warning('Not all path_params are set.  Check how path_params are set '
+                        'or for a mismatch between path_params and any extracted parameters '
+                        'from _parse_input.  Ensuring any None path_params are set as strings')
+            inst.path_params = dict(zip(inst.path_params.keys(), map(str, inst.path_params.values())))
         return func(*args, **kwargs)
     return wrapper
 
@@ -123,7 +126,7 @@ class AccessMixIn(abc.ABC):
 
     path_name: str = None
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: str, **kwargs: str):
         self._release = kwargs.get('release', None) or config.release
 
         # sdss_access attributes
@@ -136,12 +139,12 @@ class AccessMixIn(abc.ABC):
 
     @property
     @set_access
-    def access(self):
+    def access(self) -> Type[Access]:
         ''' Returns an instance of `~sdss_access.sync.access.Access` '''
         return self._access
 
     @abc.abstractmethod
-    def _set_access_path_params(self):
+    def _set_access_path_params(self) -> None:
         ''' Return the sdss_access path parameters
 
         This method must be overridden by each subclass and must set at least one
@@ -157,7 +160,7 @@ class AccessMixIn(abc.ABC):
         '''
 
     @check_access_params
-    def get_full_path(self, url=None, force_file=None):
+    def get_full_path(self, url: str = None, force_file: bool = None) -> str:
         """ Returns the full path of the file in the tree.
 
         Parameters
@@ -177,18 +180,22 @@ class AccessMixIn(abc.ABC):
         if force_file:
             return self.filename
 
+        log.debug(f'getting full path for {self.path_name} and params {self.path_params}')
+        msg = 'sdss_access was not able to retrieve the full path of the file.'
+        fullpath = None
         try:
             if url:
                 fullpath = self.access.url(self.path_name, **self.path_params)
             else:
                 fullpath = self.access.full(self.path_name, **self.path_params)
+        except TypeError as ee:
+            log.warning(msg + 'Error: {0}'.format(str(ee)), BrainUserWarning)
+            raise BrainError(f'Bad input type for sdss_access: {ee}') from ee
         except Exception as ee:
-            log.warning('sdss_access was not able to retrieve the full path of the file. '
-                        'Error message is: {0}'.format(str(ee)), BrainUserWarning)
-            fullpath = None
+            log.warning(msg + 'Error: {0}'.format(str(ee)), BrainUserWarning)
         return fullpath
 
-    def _setup_access(self, params=None):
+    def _setup_access(self, params: dict = None) -> None:
         ''' Set up the initial access parameters
 
         Sets up an initial default path_params dictionary.  Given a provided `path_name`
@@ -208,6 +215,7 @@ class AccessMixIn(abc.ABC):
 
         # look up the access keys and create attributes
         keys = self.access.lookup_keys(self.path_name)
+        log.debug(f"setting up initial access keys for {keys} for {self.path_name}")
         for k in keys:
             # skip if a class attribute already exists
             if hasattr(self.__class__, k):
@@ -216,6 +224,8 @@ class AccessMixIn(abc.ABC):
             # look for a default value
             default = self._path_defaults.get(k, None) if hasattr(
                 self, '_path_defaults') else None
+
+            # set attributes on the instance
             if params:
                 if type(params) != dict:
                     raise TypeError('the path_params attribute must be a dictionary')
@@ -227,7 +237,7 @@ class AccessMixIn(abc.ABC):
         self.path_params = {k: getattr(self, k) for k in keys}
 
     @check_access_params
-    def download(self):
+    def download(self) -> None:
         """ Download the file using sdss_access """
 
         self.access.remote()

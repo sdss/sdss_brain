@@ -12,7 +12,7 @@ SDSS user experience.
 This package provides the following:
 
 - Multi-Modal data access with the `~sdss_brain.mixins.mma.MMAccess` and `~sdss_brain.core.Brain` classes
--
+- Convenient :ref:`starter tools <tools>` for spectra with the `~sdss_brain.tools.spectra.Spectrum` class
 
 .. _mma:
 
@@ -50,7 +50,7 @@ Multi-modal data access can still be provided to files without defined paths in 
 - ``get_full_path``: Returns a local filepath to a data file
 - ``download``: Downloads a file from a remote location to a local path on disk
 
-There exists a version of the ``Brain`` with with standard MMA mixed in.  Sub-classing from
+There exists a version of the ``Brain`` with the standard MMA mixed in.  Sub-classing from
 `~sdss_brain.core.BrainNoAccess` will give you functionality of the ``Brain`` but without reliance on
 ``sdss_access`` paths.
 
@@ -142,9 +142,10 @@ See :ref:`helpers` for more information.
 
 Finally we define the ``_load_object_from_file`` method to load FITS file data using a ``load_fits_file``
 helper function.  These methods can perform any number of tasks related to handling of said data.  In
-this example, we keep it simple by only loading the data itself.  Note that we must define all abstract
-methods even if we aren't ready to use them.  Thus we also define placeholders for the `api` and `db`
-load methods.
+this example, we keep it simple by only loading the data itself into the ``data`` attribute.  The ``data``
+attribute is a common attribute to store any data loaded from files, a db, or over the API.  Note that we
+must define all abstract methods even if we aren't ready to use them.  Thus we also define placeholders
+for the `api` and `db` load methods.
 
 Now that we have our class defined, let's see it in use.  We can explicitly load a filename.
 ::
@@ -202,11 +203,16 @@ Now the ``data_origin`` is set to ``file``.  If we don't have the file locally, 
     >>> cube
         <MangaCube objectid='8485-1902', mode='remote', data_origin='api'>
 
+Now that we've seen how to create a tool, take a look at :ref:`tools` for a set of starter tools to begin
+using, aid in advanced science-specific customization, or simply as alternative examples of how to
+create new tools.
 
 .. _helpers:
 
 Conveniences for the MMA
 ------------------------
+
+There are several conveniences available when developing a new tool using the ``Brain``.
 
 .. _decorators:
 

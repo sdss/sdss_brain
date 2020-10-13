@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
+#
 # Filename: config.py
 # Project: sdss_brain
 # Author: Brian Cherinka
@@ -37,26 +37,26 @@ class Config(object):
         return f'<SDSSConfig(release={self.release}, mode={self.mode})>'
 
     @property
-    def mode(self):
+    def mode(self) -> str:
         return self._mode
 
     @mode.setter
-    def mode(self, value):
+    def mode(self, value: str):
         assert value in ['local', 'remote', 'auto'], ('config.mode must be "local",'
                                                       '"remote", or "auto".')
         self._mode = value
 
     @property
-    def release(self):
+    def release(self) -> str:
         return self._release
 
     @release.setter
-    def release(self, value):
+    def release(self, value: str) -> None:
         value = value.upper()
         if value not in self._allowed_releases:
             raise BrainError('trying to set an invalid release version. Valid releases are: {0}'
                              .format(', '.join(self._allowed_releases)))
-        
+
         # replant the tree
         if value.lower() == 'work':
             tree.replant_tree('sdsswork')
@@ -65,7 +65,7 @@ class Config(object):
 
         self._release = value
 
-    def set_release(self, version=None):
+    def set_release(self, version: str = None) -> None:
         ''' Set a new release
 
         If version not specified, uses the latest public DR
@@ -79,12 +79,16 @@ class Config(object):
             log.info(f'Setting release to latest: {version}')
         self.release = version
 
-    def _get_latest_release(self):
+    def _get_latest_release(self) -> None:
         ''' get the latest public DR release '''
         drsonly = [i for i in self._allowed_releases if 'DR' in i]
         return max(drsonly, key=lambda t: int(t.rsplit('DR', 1)[-1]))
 
-    def _load_defaults(self):
+    def list_allowed_releases(self) -> None:
+        ''' list the allowed releases based on the available tree environment configurations '''
+        return self._allowed_releases
+
+    def _load_defaults(self) -> None:
         ''' Load the Brain config yaml file and update any parameters '''
 
         # update any matching Config values
