@@ -12,7 +12,7 @@ SDSS user experience.
 This package provides the following:
 
 - Multi-Modal data access with the `~sdss_brain.mixins.mma.MMAccess` and `~sdss_brain.core.Brain` classes
-- Convenient starter tools for spectra with
+- Convenient :ref:`starter tools <tools>` for spectra with the `~sdss_brain.tools.spectra.Spectrum` class
 
 .. _mma:
 

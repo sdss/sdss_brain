@@ -19,6 +19,7 @@ except ImportError:
     plt = None
 from astropy.io.registry import IORegistryError
 from specutils import Spectrum1D
+from typing import Type
 
 from sdss_brain import log
 from sdss_brain.core import Brain
@@ -39,7 +40,7 @@ class Spectrum(Brain):
         spectrum : `~specutils.Spectrum1D`
             An Astropy specutils Spectrum1D object
     '''
-    spectrum: str = None
+    spectrum: Type[Spectrum1D] = None
     specutils_format: str = None
 
     def _load_object_from_file(self, data=None) -> None:
