@@ -25,13 +25,15 @@ class Config(object):
         self.download = False
         self.ignore_db = False
 
-        # get allowed releases from the Tree
-        self._allowed_releases = tree.get_available_releases()
-        # set latest release
-        self.release = self._get_latest_release()
-
         # load default config parameters
         self._load_defaults()
+
+        # get allowed releases from the Tree
+        self._allowed_releases = tree.get_available_releases()
+
+        # set a default release or get the latest one
+        default_release = self._custom_config.get('default_release', None)
+        self.release = default_release or self._get_latest_release()
 
     def __repr__(self):
         return f'<SDSSConfig(release={self.release}, mode={self.mode})>'
@@ -54,8 +56,8 @@ class Config(object):
     def release(self, value: str) -> None:
         value = value.upper()
         if value not in self._allowed_releases:
-            raise BrainError('trying to set an invalid release version. Valid releases are: {0}'
-                             .format(', '.join(self._allowed_releases)))
+            raise BrainError(f'trying to set an invalid release version {value}. '
+                             f'Valid releases are: {", ".join(self._allowed_releases)}')
 
         # replant the tree
         if value.lower() == 'work':

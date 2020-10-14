@@ -80,7 +80,8 @@ def get_mapped_version(name: str, release: str = None, key: str = None) -> Union
     release = release or config.release
     version = versions.get(release, None)
     if not version:
-        raise ValueError(f'no version found for release {release} in {name}')
+        raise ValueError(f'no mapped_version found for release {release} in {name}. '
+                         'Check the sdss_brain.yml config file.')
 
     # check for a specific key in the version dictionary
     if key and type(version) == dict:
