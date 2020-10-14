@@ -19,7 +19,7 @@ except ImportError:
     plt = None
 from astropy.io.registry import IORegistryError
 from specutils import Spectrum1D
-from typing import Type
+from typing import Type, Union
 
 from sdss_brain import log
 from sdss_brain.core import Brain
@@ -66,20 +66,72 @@ class Spectrum(Brain):
             log.warning('Could not load Spectrum1D for format '
                         f'{self.specutils_format}, {self.filename}')
 
-    def plot(self, ax=None, x_label: str = 'Wavelength', y_label: str = 'Flux', title: str = None,
-             **kwargs):
-        ''' A simple quick matplotlib plot of the spectrum'''
+    def plot(self, *args, ax=None, x_label: str = 'Wavelength', y_label: str = 'Flux',
+             title: str = None, **kwargs):
+        """ A simple quick matplotlib plot of the spectrum
+
+        Create a quickplot matplotlib line profile plot for spectra
+
+        Parameters
+        ----------
+        args : int|list, optional
+            for multi-dimensional spectra, the index to plot, by default None
+        ax : object, optional
+            An existing matplotlib Axes object by default None
+        x_label : str, optional
+            The x-axis plot label, by default 'Wavelength'
+        y_label : str, optional
+            The y-axis plot label, by default 'Flux'
+        title : str, optional
+            The plot title, by default None
+
+        Returns
+        -------
+        matplotlib.plt.Axes
+            The matplotlib Axes object
+
+        Raises
+        ------
+        BrainMissingDependency
+            when matplotlib is not installed
+        """
         if not self.spectrum:
             return
 
         if not plt:
             raise BrainMissingDependency("Package matplotlib not installed.")
 
+        if self.spectrum.flux.ndim > 1:
+            index = args
+            if not index:
+                raise ValueError('The spectrum is n-dimensional.  You must specify a spectrum '
+                                 'index to plot.')
+
+            if not all([type(i) == int for i in index]):
+                raise ValueError('Input spectrum indices must be integers')
+
+            min_index = self.spectrum.flux.ndim - 1
+            index = index if isinstance(index, (tuple, list)) else [index] if type(index) == int else index
+            if len(index) < min_index:
+                raise ValueError(f'The spectrum has dimension={self.spectrum.flux.ndim}. '
+                                 f'You must specify a minimum of {min_index} indices')
+
+            if min_index == 1:
+                ii = index[0]
+                ydata = self.spectrum.flux[ii]
+            elif min_index == 2:
+                ii, jj = index
+                ydata = self.spectrum.flux[ii, jj]
+            else:
+                raise ValueError('plot cannot currently support spectral dimensions higher than 3')
+        else:
+            ydata = self.spectrum.flux
+
         if not ax:
             ax = plt.gca()
 
         title = title or f'Object: {self.objectid or self.filename.stem}'
-        ax.plot(self.spectrum.wavelength, self.spectrum.flux, **kwargs)
+        ax.plot(self.spectrum.wavelength, ydata, **kwargs)
         ax.set_ylabel(f'{y_label} [{self.spectrum.flux.unit.to_string(format="latex_inline")}]')
         ax.set_xlabel(f'{x_label} [{self.spectrum.wavelength.unit.to_string(format="latex_inline")}]')
         ax.set_title(title)
