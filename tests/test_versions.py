@@ -70,5 +70,5 @@ class TestMappingFails(object):
             get_mapped_version(self.name, release=self.release)
 
     def test_bad_release(self):
-        with pytest.raises(ValueError, match='no version found for release'):
+        with pytest.raises(ValueError, match='no mapped_version found for release'):
             get_mapped_version(self.name, release='badrelease')

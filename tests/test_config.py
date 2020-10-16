@@ -1,6 +1,6 @@
 # !/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 
+#
 # Filename: test_config.py
 # Project: tests
 # Author: Brian Cherinka
@@ -32,16 +32,16 @@ def mockedcfg(monkeypatch):
 
 
 class TestConfig(object):
-    
+
     def test_release_fail(self):
         with pytest.raises(BrainError) as cm:
             config.release = 'DR4'
-        assert 'trying to set an invalid release version.' in str(cm.value)
-    
+        assert 'trying to set an invalid release version' in str(cm.value)
+
     def test_set_release_fail(self):
         with pytest.raises(BrainError) as cm:
             config.set_release('DR4')
-        assert 'trying to set an invalid release version.' in str(cm.value)
+        assert 'trying to set an invalid release version' in str(cm.value)
 
     def test_set_release(self):
         old = 'DR16'
@@ -62,6 +62,12 @@ class TestConfig(object):
     def test_update_cfg(self, mockedcfg):
         assert config.ignore_db is False
         assert mockedcfg.ignore_db is True
-        
+
         assert config.download is False
         assert mockedcfg.download is True
+
+    def test_set_work_versions(self, monkeypatch):
+        monkeypatch.setattr(config, 'work_versions', {})
+        exp = {'drpver': 'v2_4_3', 'apred': 'r12'}
+        config.set_work_versions(exp)
+        assert config.work_versions == exp
