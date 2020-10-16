@@ -17,6 +17,7 @@ import abc
 import six
 import pathlib
 import os
+import warnings
 
 from sdss_brain import log
 from sdss_brain.mixins.access import AccessMixIn
@@ -204,8 +205,14 @@ class MMAMixIn(abc.ABC):
             raise BrainError('no inputs defined. filename and objectid are both None')
 
         # convert filename to a pathlib.Path and resolve a relative name
+        # not using pathlib.resolve to preserve symlinks
         if self.filename:
-            self.filename = pathlib.Path(self.filename).resolve()
+            self.filename = pathlib.Path(os.path.abspath(self.filename))
+            # issue a warning if the release is not indicated in the filename; possible mismatch
+            if self.release.lower() not in self.filename.as_posix():
+                warnings.warn('Your filename may not match the release indicated.  Path parameters '
+                              'may not be extracted properly.  Try setting the release to match the '
+                              'known file version.')
 
         # attempt to update the access path parameters from the filename or parsed data input
         self._update_access_params(params=parsed_input)
@@ -267,14 +274,14 @@ class MMAMixIn(abc.ABC):
                 # attempt to extract the path_params from the filename
                 params = self.access.extract(self.path_name, self.filename)
                 if params:
-                    self._setup_access(params)
+                    self._setup_access(params, origin='file')
             elif self.objectid:
                 # set attributes from extracted parse_input
                 self._set_parsed_attributes(params)
                 # run the set_access_path_params method
                 self._set_access_path_params()
                 # set attributes from the path_params
-                self._setup_access(self.path_params)
+                self._setup_access(self.path_params, origin='object')
         elif not self.is_access_mixedin and params:
             # for non-access, set attributes from extracted parse_input
             self._set_parsed_attributes(params)
@@ -299,6 +306,11 @@ class MMAMixIn(abc.ABC):
             # skip if a class attribute already exists
             if hasattr(self.__class__, key):
                 continue
+
+            # if a work version is set for the given key, and no value is set, then
+            # use the work version
+            work_ver = self._version.get(key, None)
+            val = work_ver if work_ver and val is None else val
 
             setattr(self, key, val)
 

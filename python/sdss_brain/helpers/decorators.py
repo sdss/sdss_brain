@@ -86,9 +86,9 @@ def create_mapped_properties(kls: Type[T], mapped_version: str):
         # loop over all named values found
         for attr in attrkey.split(','):
             # create read-only property that extracts the correct version number
-            # for a given release
+            # for a given release or returns a valid work version
             setattr(kls, attr, property(lambda self: get_mapped_version(
-                kls.mapped_version, release=self.release, key=attr)))
+                kls.mapped_version, release=self.release, key=attr) or self._version.get(attr, None)))
 
 
 @register

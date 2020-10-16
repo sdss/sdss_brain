@@ -13,15 +13,16 @@
 
 from __future__ import print_function, division, absolute_import
 
+import warnings
+
 try:
     import matplotlib.pyplot as plt
 except ImportError:
     plt = None
 from astropy.io.registry import IORegistryError
 from specutils import Spectrum1D
-from typing import Type, Union
+from typing import Type
 
-from sdss_brain import log
 from sdss_brain.core import Brain
 from sdss_brain.exceptions import BrainNotImplemented, BrainMissingDependency
 from sdss_brain.helpers import (sdss_loader, get_mapped_version, load_fits_file, parse_data_input,
@@ -63,8 +64,8 @@ class Spectrum(Brain):
             # check robustness of this to self.data/self.filename when specutils 1.1.1 is released
             self.spectrum = Spectrum1D.read(self.data, format=self.specutils_format)
         except IORegistryError:
-            log.warning('Could not load Spectrum1D for format '
-                        f'{self.specutils_format}, {self.filename}')
+            warnings.warn('Could not load Spectrum1D for format '
+                          f'{self.specutils_format}, {self.filename}')
 
     def plot(self, *args, ax=None, x_label: str = 'Wavelength', y_label: str = 'Flux',
              title: str = None, **kwargs):
@@ -194,8 +195,8 @@ class AspcapStar(Spectrum):
 
     def _set_access_path_params(self):
         # extract the apred version id based on the data release
-        apred = get_mapped_version(self.mapped_version, release=self.release)
+        apred = get_mapped_version(self.mapped_version, release=self.release, key='apred')
 
         # set the path params using the instance attributes extracted from _parse_input
         self.path_params = {'telescope': self.telescope, 'apred': apred,
-                            'field': self.field, 'obj': self.objectid, 'aspcap': self.aspcap}
+                            'field': self.field, 'obj': self.obj, 'aspcap': self.aspcap}

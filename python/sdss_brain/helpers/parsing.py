@@ -14,6 +14,7 @@
 from __future__ import print_function, division, absolute_import
 import re
 import pathlib
+import warnings
 from typing import Match, Pattern, Union
 from itertools import groupby
 from sdss_brain import log
@@ -183,7 +184,7 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, keymap: d
 
     # if no match, assume value is a filename and return nothing
     if not pattern_match:
-        log.warning('No pattern match found.  Defaulting to input value as a filename.')
+        warnings.warn('No pattern match found.  Defaulting to input value as a filename.')
         if inputs:
             return {'filename': value, 'parsed_inputs': input_patts}
         return {'filename': value}

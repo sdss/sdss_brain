@@ -14,6 +14,7 @@
 from __future__ import print_function, division, absolute_import
 import abc
 import time
+import warnings
 from functools import wraps
 from typing import Type
 
@@ -85,9 +86,9 @@ def check_access_params(func):
         assert getattr(inst, 'path_params'), 'the path_params attribute cannot be None'
         assert type(inst.path_params) == dict, 'the path_params attribute must be a dictionary'
         if inst.filename is None and not all(inst.path_params.values()):
-            log.warning('Not all path_params are set.  Check how path_params are set '
-                        'or for a mismatch between path_params and any extracted parameters '
-                        'from _parse_input.  Ensuring any None path_params are set as strings')
+            warnings.warn('Not all path_params are set.  Check how path_params are set '
+                          'or for a mismatch between path_params and any extracted parameters '
+                          'from _parse_input.  Ensuring any None path_params are set as strings')
             inst.path_params = dict(zip(inst.path_params.keys(), map(str, inst.path_params.values())))
         return func(*args, **kwargs)
     return wrapper
@@ -189,13 +190,13 @@ class AccessMixIn(abc.ABC):
             else:
                 fullpath = self.access.full(self.path_name, **self.path_params)
         except TypeError as ee:
-            log.warning(msg + 'Error: {0}'.format(str(ee)), BrainUserWarning)
+            warnings.warn(msg + 'Error: {0}'.format(str(ee)), BrainUserWarning)
             raise BrainError(f'Bad input type for sdss_access: {ee}') from ee
         except Exception as ee:
-            log.warning(msg + 'Error: {0}'.format(str(ee)), BrainUserWarning)
+            warnings.warn(msg + 'Error: {0}'.format(str(ee)), BrainUserWarning)
         return fullpath
 
-    def _setup_access(self, params: dict = None) -> None:
+    def _setup_access(self, params: dict = None, origin: str = None) -> None:
         ''' Set up the initial access parameters
 
         Sets up an initial default path_params dictionary.  Given a provided `path_name`
@@ -207,7 +208,11 @@ class AccessMixIn(abc.ABC):
         ----------
             params : dict
                 A dictionary of access path params
+            origin : str
+                Indicates the origin of the content calling this method. Either "file" or "object"
         '''
+
+        assert origin in [None, 'file', 'object'], 'origin can only be file or object'
 
         # do nothing if no path_name set
         if not hasattr(self, 'path_name') or not self.path_name:
@@ -217,21 +222,47 @@ class AccessMixIn(abc.ABC):
         keys = self.access.lookup_keys(self.path_name)
         log.debug(f"setting up initial access keys for {keys} for {self.path_name}")
         for k in keys:
-            # skip if a class attribute already exists
-            if hasattr(self.__class__, k):
-                continue
+            # look up a possible work version
+            work_ver = self._version.get(k, None)
+            vmsg = ('Version extracted from file is different than your preset "work" '
+                    f'version for {k}. Consider updating the configured work version or '
+                    'specifying an input version.')
 
             # look for a default value
             default = self._path_defaults.get(k, None) if hasattr(
                 self, '_path_defaults') else None
 
-            # set attributes on the instance
+            # set the work version as default if no default found
+            if not default and work_ver and origin == 'object':
+                default = work_ver
+
+            # get the attribute value to set
             if params:
                 if type(params) != dict:
                     raise TypeError('the path_params attribute must be a dictionary')
-                setattr(self, k, params.get(k, default))
+
+                # check if work_ver should supersede the path_param
+                if origin == 'object' and work_ver:
+                    params[k] = work_ver
+
+                attr_value = params.get(k, default)
             else:
-                setattr(self, k, default)
+                attr_value = default
+
+            # skip if a class attribute already exists
+            if hasattr(self.__class__, k):
+                # but first check the work version and issue a warning if there mismatch is found
+                if work_ver and origin == 'file' and work_ver != attr_value:
+                    warnings.warn(vmsg)
+                continue
+
+            # set attributes on the instance
+            setattr(self, k, attr_value)
+
+            # issue a warning if the preset work version mismatches from the one
+            # extracted from the file
+            if origin == 'file' and work_ver and work_ver != getattr(self, k, None):
+                warnings.warn(vmsg)
 
         # create a default path params dictionary
         self.path_params = {k: getattr(self, k) for k in keys}

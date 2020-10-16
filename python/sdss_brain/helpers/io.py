@@ -61,6 +61,9 @@ def get_mapped_version(name: str, release: str = None, key: str = None) -> Union
         >>> get_mapped_version('manga', release='DR16', key='drpver')
             'v2_4_3'
     '''
+    # if release is a work release, return nothing
+    if release.lower() == 'work':
+        return None
 
     # get the mapped_versions attribute from the configuration
     mapped_versions = config._custom_config.get('mapped_versions', None)
