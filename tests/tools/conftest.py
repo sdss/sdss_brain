@@ -108,6 +108,7 @@ class WorkTests(object):
             assert getattr(inst, param) == val
 
     def test_as_filename(self, monkeypatch, expdata):
+        """ tests explicit filename input """
         monkeypatch.setattr(config, 'work_versions', {self.version: 'v1_1_1'})
         version = expdata['version'] if 'WORK' in expdata['release'] else None
         inst = self.mock(filename=expdata['path'], release=expdata['release'], version=version)
@@ -116,6 +117,7 @@ class WorkTests(object):
 
     #@pytest.mark.parametrize('noversion', [(True), (False)], ids=['noversion', 'explicit_version'])
     def test_as_fileinput(self, monkeypatch, expdata):#, noversion):
+        """ tests filename as data input """
         monkeypatch.setattr(config, 'work_versions', {self.version: 'v1_1_1'})
         version = expdata['version'] if 'WORK' in expdata['release'] else None
         #version = None if noversion else version
@@ -124,6 +126,13 @@ class WorkTests(object):
         self.assert_params(inst, expdata)
 
     def test_fileinput_workver_warning(self, monkeypatch, expdata):
+        """ temporary tests to check mismatch between filename version and work version
+
+        When filename input is different version than work_version and no explicit version
+        is set, tool loads the file correctly but path params are incorrect
+
+        if ever fixed then update the test and above test
+        """
         monkeypatch.setattr(config, 'work_versions', {self.version: 'v1_1_1'})
         if expdata['release'] != 'WORK':
             pytest.skip('skipping non-work releases')
@@ -138,6 +147,7 @@ class WorkTests(object):
         assert getattr(inst, self.version) not in inst.filename.as_posix()
 
     def test_as_objectid(self, expdata):
+        """ tests object id as data input """
         s = expdata['objectid']
         version = expdata['version'] if 'WORK' in expdata['release'] else None
         inst = self.mock(s, release=expdata['release'], version=version)
