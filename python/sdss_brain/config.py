@@ -24,6 +24,7 @@ class Config(object):
         self._release = None
         self.download = False
         self.ignore_db = False
+        self.work_versions = None
 
         # load default config parameters
         self._load_defaults()
@@ -34,6 +35,9 @@ class Config(object):
         # set a default release or get the latest one
         default_release = self._custom_config.get('default_release', None)
         self.release = default_release or self._get_latest_release()
+
+        # set any work versions from the config
+        self.set_work_versions()
 
     def __repr__(self):
         return f'<SDSSConfig(release={self.release}, mode={self.mode})>'
@@ -99,6 +103,16 @@ class Config(object):
                 self.__setattr__(key, value)
 
         self._custom_config = cfg_params
+
+    def set_work_versions(self, values: dict = {}):
+        ''' Set the versions used for sdsswork '''
+
+        if type(values) != dict:
+            raise ValueError('input versions must be a dict')
+
+        cfg_work = self._custom_config.get('work_versions', {})
+        cfg_work.update(values)
+        self.work_versions = cfg_work
 
 
 config = Config()
