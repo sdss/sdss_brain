@@ -61,7 +61,11 @@ def set_access(func):
     def wrapper(*args, **kwargs):
         inst = args[0]
         isset = inst._access is not None
-        diffrelease = inst.release.lower() != inst._access.release if isset else None
+        # see if the instance release is different than the access release
+        if 'work' in inst.release.lower():
+            diffrelease = 'sdsswork' != inst._access.release if isset else None
+        else:
+            diffrelease = inst.release.lower() != inst._access.release if isset else None
         if not isset or diffrelease:
             inst._access = create_new_access(inst.release)
         return func(*args, **kwargs)

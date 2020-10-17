@@ -22,6 +22,7 @@ Contents
 
   Introduction to sdss_brain <intro>
   Convenience Tools <tools>
+  Accessing unreleased ("work") data <work>
   About the global configuration <config>
   How to map specific version numbers to Data Release ids <version>
   How to create and parse a custom objectid as valid data input <parsing>

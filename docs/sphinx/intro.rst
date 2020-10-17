@@ -106,7 +106,7 @@ class, highlighting how to integrate the MMA into a new tool.
                 self.plateifu = plateifu_match.group(0)
                 self.plate, self.ifu = plateifu_match.groups(0)
             else:
-                data['filename']
+                data['filename'] = value
             return data
 
         def _load_object_from_file(self, data=None):

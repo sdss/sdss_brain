@@ -28,15 +28,50 @@ data releases (DRs) or official survey-specific internal releases, e.g interal M
 Additionally, setting the release to ``work`` allows ``sdss_brain`` and ``sdss_access`` to access files not yet
 within a release, specified in the current ``sdsswork.cfg`` Tree environment configuration.
 
-To set a new release:
+To set a new global release:
 ::
 
     from sdss_brain.config import config
     config.set_release('DR14')
 
-You can set a default release to use when loading ``sdss_brain`` by setting the `default_release` config
-parameter in your custom `~/.config/sdss/sdss_brain.yml` file.  For example, setting `default_release: DR15`
-will instruct the ``sdss_brain`` to load release DR15 on startup.
+To set global "working" versions:
+::
+
+    # set the new work versions
+    from sdss_brain.config import config
+    config.set_work_versions({'drpver': 'v2_4_3', 'run2d': 'v5_10_0', 'apred': 'r12'})
+
+    # access the set work versions
+    config.work_versions
+
+.. _config_file:
+
+The Custom Config File
+----------------------
+
+To customize the configuration for the ``Brain``, you can create a new YAML config file at
+`~/.config/sdss/sdss_brain.yml`.  This config file allows you to set custom configuration options that
+are loaded when the ``Brain`` config is instantiated.  The following entries are available:
+
+- **ignore_db**: If True, ignores any database connections used with ``Brain``-based tools
+- **download**: If True, downloads any data files accessed with `sdss_access`
+- **default_release**: Sets the default data release to use
+- **work_versions**: Sets the specified versions to use when accessing "sdsswork" files
+
+The following example config file instructs the ``Brain`` to always ignore database connections, to not
+download data files by default, to use DR15 as the default release, and to set the work versions for
+MaNGA, APOGEE, and EBOSS data to (v2_4_3, 2.2.1), r12, and v5_10_0, respectively.
+
+.. code-block:: yaml
+
+    ignore_db: True
+    download: False
+    default_release: DR15
+    work_versions:
+      drpver: v2_4_3
+      dapver: 2.2.1
+      apred: r12
+      run2d: v5_10_0
 
 
 
