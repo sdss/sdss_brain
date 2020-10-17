@@ -105,7 +105,25 @@ class Config(object):
         self._custom_config = cfg_params
 
     def set_work_versions(self, values: dict = {}):
-        ''' Set the versions used for sdsswork '''
+        """ Set the versions used for sdsswork
+
+        Sets the versions used by sdswork globally into the config.
+        Input is a valid dictionary containing version names and numbers as
+        key value pairs, e.g. `{'drpver':'v2_4_3', 'run2d':'v1_1_1', 'apred':'r12'}`.
+        Optionally can set them permanently in the custom configuration YAML file.
+
+        The input dictionary is merged with any values specified from the custom config.
+
+        Parameters
+        ----------
+        values : dict, optional
+            Dictionary of version names:numbers needed in paths, by default {}
+
+        Raises
+        ------
+        ValueError
+            when the input is not a dictionary
+        """
 
         if type(values) != dict:
             raise ValueError('input versions must be a dict')

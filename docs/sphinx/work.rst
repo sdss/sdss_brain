@@ -34,6 +34,14 @@ to set the work versions.  You can also do so individually on a tool.
     >>> from sdss_brain.tools import Eboss
     >>> e=Eboss('3606-55182-0537', version={'run2d': 'v5_10_0'})
 
+Version Order Precedence
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The order of precendence the ``Brain`` uses when deciding which work versions to use in a given tool is
+**tool > setting the config > using the custom config file**.  Specifying versions explicitly on a
+tool takes precedence over using the config `~sdss_brain.config.Config.set_work_versions` method which takes
+precedence over any values found in the custom ``sdss_brain.yml`` configuration file.
+
 
 Setting the Work Release
 ^^^^^^^^^^^^^^^^^^^^^^^^
