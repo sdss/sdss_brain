@@ -26,6 +26,7 @@ def mockedcfg(monkeypatch):
     ''' fixture to return a mocked Config with modified cfg_params '''
     monkeypatch.setitem(cfg_params, 'ignore_db', True)
     monkeypatch.setitem(cfg_params, 'download', True)
+    monkeypatch.setitem(cfg_params, 'work_versions', {})
     config = Config()
     yield config
     config = None
@@ -66,8 +67,7 @@ class TestConfig(object):
         assert config.download is False
         assert mockedcfg.download is True
 
-    def test_set_work_versions(self, monkeypatch):
-        monkeypatch.setattr(config, 'work_versions', {})
+    def test_set_work_versions(self, mockedcfg):
         exp = {'drpver': 'v2_4_3', 'apred': 'r12'}
         config.set_work_versions(exp)
         assert config.work_versions == exp

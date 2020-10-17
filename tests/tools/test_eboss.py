@@ -35,9 +35,9 @@ class TestEbossWorkVersions(WorkTests):
 
     def test_set_work_version(self, monkeypatch):
         monkeypatch.setattr(config, 'work_versions', {})
-        monkeypatch.delattr(Eboss, '_version', None)
+        monkeypatch.setattr(Eboss, '_version', None)
         assert config.work_versions == {}
-        assert not hasattr(Eboss, '_version')
+        assert getattr(Eboss, '_version') is None
         ver = {'run2d': 'v5_10_0'}
         Eboss.set_work_version(ver)
         assert Eboss._version == {'run2d': 'v5_10_0'}
