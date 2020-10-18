@@ -110,9 +110,10 @@ that we may not have locally.
 Context Managers
 ^^^^^^^^^^^^^^^^
 
-The ``Brain`` and all subclasses open FITS data and make it directly accessible via the ``data`` attribute.
-Each tool or ``Brain`` subclass comes with a destructor method that should safely close any open files,
-database connections, or remote request sessions.  Alternatively you can use each tool as a contextmanager.
+The ``Brain`` and all subclasses act as open data handlers.  For example, they open FITS data and make it
+directly accessible via the ``data`` attribute. Each tool or ``Brain`` subclass comes with a
+destructor method that should safely close any open files, database connections, or remote request
+sessions.  Alternatively you can use each tool as a contextmanager to safely access underlying data.
 ::
 
     with Eboss(s, release='DR14') as e:

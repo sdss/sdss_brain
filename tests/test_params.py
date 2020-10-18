@@ -26,6 +26,7 @@ from sdss_brain.helpers import get_mapped_version, parse_data_input, parser_load
 
 #
 # These tests for proper parameter extraction and instance attribute application
+# for different definitions of the _parse_input method
 #
 
 cube_file = '/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz'
@@ -161,6 +162,7 @@ def asserts(cube):
     assert hasattr(cube, 'wave') and cube.wave == params['wave']
     assert hasattr(cube, 'drpver') and cube.drpver == params['drpver']
     assert hasattr(cube, 'path_params') and cube.path_params == params
+    assert getattr(cube, 'drpver') == cube.path_params['drpver']
 
 
 @pytest.mark.parametrize('name',

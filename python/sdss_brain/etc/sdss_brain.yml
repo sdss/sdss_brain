@@ -2,6 +2,7 @@
 
 ignore_db: False
 download: False
+default_release: null
 
 mapped_versions:
   manga:

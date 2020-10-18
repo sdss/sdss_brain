@@ -3,6 +3,7 @@
 #
 # conftest.py
 
+import copy
 import pytest
 import os
 import six
@@ -42,7 +43,7 @@ def check_path(item):
         path = item
     else:
         dataobj = check_class(item)
-        path = dataobj.get_full_path()
+        path = dataobj.filename or dataobj.get_full_path()
 
     if not os.path.exists(path):
         pytest.skip('No local file found.')
@@ -158,6 +159,7 @@ class ToyNoAccess(mma.MMAMixIn):
 class Toy(MockMMA):
     ''' toy object to utilize in tests '''
     path_name = 'toy'
+    _version = {}
 
     def _parse_input(self, value):
         data = {'filename': None, 'objectid': None}
@@ -228,12 +230,61 @@ def get_object(name):
     return objects.get(name, None)
 
 
-def get_path(name):
+def create_work_version(work, data):
+    """ create object data using an input work_version"""
+    new = copy.deepcopy(data)
+    workc = copy.deepcopy(work)
+    key = list(workc.keys())[0]
+    new['path'] = new['path'].replace(new['params'][key], workc[key])
+    new['version_info'] = dict(zip(('name', 'number'), list(workc.items())[0]))
+    new['version'].update(workc)
+    new['params'].update(workc)
+    new['release'] = 'WORK'
+    return new
+
+
+def create_releases(name):
+    """ extract an entry from the objects.yaml and reorganize by release """
+    data = get_object(name)
+    if not data:
+        return None
+
+    data = copy.deepcopy(data)
+
+    # pop out the works
+    works = data.pop('work_version', None)
+
+    # create a dictionary of the object parameters with release as the key
+    dd = {}
+    dd[data.get('release', 'DR15')] = data
+
+    if works:
+        # add any other work objects found
+        for work in works:
+            work_object = create_work_version(work, data)
+            dd[f"WORK-{work_object['version_info']['number']}"] = work_object
+
+    # expand the path envvars
+    for k, v in dd.items():
+        release = 'WORK' if 'WORK' in k else k
+        tree.replant_tree(release.lower())
+        dd[k]['path'] = os.path.expandvars(v.get('path', ''))
+
+    return dd
+
+
+# create a global dictionary of releases
+object_data = {}
+for name, data in objects.items():
+    object_data[name] = create_releases(name)
+
+
+def get_path(name, work=None):
     ''' Function to return a path name '''
     path = None
     data = get_object(name)
     if data:
-        release = data.get('release', 'DR15')
+        release = 'WORK' if work else data.get('release', 'DR15')
         tree.replant_tree(release.lower())
         path = os.path.expandvars(data.get('path', ''))
     return path

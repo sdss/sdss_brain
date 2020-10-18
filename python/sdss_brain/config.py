@@ -24,14 +24,20 @@ class Config(object):
         self._release = None
         self.download = False
         self.ignore_db = False
-
-        # get allowed releases from the Tree
-        self._allowed_releases = tree.get_available_releases()
-        # set latest release
-        self.release = self._get_latest_release()
+        self.work_versions = None
 
         # load default config parameters
         self._load_defaults()
+
+        # get allowed releases from the Tree
+        self._allowed_releases = tree.get_available_releases()
+
+        # set a default release or get the latest one
+        default_release = self._custom_config.get('default_release', None)
+        self.release = default_release or self._get_latest_release()
+
+        # set any work versions from the config
+        self.set_work_versions()
 
     def __repr__(self):
         return f'<SDSSConfig(release={self.release}, mode={self.mode})>'
@@ -54,8 +60,8 @@ class Config(object):
     def release(self, value: str) -> None:
         value = value.upper()
         if value not in self._allowed_releases:
-            raise BrainError('trying to set an invalid release version. Valid releases are: {0}'
-                             .format(', '.join(self._allowed_releases)))
+            raise BrainError(f'trying to set an invalid release version {value}. '
+                             f'Valid releases are: {", ".join(self._allowed_releases)}')
 
         # replant the tree
         if value.lower() == 'work':
@@ -97,6 +103,34 @@ class Config(object):
                 self.__setattr__(key, value)
 
         self._custom_config = cfg_params
+
+    def set_work_versions(self, values: dict = {}):
+        """ Set the versions used for sdsswork
+
+        Sets the versions used by sdswork globally into the config.
+        Input is a valid dictionary containing version names and numbers as
+        key value pairs, e.g. `{'drpver':'v2_4_3', 'run2d':'v1_1_1', 'apred':'r12'}`.
+        Optionally can set them permanently in the custom configuration YAML file.
+
+        The input dictionary is merged with any values specified from the custom config.
+
+        Parameters
+        ----------
+        values : dict, optional
+            Dictionary of version names:numbers needed in paths, by default {}
+
+        Raises
+        ------
+        ValueError
+            when the input is not a dictionary
+        """
+
+        if type(values) != dict:
+            raise ValueError('input versions must be a dict')
+
+        cfg_work = self._custom_config.get('work_versions', {})
+        cfg_work.update(values)
+        self.work_versions = cfg_work
 
 
 config = Config()

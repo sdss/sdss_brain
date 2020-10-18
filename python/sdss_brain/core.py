@@ -13,6 +13,8 @@
 
 from __future__ import print_function, division, absolute_import
 import abc
+from sdss_brain.config import config
+from sdss_brain.exceptions import BrainError
 from sdss_brain.mixins.mma import MMAccess, MMAMixIn
 from astropy.io import fits
 
@@ -21,10 +23,12 @@ class Base(abc.ABC):
     ''' abstract base class for tools '''
 
     def __new__(cls, *args, **kwargs):
+        # set the correct MMA class
         if MMAccess in cls.mro():
             cls._mma = MMAccess
         else:
             cls._mma = MMAMixIn
+
         return super().__new__(cls)
 
     @abc.abstractmethod
@@ -84,18 +88,37 @@ class HindBrain(Base):
     '''
     _db = None
     mapped_version = None
+    data_origin = None
+
+    def __new__(cls, *args, **kwargs):
+        # set any work versions
+        cls.set_work_version(config.work_versions)
+        return super().__new__(cls)
 
     def __init__(self, data_input: str = None, filename: str = None,
                  objectid: str = None, mode: str = None, data: object = None,
                  release: str = None, download: bool = None,
-                 ignore_db: bool = None, use_db: bool = None) -> None:
+                 ignore_db: bool = None, use_db: bool = None, version: str = None) -> None:
 
-        self.data = data
+        # set a version for sdsswork data
+        checked_release = release or config.release
+        if version:
+            self.set_work_version(version)
+            if checked_release.lower() != 'work':
+                raise BrainError('version is only used for "work" data. '
+                                 'Please set the input or config release to "WORK"')
+        else:
+            if not self._version and checked_release.lower() == 'work':
+                raise BrainError('You are using a "work" release but have no work versions set! '
+                                 'Try setting a global "work_version" dict or specify a "version" input!')
+
+        # initialize the MMA
         self._mma.__init__(self, data_input=data_input, filename=filename,
                            objectid=objectid, mode=mode,
                            release=release, download=download,
                            ignore_db=ignore_db, use_db=use_db or self._db)
 
+        self.data = data
         if self.data_origin == 'file':
             self._load_object_from_file(data=data)
         elif self.data_origin == 'db':
@@ -130,6 +153,17 @@ class HindBrain(Base):
         ''' destructor for context manager '''
         self._close()
         return True
+
+    @classmethod
+    def set_work_version(cls, value: dict):
+        ''' Set the work version for the given class '''
+        if type(value) != dict:
+            raise ValueError(f'input verion must be a dictionary')
+
+        # update any existing work versions with the new values
+        wv = config.work_versions.copy()
+        wv.update(value)
+        cls._version = wv
 
 
 class Brain(HindBrain, MMAccess):
