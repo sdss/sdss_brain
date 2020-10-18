@@ -4,6 +4,9 @@
 Change Log
 ==========
 
+* :release:`0.1.3 <2020-10-18>`
+* :bug:`-` fixing github actions release yaml
+
 * :release:`0.1.2 <2020-10-18>`
 * :feature:`9` adds ability to specify work versions to access unreleased data products
 * :support:`7` issues a warning when a mismatch is found between extracted filename version and the release or work version
