@@ -2,8 +2,8 @@
 
 .. _config:
 
-Global Config
--------------
+About the Global Config
+-----------------------
 
 ``sdss_brain`` includes a global configuration class, ``Config``, which handles parameters used globally
 by ``sdss_brain`` and potentially other SDSS packages.
