@@ -4,7 +4,7 @@
 Change Log
 ==========
 
-* :release:`0.1.2 <unknown>`
+* :release:`0.1.2 <2020-10-18>`
 * :feature:`9` adds ability to specify work versions to access unreleased data products
 * :support:`7` issues a warning when a mismatch is found between extracted filename version and the release or work version
 * :feature:`-` adds new convenience spectrum tools, ``Eboss``, ``MangaCube``, ``ApStar``, ``ApVisit``, and ``AspcapStar``
