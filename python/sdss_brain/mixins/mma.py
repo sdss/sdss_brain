@@ -23,6 +23,7 @@ from sdss_brain import log
 from sdss_brain.mixins.access import AccessMixIn
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError
+from sdss_brain.helpers import DatabaseHandler
 
 
 __all__ = ['MMAMixIn', 'MMAccess']
@@ -79,7 +80,7 @@ class MMAMixIn(abc.ABC):
                  mode: str = None, release: str = None, download: bool = None, ignore_db:
                  bool = False, use_db: bool = None):
         # data attributes
-        self._db = use_db
+        self._db = DatabaseHandler(use_db)
         self.filename = filename
         self.objectid = objectid
         self.data_origin = None
