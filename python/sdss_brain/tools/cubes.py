@@ -31,15 +31,24 @@ class MangaCube(Spectrum):
     specutils_format: str = 'MaNGA cube'
 
     def _load_object_from_db(self, data=None):
-        if not self._db.connected:
+
+        # do nothing if not connected to the database
+        if not self.db.connected:
+            return
+
+        # issue warning if no model or models attached to database handler
+        if not self.db.model or not self.db.models:
+            warnings.warn('No model(s) found in db handler.  Cannot query for a cube.'
+                          'Try passing in an explicit ORM or setting the schema and model with '
+                          'db.load_model or db.load_schema.')
             return
 
         # make a database call to retrieve the Cube row
-        self.data = self._db.session.query(self._db.model).join(self._db.models.IFUDesign,
-                                                                self._db.models.PipelineInfo,
-                                                                self._db.models.PipelineVersion).\
-            filter(self._db.model.plateifu == self.plateifu,
-                   self._db.models.PipelineVersion.version == self.drpver).one_or_none()
+        self.data = self.db.session.query(self.db.model).join(self.db.models.IFUDesign,
+                                                              self.db.models.PipelineInfo,
+                                                              self.db.models.PipelineVersion).\
+            filter(self.db.model.plateifu == self.plateifu,
+                   self.db.models.PipelineVersion.version == self.drpver).one_or_none()
 
         if not self.data:
             warnings.warn(f"No data returned from database for {self.plateifu}")

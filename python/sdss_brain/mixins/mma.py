@@ -23,7 +23,7 @@ from sdss_brain import log
 from sdss_brain.mixins.access import AccessMixIn
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError
-from sdss_brain.helpers import DatabaseHandler
+from sdss_brain.helpers import DatabaseHandler, db_type
 
 
 __all__ = ['MMAMixIn', 'MMAccess']
@@ -66,8 +66,8 @@ class MMAMixIn(abc.ABC):
             If True, downloads the object locally with sdss_access
         ignore_db : bool
             If True, ignores any database connection for local access
-        use_db : `~sdssdb.connection.DatabaseConnection`
-            a database connection to override the default with
+        use_db : db_type, see `~sdss_brain.helpers.database.DatabaseHandler`
+            a database ORM or connection to override the default with
 
     Attributes
     ----------
@@ -78,9 +78,9 @@ class MMAMixIn(abc.ABC):
 
     def __init__(self, data_input: str = None, filename: str = None, objectid: str = None,
                  mode: str = None, release: str = None, download: bool = None, ignore_db:
-                 bool = False, use_db: bool = None):
+                 bool = False, use_db: db_type = None):
         # data attributes
-        self._db = DatabaseHandler(use_db)
+        self._db = DatabaseHandler(use_db) if use_db else None
         self.filename = filename
         self.objectid = objectid
         self.data_origin = None
@@ -128,6 +128,11 @@ class MMAMixIn(abc.ABC):
         """Fails when trying to set the release after instantiation."""
         raise BrainError('the release cannot be changed once the object has been instantiated.')
 
+    @property
+    def db(self):
+        """ an instance of a DatabaseHandler """
+        return self._db
+
     def _do_local(self) -> None:
         """ Check if it's possible to load the data locally."""
 
@@ -143,7 +148,7 @@ class MMAMixIn(abc.ABC):
         elif self.objectid:
 
             # prioritize a database unless explicitly set to ignore
-            if self._db and self._db.connected and not self._ignore_db:
+            if self.db and self.db.connected and not self._ignore_db:
                 self.mode = 'local'
                 self.data_origin = 'db'
             else:
