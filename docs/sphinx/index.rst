@@ -26,6 +26,7 @@ Contents
   About the global configuration <config>
   How to map specific version numbers to Data Release ids <version>
   How to create and parse a custom objectid as valid data input <parsing>
+  Connecting to Database Objects <database>
 
 Reference
 ---------

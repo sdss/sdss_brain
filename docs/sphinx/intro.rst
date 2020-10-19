@@ -74,10 +74,10 @@ class, highlighting how to integrate the MMA into a new tool.
     import re
     from sdss_brain.core import Brain
     from sdss_brain.helpers import get_mapped_version, load_fits_file
-    from sdssdb.sqlalchemy.mangadb import database as mangadb
+    from sdssdb.sqlalchemy.mangadb.datadb import Cube
 
     class MangaCube(Brain):
-        _db = mangadb
+        _db = Cube
         mapped_version = 'manga' # set the release mapping key
         path_name = 'mangacube'  # set path name for sdss_access
 
@@ -118,8 +118,12 @@ class, highlighting how to integrate the MMA into a new tool.
         def _load_object_from_api(self, data=None):
             pass
 
-To set up database access for your tool, set the ``_db`` class attribute to the appropriate database containing
-information for.  Since we're creating a tool for MaNGA cubes, we use the `mangadb` database from `sdssdb`.
+To set up database access for your tool, set the ``_db`` class attribute to an appropriate `sdssdb` database
+connection, ORM model, or ORM schema relevant for the tool.  Since we're creating a tool for MaNGA cubes,
+we use the ``datadb.Cube`` ORM model from the ``mangadb`` database from `sdssdb`.  If there is no relevant
+database input to attach, leave the ``_db`` attribute blank.  When a tool is instantiated with a valid
+database input, a `~sdss_brain.helpers.database.DatabaseHandler` is created. See :ref:`database`
+for more information on what this means.
 
 Next, we setup our tool to interface with ``sdss_access``.  To do so, we must specify the ``sdss_access``
 path template **name** and **keyword parameters** needed to build complete file paths.  The template name
@@ -162,11 +166,12 @@ We can provide the filename directly.
 
     >>> ff = '/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz'
     >>> cube = MangaCube(f, release='DR15')
+    >>> cube
     <MangaCube filename='/Users/Brian/Work/sdss/sas/dr15/manga/spectro/redux/v2_4_3/8485/stack/manga-8485-1901-LOGCUBE.fits.gz', mode='local', data_origin='file'>
 
 We defined the ``_parse_input`` method to instruct the ``Brain`` on what kind of "objectid" to expect, in this case
 a "plateifu" id designation, which is 4-5 digit plate id and and 3-5 digit IFU bundle number.  Now we can
-directly input a "plateifu" as input.  If we specified a database to use during class
+directly input a "plateifu" as input.  If we specified a database input to use during class
 definition, the default local action is to attempt to connect via the db.
 ::
 
@@ -174,8 +179,8 @@ definition, the default local action is to attempt to connect via the db.
     >>> cube
         <MangaCube objectid='8485-1901', mode='local', data_origin='db'>
 
-The ``data_origin`` has been set to `db` and the mode is ``local``.  We can override the default database we
-use with the ``use_db`` keyword during instantiation.
+The ``data_origin`` has been set to `db` and the mode is ``local``.  We can override the default database input
+we defined on our class with the ``use_db`` keyword during instantiation.
 ::
 
         cube = MangaCube('8485-1901', use_db=mangadb)
@@ -204,8 +209,8 @@ Now the ``data_origin`` is set to ``file``.  If we don't have the file locally, 
         <MangaCube objectid='8485-1902', mode='remote', data_origin='api'>
 
 Now that we've seen how to create a tool, take a look at :ref:`tools` for a set of starter tools to begin
-using, aid in advanced science-specific customization, or simply as alternative examples of how to
-create new tools.
+using, to start customizing with advanced science-specific features, or simply as alternative examples of
+how to create new tools.
 
 .. _helpers:
 
