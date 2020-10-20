@@ -13,6 +13,7 @@ from sdss_brain import tree
 from sdss_brain.config import config
 import sdss_brain.mixins.mma as mma
 import sdss_brain.mixins.access as access
+from sdssdb.connection import DatabaseConnection
 
 
 def pytest_addoption(parser):
@@ -57,8 +58,14 @@ def check_db(item):
         item (fxn|object):
             A function o
     '''
-    dataobj = check_class(item)
-    if not dataobj._db or dataobj._db.connected is False:
+    if isinstance(item, DatabaseConnection):
+        dataobj = item
+        nodb = dataobj.connected is False
+    else:
+        dataobj = check_class(item)
+        nodb = not dataobj.db or dataobj.db.connected is False
+
+    if nodb:
         pytest.skip('skipping test when no db present')
 
 
