@@ -129,7 +129,8 @@ intersphinx_mapping = {'python': ('https://docs.python.org/3.7', None),
                        'specutils': ('https://specutils.readthedocs.io/en/stable', None),
                        'sdss_access': ('https://sdss-tree.rtfd.io/en/latest', None),
                        'sdss_tree': ('https://sdss-access.rtfd.io/en/latest', None),
-                       'sdssdb': ('https://sdssdb.rtfd.io/en/latest', None)}
+                       'sdssdb': ('https://sdssdb.rtfd.io/en/latest', None),
+                       'sqlalchemy': ('https://docs.sqlalchemy.org/en/latest/', None)}
 
 autodoc_mock_imports = ['_tkinter']
 autodoc_member_order = 'groupwise'

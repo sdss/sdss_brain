@@ -7,6 +7,11 @@ Convenience Tools
 `sdss_brain` offers starter tools, based off the ``Brain``, that can be further customized and subclassed
 to enable enhancements specific to the science domain.
 
+.. note::
+    These tools are **not** meant to be final science-ready tools and products.  They are meant to be
+    subclassed, customized, and improved with mapper-, survey-, science-specific functionality and
+    features.
+
 Spectral Data
 ^^^^^^^^^^^^^
 

@@ -15,6 +15,7 @@ from __future__ import print_function, division, absolute_import
 import abc
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError
+from sdss_brain.helpers import db_type
 from sdss_brain.mixins.mma import MMAccess, MMAMixIn
 from astropy.io import fits
 
@@ -76,13 +77,13 @@ class HindBrain(Base):
             If True, downloads the object locally with sdss_access
         ignore_db : bool
             If True, ignores any database connection for local access
-        use_db : `~sdssdb.connection.DatabaseConnection`
-            a database connection to override the default with
+        use_db : db_type, see `~sdss_brain.helpers.database.DatabaseHandler`
+            a database ORM or connection to override the default with
 
     Attributes
     ----------
-        _db : `~sdssdb.connection.DatabaseConnection`
-            A relevant sdssdb database connection for the object
+        _db : `~sdss_brain.helpers.database.DatabaseHandler`
+            A db handler for any loaded sdssdb ORM or db connection for the object
         mapped_version : str
             The name of survey/category in the mapped_versions dictionary
     '''
@@ -98,7 +99,7 @@ class HindBrain(Base):
     def __init__(self, data_input: str = None, filename: str = None,
                  objectid: str = None, mode: str = None, data: object = None,
                  release: str = None, download: bool = None,
-                 ignore_db: bool = None, use_db: bool = None, version: str = None) -> None:
+                 ignore_db: bool = None, use_db: db_type = None, version: str = None) -> None:
 
         # set a version for sdsswork data
         checked_release = release or config.release
@@ -155,8 +156,26 @@ class HindBrain(Base):
         return True
 
     @classmethod
-    def set_work_version(cls, value: dict):
-        ''' Set the work version for the given class '''
+    def set_work_version(cls, value: dict) -> None:
+        """ Set the work version for the given class
+
+        Sets the versions used by sdswork on the given class.  This takes
+        precendence over any versions set in the global config. Input is a valid
+        dictionary containing version names and numbers as key value pairs, e.g.
+        `{'drpver':'v2_4_3', 'run2d':'v1_1_1', 'apred':'r12'}`.
+
+        The input dictionary is merged with any values specified on the config class.
+
+        Parameters
+        ----------
+        values : dict, optional
+            Dictionary of version names:numbers needed in paths, by default {}
+
+        Raises
+        ------
+        ValueError
+            when input value is not a dictionary
+        """
         if type(value) != dict:
             raise ValueError(f'input verion must be a dictionary')
 
@@ -164,6 +183,22 @@ class HindBrain(Base):
         wv = config.work_versions.copy()
         wv.update(value)
         cls._version = wv
+
+    @classmethod
+    def set_database_object(cls, value: db_type) -> None:
+        """ Sets up the MMA to create a new db handler
+
+        Sets up the MMA to create a new `~sdss_brain.helpers.database.DatabaseHandler`
+        on the given class.  Valid input can be any sdssdb ORM Model,
+        DatabaseConnection, or schema module.
+
+        Parameters
+        ----------
+        value : db_type
+            The type of ``sdssdb`` database input
+        """
+        # set this straight to the value since the MMA converts it into a DatabaseHandler
+        cls._db = value
 
 
 class Brain(HindBrain, MMAccess):

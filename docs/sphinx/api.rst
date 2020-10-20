@@ -61,6 +61,10 @@ Helpers
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: sdss_brain.helpers.database
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Tools
 -----
@@ -75,3 +79,10 @@ Tools
    :undoc-members:
    :show-inheritance:
 
+Exceptions
+----------
+
+.. automodule:: sdss_brain.exceptions
+   :members:
+   :undoc-members:
+   :show-inheritance:

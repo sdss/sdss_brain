@@ -20,8 +20,9 @@ try:
 except ImportError:
     plt = None
 from astropy.io.registry import IORegistryError
+from astropy.io.fits import HDUList
 from specutils import Spectrum1D
-from typing import Type
+from typing import Type, Union, BinaryIO
 
 from sdss_brain.core import Brain
 from sdss_brain.exceptions import BrainNotImplemented, BrainMissingDependency
@@ -54,15 +55,28 @@ class Spectrum(Brain):
 
     def _load_object_from_api(self, data=None) -> None:
         # for now, do a simple get request to grab the file into memory
+        # TODO replace this with better API request framework
         self.data = data or load_from_url(self.get_full_path(url=True))
         self.header = self.data['PRIMARY'].header
         self._load_spectrum()
 
-    def _load_spectrum(self) -> None:
-        ''' Load the `~specutils.Spectrum1D` object '''
+    def _load_spectrum(self, data: Union[str, BinaryIO, HDUList] = None) -> None:
+        """ Load the `~specutils.Spectrum1D` object
+
+        Loads data into a Spectrum1D object, using ``Spectrum1D.read``.
+        If no input data is specified, uses the data attached to the ``self.data``
+        attribute.  Valid ``Spectrum1D.read`` inputs are a filename, an open
+        file-like object, or an Astropy fits.HDUList.
+
+        Parameters
+        ----------
+        data : str | `~python.io.BinaryIO` |`~astropy.io.fits.HDUList`, optional
+            The data object to be read by Spectrum1D, by default None
+        """
+        data = data if data else self.data
         try:
             # check robustness of this to self.data/self.filename when specutils 1.1.1 is released
-            self.spectrum = Spectrum1D.read(self.data, format=self.specutils_format)
+            self.spectrum = Spectrum1D.read(data, format=self.specutils_format)
         except IORegistryError:
             warnings.warn('Could not load Spectrum1D for format '
                           f'{self.specutils_format}, {self.filename}')
