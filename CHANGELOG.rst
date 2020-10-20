@@ -4,6 +4,9 @@
 Change Log
 ==========
 
+* :release:`0.2.0 <unreleased>`
+* :feature:`5` adds `DatabaseHandler` class to support `sdssdb` database objects
+
 * :release:`0.1.3 <2020-10-18>`
 * :bug:`-` fixing github actions release yaml
 
