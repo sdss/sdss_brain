@@ -17,6 +17,7 @@ import pytest
 from sdss_brain.helpers import DatabaseHandler
 from sdss_brain.exceptions import BrainError
 from sdssdb.peewee.sdss5db import database, SDSS5dbDatabaseConnection, targetdb
+from sdssdb.sqlalchemy.mangadb import database as mangadb
 
 
 @pytest.mark.datasource(database, db=True)
@@ -69,6 +70,13 @@ class TestDatabaseHandler(object):
         self.assert_schema(d, 'sdss5db.targetdb')
         assert d.model == targetdb.Instrument
 
+    def test_session(self):
+        d = DatabaseHandler(mangadb)
+        assert d.orm == 'sqla'
+        assert d.db.dbname == 'manga'
+        if d.connected:
+            assert d.session is not None
+
 
 class TestDbHandlerFails(object):
 
@@ -86,3 +94,8 @@ class TestDbHandlerFails(object):
         d = DatabaseHandler('badinput')
         assert d.db is None
         assert d.orm is None
+
+    def test_no_session(self):
+        d = DatabaseHandler(database)
+        with pytest.raises(AttributeError, match='peewee ORMs do not use sessions'):
+            d.session

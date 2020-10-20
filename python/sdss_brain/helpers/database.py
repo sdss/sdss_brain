@@ -131,7 +131,7 @@ class DatabaseHandler(object):
             self.orm = 'sqla'
             self.schema = value._schema
             self.db = getattr(self.models, 'database', None)
-            self._session = self.db.Session()
+            self._set_session()
 
     @staticmethod
     def _is_a_db(value: db_type) -> List[bool]:
@@ -158,7 +158,7 @@ class DatabaseHandler(object):
             self.orm = 'peewee'
         elif sdatabase:
             self.orm = 'sqla'
-            self._session = self.db.Session()
+            self._set_session()
 
     @staticmethod
     def _is_a_schema(value: db_type) -> List[bool]:
@@ -189,12 +189,17 @@ class DatabaseHandler(object):
             self.orm = 'peewee'
         elif sschema:
             self.orm = 'sqla'
-            self._session = self.db.Session()
+            self._set_session()
 
     @property
     def connected(self) -> bool:
         """ Returns True if the database is connected """
         return self.db.connected if self.db else None
+
+    def _set_session(self):
+        """ Sets the sqla database Session if db is connected """
+        if self.connected:
+            self._session = self.db.Session()
 
     @property
     def session(self):
