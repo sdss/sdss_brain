@@ -90,6 +90,11 @@ class User(object):
         """ Checks if SDSS credentials are validated for the given user """
         return self._valid_sdss_cred
 
+    @property
+    def validated(self):
+        """ Checks if user is validated """
+        return any([self.is_netrc_valid, self.is_htpass_valid, self.is_sdss_cred_valid])
+
     def validate_user(self, password: str = None) -> None:
         """ Validate the given user
 
