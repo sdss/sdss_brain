@@ -41,6 +41,7 @@ class User(object):
         self.netrc = None
         self.htpass = None
         self.cred = None
+        self.member = None
 
         self._valid_netrc = False
         self._valid_htpass = False
@@ -95,6 +96,11 @@ class User(object):
         """ Checks if user is validated """
         return any([self.is_netrc_valid, self.is_htpass_valid, self.is_sdss_cred_valid])
 
+    @property
+    def in_sdss(self):
+        if self.member:
+            return {'sdss4': self.member['sdss4']['has_sdss_access'], 'sdss5': self.member['sdss5']['has_sdss_access']}
+
     def validate_user(self, password: str = None) -> None:
         """ Validate the given user
 
@@ -147,3 +153,4 @@ class User(object):
             if not r.is_error:
                 data = r.json()
                 self._valid_sdss_cred = data.get('authenticated', False) == 'True'
+                self.member = data.get('member', None)
