@@ -72,7 +72,10 @@ class Netrc(object):
                              'permissions different from 600.')
 
         # read the netrc file
-        netfile = netrc.netrc(self.path)
+        try:
+            netfile = netrc.netrc(self.path)
+        except netrc.NetrcParseError as nerr:
+            raise BrainError(f'Your netrc file was not parsed correctly. Error: {nerr}') from nerr
 
         # check the netrc file has the allowed SDSS host machines
         nethosts = netfile.hosts.keys()
