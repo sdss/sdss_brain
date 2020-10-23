@@ -31,7 +31,7 @@ class Netrc(object):
     Parameters
     ----------
     path : str
-        The path to a .netrc file
+        The path to a .netrc file.  Defaults to custom "netrc_path" config path or ~/.netrc
     """
 
     def __init__(self, path: str = None):

@@ -37,7 +37,7 @@ class Htpass(object):
     Parameters
     ----------
     path : str
-        The path to a .htpasswd file
+        The path to a .htpasswd file.  Defaults to custom "htpass_path" config path or ~/.htpasswd
     """
 
     def __init__(self, path: str = None):

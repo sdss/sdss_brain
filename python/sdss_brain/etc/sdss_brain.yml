@@ -3,6 +3,7 @@
 ignore_db: False
 download: False
 default_release: null
+netrc_path: null
 
 mapped_versions:
   manga:
