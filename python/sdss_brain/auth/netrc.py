@@ -34,7 +34,7 @@ class Netrc(object):
         The path to a .netrc file
     """
 
-    def __init__(self, path=None):
+    def __init__(self, path: str = None):
         path = path or config._custom_config.get('netrc_path', None) or '~/.netrc'
         self.path = pathlib.Path(path).expanduser()
         self.allowed_hosts = ['data.sdss.org', 'api.sdss.org', 'magrathea.sdss.org']

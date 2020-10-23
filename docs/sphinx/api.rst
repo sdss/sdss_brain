@@ -6,6 +6,27 @@ sdss_brain Reference
 
 .. _api-main:
 
+.. _api_auth:
+
+Auth
+----
+
+.. automodule:: sdss_brain.auth.netrc
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: sdss_brain.auth.htpass
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: sdss_brain.auth.user
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 .. _api_config:
 
 Config

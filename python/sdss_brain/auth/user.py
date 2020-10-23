@@ -14,6 +14,7 @@
 from __future__ import print_function, division, absolute_import
 
 import httpx
+from typing import Type
 from sdss_brain.auth import Netrc, Htpass
 from sdss_brain.exceptions import BrainError
 
@@ -34,6 +35,17 @@ class User(object):
     ----------
     user : str
         the SDSS username
+
+    Attributes
+    ----------
+    member : dict
+        dictionary of member information for a validated user
+    netrc : type[Netrc]
+        A local Netrc instance, if any
+    htpass : type[Htpass]
+        A local Htpass instance, if any
+    cred : type[Credential]
+        A local SDSS Credential instance, if any
     """
 
     def __init__(self, user: str):
@@ -92,14 +104,16 @@ class User(object):
         return self._valid_sdss_cred
 
     @property
-    def validated(self):
+    def validated(self) -> bool:
         """ Checks if user is validated """
         return any([self.is_netrc_valid, self.is_htpass_valid, self.is_sdss_cred_valid])
 
     @property
-    def in_sdss(self):
+    def in_sdss(self) -> dict:
+        """ Checks member status in SDSS-IV and SDSS-V """
         if self.member:
-            return {'sdss4': self.member['sdss4']['has_sdss_access'], 'sdss5': self.member['sdss5']['has_sdss_access']}
+            return {'sdss4': self.member['sdss4']['has_sdss_access'],
+                    'sdss5': self.member['sdss5']['has_sdss_access']}
 
     def validate_user(self, password: str = None) -> None:
         """ Validate the given user
