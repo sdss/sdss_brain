@@ -20,14 +20,18 @@ from sdss_brain.exceptions import BrainError
 class Config(object):
     """ Main configuration class for SDSS Brain
 
-    [extended_summary]
+    This class helps set up global configurations for the ``Brain`` to use.
 
     Attributes
     ----------
     download : bool
+        When True, automatically downloads all data
     ignore_db : bool
+        When True, automatically ignores all database connections
     work_versions: dict
+        A dictionary containing the survey version numbers to work with non-released data
     user: type[User]
+        A validated SDSS user
     """
 
     def __init__(self):
@@ -110,7 +114,7 @@ class Config(object):
         return max(drsonly, key=lambda t: int(t.rsplit('DR', 1)[-1]))
 
     def list_allowed_releases(self) -> list:
-        """ list the allowed releases based on the available tree environment configurations """
+        """ List the allowed releases based on the available tree environment configurations """
         return self._allowed_releases
 
     def _load_defaults(self) -> None:
@@ -165,7 +169,13 @@ class Config(object):
             The username to use, by default 'sdss'
         password : str, optional
             The password to use to validate the user, by default None.
+
+        Raises
+        ------
+        BrainError
+            when a user cannot be validated
         """
+
         default_user = self._custom_config.get('default_username', None)
         default_pass = self._custom_config.get('default_userpass', None)
         user = default_user or user
