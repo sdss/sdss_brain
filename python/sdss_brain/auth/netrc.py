@@ -16,7 +16,7 @@ from __future__ import print_function, division, absolute_import
 import netrc
 import pathlib
 import warnings
-from sdss_brain.config import config
+from sdss_brain import cfg_params
 from sdss_brain.exceptions import BrainError
 
 
@@ -35,7 +35,7 @@ class Netrc(object):
     """
 
     def __init__(self, path: str = None):
-        path = path or config._custom_config.get('netrc_path', None) or '~/.netrc'
+        path = path or cfg_params.get('netrc_path', None) or '~/.netrc'
         self.path = pathlib.Path(path).expanduser()
         self.allowed_hosts = ['data.sdss.org', 'api.sdss.org', 'magrathea.sdss.org']
         self._valid_hosts = {}

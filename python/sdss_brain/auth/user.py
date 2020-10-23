@@ -14,7 +14,6 @@
 from __future__ import print_function, division, absolute_import
 
 import httpx
-from typing import Type
 from sdss_brain.auth import Netrc, Htpass
 from sdss_brain.exceptions import BrainError
 

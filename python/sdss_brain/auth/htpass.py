@@ -15,7 +15,7 @@ from __future__ import print_function, division, absolute_import
 
 import pathlib
 import warnings
-from sdss_brain.config import config
+from sdss_brain import cfg_params
 from sdss_brain.exceptions import BrainError
 
 try:
@@ -41,7 +41,7 @@ class Htpass(object):
     """
 
     def __init__(self, path: str = None):
-        path = path or config._custom_config.get('htpass_path', None) or '~/.htpasswd'
+        path = path or cfg_params.get('htpass_path', None) or '~/.htpasswd'
         self.path = pathlib.Path(path).expanduser()
 
         self.htpass = None
