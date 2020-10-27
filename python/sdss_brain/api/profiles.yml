@@ -1,0 +1,86 @@
+# This file contains a list of domains and APIs available for SDSS
+#
+
+# this section contains a list of the used SDSS domains
+#
+# The domains schema is defined as the following:
+# schema:
+#   name: the full domain name. Required.
+
+domains:
+  data:
+    name: data.sdss.org
+
+  sas:
+    name: sas.sdss.org
+
+  api:
+    name: api.sdss.org
+
+  lore:
+    name: lore.sdss.utah.edu
+
+  internal:
+    name: internal.sdss.org
+
+  magrathea:
+    name: magrathea.sdss.org
+
+  dr15:
+    name: dr15.sdss.org
+    public: true
+
+  dr16:
+    name: dr16.sdss.org
+    public: true
+
+  local:
+    name: localhost
+
+
+# this section contains a list of available SDSS APIs.  For definition purposes,
+# any programmatic, non-web interface serving SDSS data/info hosted by nginx or
+# or apache counts as an API
+#
+# The API profile schema is defined as the following:
+# schema:
+#   base: the base name of the API. Required.
+#   domains: the domains where the API is active. Required.
+#   mirrors: the domains for possible mirrors
+#   stems:
+#     test: the name of the development stem.
+#     public: the name of the development public stem
+#     affix: whether the alternate base is a prefix or suffix
+#   api: whether the API is under an "api" stem
+#   routemap: an API route that returns the available routes on the given API
+
+apis:
+  marvin:
+    base: marvin
+    domains:
+      - sas
+      - lore
+      - dr15
+      - dr16
+    mirrors:
+      - magrathea
+    stems:
+      test: test
+      public: public
+      affix: prefix
+    api: true
+    routemap: general/getroutemap
+
+  icdb:
+    base: collaboration
+    domains:
+      - internal
+    stems:
+      test: dev
+      affix: prefix
+    api: true
+
+  valis:
+    base: valis
+    domains:
+      - api

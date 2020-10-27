@@ -6,6 +6,21 @@ sdss_brain Reference
 
 .. _api-main:
 
+.. _api-api:
+
+Api
+---
+
+.. automodule:: sdss_brain.api.client
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+.. automodule:: sdss_brain.api.manager
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. _api_auth:
 
 Auth
