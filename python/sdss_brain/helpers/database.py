@@ -298,3 +298,10 @@ class DatabaseHandler(object):
 
         self.model = model_obj
 
+    def close(self):
+        """ Close database connections and sessions """
+        if self.orm == 'sqlalchemy':
+            self.session.close()
+        elif self.orm == 'peewee':
+            self.db.close()
+

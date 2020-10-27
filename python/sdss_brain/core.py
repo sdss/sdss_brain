@@ -142,7 +142,9 @@ class HindBrain(Base):
         if self.data_origin == 'file' and isinstance(self.data, fits.HDUList):
             self.data.close()
         elif self.data_origin == 'db':
-            pass
+            if hasattr(self, 'db'):
+                self.db.close()
+            self.data = None
         elif self.data_origin == 'api':
             pass
 
