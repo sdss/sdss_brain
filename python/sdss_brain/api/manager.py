@@ -142,7 +142,11 @@ class ApiProfileModel(BaseModel):
 class ApiProfile(object):
     """ Class representing an API profile
 
-    This class provides an interface for a given SDSS API.
+    This class provides an interface for a given SDSS API profile.  It provides
+    convenience methods for easily switching domain hosts for a given API, switching
+    between production and development paths, and constructing full url route paths.
+    It uses the `~urllib.parse.urlparse` URL scheme,
+    "scheme://netloc/path;parameters?query#fragment".
 
     Parameters
     ----------
@@ -221,6 +225,24 @@ class ApiProfile(object):
         return {i: domains[i].name for i in profile_domains}
 
     def construct_url(self, test: bool = None, public: bool = None) -> str:
+        """ Constructs a new base url
+
+        Constructs a new url given the currently set domain name and the API
+        base name.  Can optionally specify a development base using the test or
+        public keywords.
+
+        Parameters
+        ----------
+        test : bool, optional
+            If True, add the "test" stem for the development path, by default None
+        public : bool, optional
+            If True, adds the "public" stem for the deveopment path, by default None
+
+        Returns
+        -------
+        str
+            [description]
+        """
         scheme = 'http' if 'local' in self.current_domain else 'https'
         netloc = self.current_domain
         path = self._create_base_stem(test, public)
@@ -240,6 +262,14 @@ class ApiProfile(object):
         -------
         str
             The full route url
+
+        Example
+        -------
+        >>> p = ApiProfile('marvin')
+        >>> p.url
+        'https://sas.sdss.org/marvin/api'
+        >>> p.construct_route('general/getroutemap')
+        'https://sas.sdss.org/marvin/api/general/getroutemap'
         """
         return urljoin(self.url, route)
 
@@ -252,6 +282,30 @@ class ApiProfile(object):
 
     @check_domain
     def change_domain(self, domain: str, port: int = None, ngrokid: int = None) -> None:
+        """ Change the url domain
+
+        Updates the url "netloc" segment to use the domain name provided.  If the domain is
+        "local", also needs either a port number or ngrok id to fully construct a local
+        domain name.
+
+        Parameters
+        ----------
+        domain : str
+            The name of the domain to use
+        port : int, optional
+            The port used for localhost domains, by default None
+        ngrokid : int, optional
+            The ngrok id used for localhost domains, by default None
+
+        Example
+        -------
+        >>> p = ApiProfile('marvin')
+        >>> p.url
+        'https://sas.sdss.org/marvin/api'
+        >>> p.change_domains('dr15')
+        >>> p.url
+        'https://dr15.sdss.org/marvin/api'
+        """
         parsed_url = urlparse(self.url)
         params = dict(zip(['scheme', 'netloc', 'path', 'params', 'query', 'fragment'],
                           tuple(parsed_url)))
@@ -295,6 +349,15 @@ class ApiProfile(object):
             If True, add the "test" stem for the development path, by default None
         public : bool, optional
             If True, adds the "public" stem for the deveopment path, by default None
+
+        Example
+        -------
+        >>> p = ApiProfile('marvin')
+        >>> p.url
+        'https://sas.sdss.org/marvin/api'
+        >>> p.change_path(test=True)
+        >>> p.url
+        'https://sas.sdss.org/test/marvin/api'
         """
         path = self._create_base_stem(test, public)
         parsed_url = urlparse(self.url)
@@ -362,6 +425,8 @@ class ApiManager(object):
         ----------
         name : str
             The name of the API
+        test: bool
+            If True, sets the API profile to development, by default None
         """
 
         self.profile = self.apis.get(name, None)
