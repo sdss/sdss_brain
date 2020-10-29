@@ -61,7 +61,7 @@ def strjoin(str1: str, str2: str) -> str:
 
 
 # read in the available domains / apis
-with open((pathlib.Path(__file__).parent / 'profiles.yml').resolve(), 'r') as f:
+with open((pathlib.Path(__file__).parent.parent / 'etc/api_profiles.yml').resolve(), 'r') as f:
     profiles = yaml.load(f.read(), Loader=yaml.SafeLoader)
     domains = profiles['domains']
     apis = profiles['apis']
