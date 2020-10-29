@@ -14,6 +14,7 @@
 from __future__ import print_function, division, absolute_import
 from sdss_brain import cfg_params, log, tree
 from sdss_brain.auth import User
+from sdss_brain.api.manager import apim
 from sdss_brain.exceptions import BrainError
 
 
@@ -56,6 +57,9 @@ class Config(object):
 
         # set default sdss user
         self.set_user()
+
+        # set default API
+        self.set_api()
 
     def __repr__(self):
         return f'<SDSSConfig(release={self.release}, mode={self.mode})>'
@@ -194,6 +198,28 @@ class Config(object):
         if not self.user.validated:
             log.warning(f'User {user} is not validated.  Check your netrc credentials '
                         'or validate your user with config.set_user(username, password)')
+
+    def set_api(self, name: str = None, domain: str = None, test: bool = None) -> None:
+        """ Set a new global API to use
+
+        Sets the `~sdss_brain.api.manager.ApiManager` and a new global
+        `~sdss_brain.api.manager.ApiProfile`.  Can set permanently by setting
+        the "default_api" keywords in the custom YAML configuration file.
+
+        Parameters
+        ----------
+        name : str, optional
+            The name of a valid SDSS API, by default None
+        domain : str, optional
+            The name of the domain to set on the API profile, by default None
+        test : bool, optional
+            If True, uses the development API, by default None
+        """
+        default_api = self._custom_config.get('default_api', None)
+        name =  name or default_api
+        self.apis = apim
+        if name:
+            self.apis.set_profile(name, domain=domain, test=test)
 
 
 config = Config()

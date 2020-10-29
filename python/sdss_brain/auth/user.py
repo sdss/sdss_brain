@@ -64,6 +64,9 @@ class User(object):
         return (f'<User("{self.user}", netrc={self.is_netrc_valid}, htpass={self.is_htpass_valid}, '
                 f'cred={self.is_sdss_cred_valid})>')
 
+    def __str__(self):
+        return self.user
+
     def _setup_auths(self):
         """ Setup the authenticators """
         # setup netrc

@@ -20,11 +20,10 @@ from pydantic import BaseModel, validator, parse_obj_as
 from typing import List, Dict
 from urllib.parse import urlparse, urlunparse
 from sdss_brain import log
-from sdss_brain.config import config
 from functools import wraps
 
 
-__all__ = ['Domain', 'ApiProfileModel', 'ApiProfile', 'ApiManager']
+__all__ = ['Domain', 'ApiProfileModel', 'ApiProfile', 'ApiManager', 'apim']
 
 
 def urljoin(url1: str, url2: str) -> str:
@@ -158,8 +157,6 @@ class ApiProfile(object):
         The port used for localhost domains, by default None
     ngrokid : int, optional
         The ngrok id used for localhost domains, by default None
-    release : str, optional
-        The SDSS release, by default `sdss_brain.config.release`
     test: bool, optional
         If True, use the development url, by default None
 
@@ -171,7 +168,6 @@ class ApiProfile(object):
     def __init__(self, name: str, domain: str = None, port: int = None, ngrokid: int = None,
                  release: str = None, test: bool = None) -> None:
 
-        self.release = release or config.release
         self.name = name
         # load and validate the name from the list of API profiles
         if name not in apis:
@@ -416,7 +412,7 @@ class ApiManager(object):
         """
         return list(self.domains.values())
 
-    def set_profile(self, name: str, test: bool = None) -> None:
+    def set_profile(self, name: str, domain: str = None, test: bool = None) -> None:
         """ Set the current API profile
 
         Sets the current API to the named profile
@@ -425,11 +421,22 @@ class ApiManager(object):
         ----------
         name : str
             The name of the API
-        test: bool
+        domain: str, optional
+            The name of the domain to switch to, by default None
+        test: bool, optional
             If True, sets the API profile to development, by default None
         """
 
+        if name not in self.apis:
+            raise ValueError(f'Input profile {name} not an available SDSS API.')
+
         self.profile = self.apis.get(name, None)
+
+        if domain:
+            self.profile.change_domain(domain)
 
         if test:
             self.profile.change_path(test=test)
+
+
+apim = ApiManager()
