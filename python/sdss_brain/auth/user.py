@@ -13,9 +13,9 @@
 
 from __future__ import print_function, division, absolute_import
 
-import httpx
 from sdss_brain.auth import Netrc, Htpass
 from sdss_brain.exceptions import BrainError
+from sdss_brain.api.io import send_post_request
 
 try:
     from collaboration.wiki import Credential
@@ -165,8 +165,7 @@ class User(object):
         else:
             # TODO change this dev login to production site when ready
             cred_url = 'https://internal.sdss.org/dev/collaboration/api/login'
-            r = httpx.post(cred_url, data={'username': self.user, 'password': password})
-            if not r.is_error:
-                data = r.json()
-                self._valid_sdss_cred = data.get('authenticated', False) == 'True'
-                self.member = data.get('member', None)
+            data = send_post_request(cred_url, data={'username': self.user, 'password': password})
+            self._valid_sdss_cred = data.get('authenticated', False) == 'True'
+            self.member = data.get('member', None)
+

@@ -13,6 +13,7 @@
 
 from __future__ import print_function, division, absolute_import
 import httpx
+import warnings
 from io import BytesIO
 from typing import Union, Type
 from sdss_brain import log
@@ -117,7 +118,7 @@ class BaseClient(object):
         self.user = User(user) if type(user) == str else user if isinstance(user, User) \
             else config.user
         if not self.user.validated:
-            raise BrainError("User is not validated")
+            warnings.warn(f"User {user} is not a validated user. Some requests may not work.")
 
     def set_api(self, use_api: Union[str, Type[ApiProfile]], domain: str = None,
                 test: bool = None) -> None:
@@ -254,6 +255,36 @@ class BaseClient(object):
         else:
             self.data = self.data
 
+    def _create_token_auth_header(self):
+        if not self.api:
+            raise BrainError("No API profile set. Cannot created token auth header.")
+
+        if self.api.auth_type != 'token':
+            return {}
+
+        token = self.api.token
+        if not token:
+            log.info('No token found.  Attempting to retreive one.')
+            token = self.get_token()
+            if not token:
+                raise ValueError(f'No token retrieved for API {self.api.name}.  Check for a valid '
+                                 'user, try self.get_token again, and save your token!')
+
+        return {'Authorization': f'Bearer {token}'}
+
+    def get_token(self):
+        if not self.user:
+            raise ValueError("No user specified.")
+
+        if not self.api:
+            raise ValueError("No API profile specified.")
+
+        if not self.user.validated and not self.user.is_netrc_valid:
+            raise ValueError(f'User {self.user} is not properly validated with netrc.  '
+                             'Cannot get a token.  Check self.user for proper netrc validation.')
+
+        return self.api.get_token(self.user)
+
 
 class SDSSClient(BaseClient):
     """ Helper class for sending http requests using httpx.Client"""
@@ -304,13 +335,18 @@ class SDSSClient(BaseClient):
         # validate the input
         self._validate_request(url, method)
 
+        headers = None
+        if self.api and self.api.auth_type == 'token':
+            headers = self._create_token_auth_header()
+
         try:
             # try to send the request
             if method == 'stream':
                 resp = self._stream_request()
             else:
-                resp = self.client.request(method, self.url, params=data, data=data, json=data,
-                                           files=files, content=content)
+                params, data, json = (data, None, None) if method == 'get' else (None, data, data)
+                resp = self.client.request(method, self.url, params=params, data=data, json=json,
+                                           files=files, content=content, headers=headers)
 
         except httpx.RequestError as exc:
             raise BrainError(f'An error occurred requesting {exc.request.url!r}') from exc
@@ -449,3 +485,4 @@ class SDSSAsyncClient(BaseClient):
 
         self.data = b
         return resp
+

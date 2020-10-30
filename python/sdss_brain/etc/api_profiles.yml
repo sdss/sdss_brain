@@ -53,6 +53,7 @@ domains:
 #     affix: whether the alternate base is a prefix or suffix
 #   api: whether the API is under an "api" stem
 #   routemap: an API route that returns the available routes on the given API
+#   auth: the type of authentication the API needs for non-public APIs
 
 apis:
   marvin:
@@ -69,7 +70,10 @@ apis:
       public: public
       affix: prefix
     api: true
-    routemap: general/getroutemap
+    routemap: general/getroutemap/
+    auth:
+      type: token
+      route: general/login/
 
   icdb:
     base: collaboration

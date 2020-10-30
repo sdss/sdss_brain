@@ -13,14 +13,18 @@
 
 from __future__ import print_function, division, absolute_import
 
+import os
 import pathlib
 import warnings
 import yaml
+from functools import wraps
 from pydantic import BaseModel, validator, parse_obj_as
 from typing import List, Dict
 from urllib.parse import urlparse, urlunparse
-from sdss_brain import log
-from functools import wraps
+from sdss_brain import log, cfg_params
+from sdss_brain.auth import User
+from sdss_brain.api.io import send_post_request
+from sdss_brain.exceptions import BrainError
 
 
 __all__ = ['Domain', 'ApiProfileModel', 'ApiProfile', 'ApiManager', 'apim']
@@ -29,8 +33,9 @@ __all__ = ['Domain', 'ApiProfileModel', 'ApiProfile', 'ApiManager', 'apim']
 def urljoin(url1: str, url2: str) -> str:
     """ Custom function to join two url paths
 
-    Uses `~python.urllib.parse.urlparse` and `~python.urllib.parse.urlunparse`
-    to join relevant segments of two urls.
+    Uses `~urllib.parse.urlparse` and `~urllib.parse.urlunparse`
+    to join relevant segments of two urls.  Does not use `~urllib.parse.urljoin`
+    as that replaces existing url path with a new path.
 
     Parameters
     ----------
@@ -54,7 +59,8 @@ def urljoin(url1: str, url2: str) -> str:
 def strjoin(str1: str, str2: str) -> str:
     """ Joins two url strings ignoring a leading / """
     if not str2.startswith(str1):
-        f = (pathlib.Path(str1) / str2.lstrip('/')).as_posix() if str2 else str1
+        # use os.path instead of pathlib since it does not trim trailing slashes
+        f = os.path.join(str1, str2.lstrip('/')) if str2 else str1
     else:
         f = str2
     return f
@@ -78,6 +84,9 @@ class Domain(BaseModel):
             raise ValueError(f'Domain name {value} does not fit format of "xxx.sdss.org" or "xxx.sdss.utah.edu"')
 
         return value
+
+    def __str__(self):
+        return str(self.name)
 
 
 # validate and process the domains yaml section
@@ -121,6 +130,7 @@ class ApiProfileModel(BaseModel):
     stems: Dict[str, str] = {'test': 'test', 'public': 'public', 'affix': 'prefix'}
     api: bool = False
     routemap: str = None
+    auth: Dict[str, str] = {'type': 'netrc', 'route': None}
 
     @validator('domains', 'mirrors')
     def domains_in_list(cls, values):
@@ -188,11 +198,77 @@ class ApiProfile(object):
         # construct the API url
         self.url = self.construct_url(test=test)
 
+        # set auth type
+        self._set_auth_type()
+
     def __repr__(self) -> str:
         return f'<ApiProfile("{self.name}", current_domain="{self.current_domain}", url="{self.url}")>'
 
     def __str__(self) -> str:
         return self.name.lower()
+
+    def _set_auth_type(self) -> None:
+        """ Sets the API authentication type """
+        if self.is_domain_public is True or 'local' in str(self.current_domain):
+            self.auth_type = None
+        else:
+            self.auth_type = self.info['auth'].get('type', 'netrc')
+
+    @property
+    def token(self):
+        return self.check_for_token()
+
+    def check_for_token(self):
+        token = f'{self.name.upper()}_API_TOKEN'
+        return os.getenv(token) or cfg_params.get(token.lower(), None)
+
+    def construct_token_url(self):
+        auth = self.info.get('auth', None)
+        if auth['type'] != 'token':
+            log.info(f'Auth type for API {self.name} is not "token".  No token needed.')
+            return
+
+        token_route = auth.get('route', None)
+        if not token_route:
+            raise ValueError(f'No token route specified for API profile {self.name}. '
+                             'I do not where to request a token from.')
+        return self.construct_route(token_route)
+
+    def get_token(self, user: str):
+        if self.token:
+            return self.token
+
+        auth = self.info.get('auth', None)
+        if auth['type'] != 'token':
+            log.info(f'Auth type for API {self.name} is not "token".  No token needed.')
+            return
+
+        if type(user) == str:
+            user = User(user)
+        if not user.validated and not user.is_netrc_valid:
+            raise BrainError(f'User {user.name} is not netrc validated!  Cannot access credentials.')
+
+        username, password = user.netrc.read_netrc('api.sdss.org')
+        token_url = self.construct_token_url()
+        data = send_post_request(token_url, data={'username': username, 'password': password})
+        token = data.get('token',
+                         data.get('access_token',
+                                  data.get('user_token',
+                                           data.get('sdss_token', None))))
+        if not token:
+            raise BrainError('Token request successful but could not extract token '
+                             'from response data. Check the returned json response '
+                             'for prope key name')
+        else:
+            tok_name = f'{self.name.upper()}_API_TOKEN'
+            log.info(f'Save this token as either a "{tok_name}" environment variable in your '
+                     f'.bashrc or as "{tok_name.lower()}" in your custom sdss_brain.yml config file.')
+            return token
+
+    @property
+    def is_domain_public(self) -> bool:
+        """ Checks if current domain is a public one """
+        return self.current_domain.public
 
     @check_domain
     def _select_current_domain(self, domain: str, port: int = None, ngrokid: int = None) -> None:
@@ -218,7 +294,7 @@ class ApiProfile(object):
             raise ValueError(f'Profile {self.name} has no "domains" entry set!')
         elif mirror and not profile_domains:
             return None
-        return {i: domains[i].name for i in profile_domains}
+        return {i: domains[i] for i in profile_domains}
 
     def construct_url(self, test: bool = None, public: bool = None) -> str:
         """ Constructs a new base url
@@ -240,7 +316,7 @@ class ApiProfile(object):
             [description]
         """
         scheme = 'http' if 'local' in self.current_domain else 'https'
-        netloc = self.current_domain
+        netloc = self.current_domain.name
         path = self._create_base_stem(test, public)
         return urlunparse((scheme, netloc, path, '', '', ''))
 
@@ -273,7 +349,7 @@ class ApiProfile(object):
         if ngrokid:
             domain = f'{ngrokid}.ngrok.io'
         else:
-            domain = f'{self.domains["local"]}:{port}'
+            domain = f'{self.domains["local"].name}:{port}'
         return domain
 
     @check_domain
@@ -309,8 +385,12 @@ class ApiProfile(object):
             params['scheme'] = 'http'
             params['netloc'] = self._create_local_domain(port, ngrokid)
         else:
-            params['netloc'] = self._all_domains[domain]
+            params['netloc'] = self._all_domains[domain].name
         self.url = urlunparse(params.values())
+
+        # reset current domain and auth_type
+        self.current_domain = self._all_domains[domain]
+        self._set_auth_type()
 
     def _create_base_stem(self, test: bool, public: bool) -> str:
         base = self.info['base']
