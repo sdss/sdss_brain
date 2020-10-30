@@ -70,7 +70,7 @@ class BaseClient(object):
     data: Union[dict, str, bytes]
         The extracted response content
     """
-    _kls = None
+    _kls: Union[Type[httpx.Client], Type[httpx.AsyncClient]] = None
 
     def __init__(self, route: str = None, user: Union[str, Type[User]] = None,
                  use_api: Union[str, Type[ApiProfile]] = None, test: bool = None,
@@ -328,7 +328,7 @@ class BaseClient(object):
 
 class SDSSClient(BaseClient):
     """ Helper class for sending http requests using httpx.Client"""
-    _kls = httpx.Client
+    _kls: Type[httpx.Client] = httpx.Client
 
     def __del__(self):
         if hasattr(self, 'client'):
@@ -344,7 +344,7 @@ class SDSSClient(BaseClient):
         return True
 
     def request(self, url: str = None, data: dict = None, method: str = 'get', files: dict = None,
-                content: bytes = None) -> None:
+                content: bytes = None, **kwargs) -> None:
         """ Submit a http request with httpx
 
         This is a convenience method that wraps `httpx.Client.request`.  It provides support for
@@ -365,6 +365,8 @@ class SDSSClient(BaseClient):
             Input for multi-part file uploads, by default None
         content : bytes, optional
             Input for binary content, by default None
+        kwargs : Any, optional
+            Any other httpx request keyword arguments
 
         Raises
         ------
@@ -386,7 +388,7 @@ class SDSSClient(BaseClient):
             else:
                 params, data, json = (data, None, None) if method == 'get' else (None, data, data)
                 resp = self.client.request(method, self.url, params=params, data=data, json=json,
-                                           files=files, content=content, headers=headers)
+                                           files=files, content=content, headers=headers, **kwargs)
 
         except httpx.RequestError as exc:
             raise BrainError(f'An error occurred requesting {exc.request.url!r}') from exc
@@ -435,7 +437,7 @@ class SDSSClient(BaseClient):
 
 class SDSSAsyncClient(BaseClient):
     """ Helper class for sending asynchronous http requests using httpx.AsyncClient"""
-    _kls = httpx.AsyncClient
+    _kls: Type[httpx.AsyncClient] = httpx.AsyncClient
 
     async def __aenter__(self):
         ''' Constructor for client use as context manager '''
@@ -446,7 +448,8 @@ class SDSSAsyncClient(BaseClient):
         await self.client.aclose()
         return True
 
-    async def request(self, url: str = None, data=None, method='get', files=None, content=None):
+    async def request(self, url: str = None, data: dict = None, method: str = 'get', files: dict = None,
+                      content: bytes = None, **kwargs):
         """ Submit a http request with httpx
 
         This is a convenience method that wraps `httpx.AsyncClient.request`.  It provides support
@@ -467,6 +470,8 @@ class SDSSAsyncClient(BaseClient):
             Input for multi-part file uploads, by default None
         content : bytes, optional
             Input for binary content, by default None
+        kwargs : Any, optional
+            Any other httpx request keyword arguments
 
         Raises
         ------
@@ -485,7 +490,8 @@ class SDSSAsyncClient(BaseClient):
             else:
                 params, data, json = (data, None, None) if method == 'get' else (None, data, data)
                 resp = await self.client.request(method, self.url, params=params, data=data,
-                                                 json=json, files=files, content=content, headers=headers)
+                                                 json=json, files=files, content=content,
+                                                 headers=headers, **kwargs)
         except httpx.RequestError as exc:
             raise BrainError(f'An error occurred requesting {exc.request.url!r}') from exc
         else:
