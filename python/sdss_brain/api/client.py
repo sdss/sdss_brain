@@ -255,7 +255,24 @@ class BaseClient(object):
         else:
             self.data = self.data
 
-    def _create_token_auth_header(self):
+    def _create_token_auth_header(self) -> dict:
+        """ Create a new request authorization header
+
+        Creates a new http request header containing valid
+        Bearer token authorization.
+
+        Returns
+        -------
+        dict
+            A new http request header to be added to the outgoing request
+
+        Raises
+        ------
+        BrainError
+            when no API profile has been set
+        ValueError
+            when a token cannot be retrieved
+        """
         if not self.api:
             raise BrainError("No API profile set. Cannot created token auth header.")
 
@@ -269,10 +286,33 @@ class BaseClient(object):
             if not token:
                 raise ValueError(f'No token retrieved for API {self.api.name}.  Check for a valid '
                                  'user, try self.get_token again, and save your token!')
+            else:
+                log.info("This token is temporary.  To permanently set one, run self.api.get_token "
+                         "and save it in your config file or as an environment variable.")
 
         return {'Authorization': f'Bearer {token}'}
 
-    def get_token(self):
+    def get_token(self) -> str:
+        """ Get an API auth token for the specified API
+
+        Retrieves an API auth token for the given API profile, if
+        the auth_type for this API is set to "token".  For APIs that only
+        use "netrc" authentication, this method is unnecessary.
+
+        Returns
+        -------
+        str
+            A valid API auth token
+
+        Raises
+        ------
+        ValueError
+            when no user is set
+        ValueError
+            when no API profile is set
+        ValueError
+            when the user is not properly validated
+        """
         if not self.user:
             raise ValueError("No user specified.")
 
@@ -435,12 +475,17 @@ class SDSSAsyncClient(BaseClient):
         """
         self._validate_request(url, method)
 
+        headers = None
+        if self.api and self.api.auth_type == 'token':
+            headers = self._create_token_auth_header()
+
         try:
             if method == 'stream':
                 resp = await self._stream_request()
             else:
-                resp = await self.client.request(method, self.url, params=data, data=data,
-                                                 json=data, files=files, content=content)
+                params, data, json = (data, None, None) if method == 'get' else (None, data, data)
+                resp = await self.client.request(method, self.url, params=params, data=data,
+                                                 json=json, files=files, content=content, headers=headers)
         except httpx.RequestError as exc:
             raise BrainError(f'An error occurred requesting {exc.request.url!r}') from exc
         else:

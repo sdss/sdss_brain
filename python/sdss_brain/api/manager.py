@@ -215,26 +215,57 @@ class ApiProfile(object):
             self.auth_type = self.info['auth'].get('type', 'netrc')
 
     @property
-    def token(self):
+    def token(self) -> str:
+        """ Returns an authentication token """
         return self.check_for_token()
 
-    def check_for_token(self):
+    def check_for_token(self) -> str:
+        """ Checks for a proper auth token set as a envvar or in custom config """
         token = f'{self.name.upper()}_API_TOKEN'
         return os.getenv(token) or cfg_params.get(token.lower(), None)
 
-    def construct_token_url(self):
+    def construct_token_url(self) -> str:
+        """ Construct a login url for requesting tokens """
+        # check the API auth_type
         auth = self.info.get('auth', None)
         if auth['type'] != 'token':
             log.info(f'Auth type for API {self.name} is not "token".  No token needed.')
             return
 
+        # get the token route for the given API
         token_route = auth.get('route', None)
         if not token_route:
             raise ValueError(f'No token route specified for API profile {self.name}. '
                              'I do not where to request a token from.')
+
         return self.construct_route(token_route)
 
-    def get_token(self, user: str):
+    def get_token(self, user: str) -> str:
+        """ Request and receive a valid API auth token
+
+        Requests an auth token for the specified user.  This uses found netrc
+        authentication to attempt to request and retrieve a valid token.  The
+        token should be saved in an "XXX_API_TOKEN" environment variable or in
+        the custom sdss_brain.yml configuration file as "xxx_api_token", where
+        "XXX" is the API profile name.
+
+        Parameters
+        ----------
+        user : str
+            The name of the SDSS user
+
+        Returns
+        -------
+        str
+            A valid API auth token
+
+        Raises
+        ------
+        BrainError
+            when the user is not netrc validated
+        BrainError
+            when a token cannot be extracted from the http response
+        """
         if self.token:
             return self.token
 
@@ -284,6 +315,26 @@ class ApiProfile(object):
             self.current_domain = self._all_domains.get(domain, None)
 
     def _get_domains(self, mirror: bool = None) -> dict:
+        """ Get the subset of domains valid for the given API
+
+        Set the domains subsets for the specific API.  Sets the
+        ``domains`` attribute and the ``mirrors`` attribute.
+
+        Parameters
+        ----------
+        mirror : bool, optional
+            If True, looks for and sets any mirror domains, by default None
+
+        Returns
+        -------
+        dict
+            The set of valid domains for the given API
+
+        Raises
+        ------
+        ValueError
+            when the API profile has no domains entry set
+        """
         # get the API profile domains ; add localhost automatically
         key = 'mirrors' if mirror else 'domains'
         profile_domains = self.info.get(key, None)
@@ -346,6 +397,7 @@ class ApiProfile(object):
         return urljoin(self.url, route)
 
     def _create_local_domain(self, port: int, ngrokid: int) -> str:
+        """ Create a local domain name """
         if ngrokid:
             domain = f'{ngrokid}.ngrok.io'
         else:
@@ -393,6 +445,7 @@ class ApiProfile(object):
         self._set_auth_type()
 
     def _create_base_stem(self, test: bool, public: bool) -> str:
+        """ Create a new path stem """
         base = self.info['base']
         api = self.info.get('api', False)
         path = f'{base}'
