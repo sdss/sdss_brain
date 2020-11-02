@@ -77,15 +77,23 @@ class MangaCube(Spectrum):
         self._load_spectrum(hdulist)
 
     def _load_object_from_api(self):
-        self.remote.client.request(method='post', data={'release': self.release})
-        self.data = self.remote.client.data['data']
 
+        # do nothing if no remote client
+        if not self.remote:
+            return
+
+        # submit the remote request
+        self.remote.client.request(method='post', data={'release': self.release})
+
+        # extract data from the response
+        self.data = self.remote.client.data['data']
         self.mangaid = self.data['mangaid']
         self.ra = self.data['ra']
         self.dec = self.data['dec']
         self.redshift = self.data['redshift']
         self.wavelength = np.array(self.data['wavelength'])
 
+        # set the header
         # TODO - fix header - see above
         header = fits.Header.fromstring(self.data['header'])
         head = [(k, int(v) if v.isnumeric() else float(v) if v.replace('.', '').isnumeric(
@@ -97,8 +105,8 @@ class MangaCube(Spectrum):
         # TODO - improve url extension-ing
         self.shape = np.array(self.data['shape'])
         x_cen, y_cen = self.shape // 2
-        self.remote.client.request(f'cubes/{self.plateifu}/quantities/{x_cen}/{y_cen}/',
-                                   data={'release': self.release})
+        spaxel_url = self.remote.extend_url(f'quantities/{x_cen}/{y_cen}/')
+        self.remote.client.request(spaxel_url, data={'release': self.release})
 
         # construct a FITS hdulist
         flux = np.zeros(shape=((len(self.wavelength),) + tuple(self.shape)))

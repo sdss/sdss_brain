@@ -13,10 +13,11 @@
 
 from __future__ import print_function, division, absolute_import
 
+import os
 import re
 from typing import Type, Union
 from sdss_brain.api.client import SDSSClient, SDSSAsyncClient
-from sdss_brain.api.manager import apim, ApiProfile
+from sdss_brain.api.manager import apim, ApiProfile, strjoin
 
 
 api_type = Union[str, list, tuple, Type[ApiProfile]]
@@ -162,6 +163,25 @@ class ApiHandler(object):
         """
         self.api = value
         self.client = self._kls(use_api=self.api, timeout=self.timeout)
+
+    def extend_url(self, route: str) -> str:
+        """ Extend the current url by a route segment
+
+        Extend the current url by the given route segment and
+        return a temporary new url.  Meant to easily extend one base
+        route to a deeper sub-route.
+
+        Parameters
+        ----------
+        route : str
+            A url route segment
+
+        Returns
+        -------
+        str
+            A new combined url
+        """
+        return strjoin(self.url, route)
 
     def resolve_url(self, params: dict):
         """ Resolve any url bracket parameters
