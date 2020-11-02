@@ -88,6 +88,12 @@ class Domain(BaseModel):
     def __str__(self):
         return str(self.name)
 
+    def __eq__(self, value):
+        if type(value) is str:
+            return value == self.name
+        elif isinstance(value, Domain):
+            return value is self
+
 
 # validate and process the domains yaml section
 domains = dict(zip(domains.keys(), parse_obj_as(List[Domain], list(domains.values()))))
@@ -570,6 +576,46 @@ class ApiManager(object):
 
         if test:
             self.profile.change_path(test=test)
+
+    def identify_api_from_url(self, url: str) -> tuple:
+        """ Identify and extract an API and domain type from a URL.
+
+        Identifies the type of API and domain name the input URL
+        is using.  Loops over all available API and domain profiles in the
+        ApiManager checks against extracted url parts from `~urllib.parse.urlparse`.
+
+        Parameters
+        ----------
+        url : str
+            The full url string
+
+        Returns
+        -------
+        tuple
+            The identified API profile and domain name
+
+        Raises
+        ------
+        ValueError
+            when the url does not start with http
+        """
+        if not url.startswith('http'):
+            raise ValueError('Input url does not start with http.')
+
+        api = domain = None
+        # extract url parts
+        parts = urlparse(url)
+        # identify the API
+        for v in self.apis.values():
+            if v.info['base'] in parts.path:
+                api = v.name
+
+        # identify the domain
+        for k, d in self.domains.items():
+            if d.name == parts.netloc:
+                domain = k
+
+        return api, domain
 
 
 apim = ApiManager()

@@ -21,6 +21,11 @@ Api
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: sdss_brain.api.handler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: sdss_brain.api.io
    :members:
    :undoc-members:
