@@ -17,6 +17,7 @@ import os
 import pathlib
 import warnings
 import yaml
+from astropy.table import Table
 from functools import wraps
 from pydantic import BaseModel, validator, parse_obj_as
 from typing import List, Dict
@@ -77,6 +78,7 @@ class Domain(BaseModel):
     """ Pydantic class handling validation for SDSS domains """
     name: str
     public: bool = False
+    description: str = None
 
     @validator('name')
     def check_domain_name(cls, value):
@@ -132,11 +134,12 @@ class ApiProfileModel(BaseModel):
     domains: List[str]
     base: str
     mirrors: List[str] = None
-    public: bool = False
     stems: Dict[str, str] = {'test': 'test', 'public': 'public', 'affix': 'prefix'}
     api: bool = False
     routemap: str = None
     auth: Dict[str, str] = {'type': 'netrc', 'route': None}
+    description: str = ''
+    docs: str = None
 
     @validator('domains', 'mirrors')
     def domains_in_list(cls, values):
@@ -616,6 +619,81 @@ class ApiManager(object):
                 domain = k
 
         return api, domain
+
+    def display(self, value: str, pprint: bool = False, show_docs: bool = True,
+                show_desc: bool = True, **kwargs) -> Table:
+        """ Display the APIs or domains as an Astropy Table
+
+        Display the list of available SDSS APIs or domains as an
+        Astropy Table.
+
+        Parameters
+        ----------
+        value : str
+            Either "api(s)" or "domain(s)"
+        pprint : bool, optional
+            If True, pretty print the Astropy Table, by default False
+        show_docs : bool, optional
+            If True, include the "docs" column in the API table, by default True
+        show_desc : bool, optional
+            If True, include the "description" column in the API table, by default True
+        kwargs: Any
+            Other kwargs for Table.pprint (pretty print) method
+
+        Returns
+        -------
+        `~astropy.table.Table`
+            An Astropy Table of information
+
+        Raises
+        ------
+        TypeError
+            when the input value is not a string
+        ValueError
+            when the input value is not either "apis" or "domains"
+        """
+        if type(value) != str:
+            raise TypeError('Value can only be a string')
+
+        value = value.lower()
+        if value not in ['apis', 'api', 'domains', 'domain']:
+            raise ValueError('Value can only be "apis" or "domains"!')
+
+        rows = []
+        cols = []
+        if 'domain' in value:
+            # create display columns
+            cols = ['key', 'name', 'public', 'description']
+
+            # create table rows
+            for k, v in self.domains.items():
+                row = v.dict()
+                row['key'] = k
+                rows.append(row)
+        elif 'api' in value:
+            # create display columns
+            cols = ['key', 'base', 'description', 'domains', 'mirrors', 'auth', 'docs']
+            if not show_docs:
+                cols.remove('docs')
+            if not show_desc:
+                cols.remove('description')
+
+            # create table rows
+            for k, v in self.apis.items():
+                row = {kk: vv for kk, vv in v.info.items() if kk in cols}
+                row['domains'] = ', '.join(row['domains'])
+                row['mirrors'] = ', '.join(row['mirrors']) if row['mirrors'] else ''
+                row['auth'] = row['auth']['type']
+                row['key'] = k
+                rows.append(row)
+
+        table = Table(rows, names=cols)
+
+        if pprint:
+            table.pprint(**kwargs)
+            return
+
+        return table
 
 
 apim = ApiManager()
