@@ -83,12 +83,16 @@ class HindBrain(Base):
             a database ORM or connection to override the default with
         use_api : api_type, see `~sdss_brain.api.handler.ApiHandler`
             An API or URL route to use for remote access to the object
+        async_client : bool
+            If True, sets the remote http client to `~sdss_brain.api.client.SDSSAsyncClient`
     Attributes
     ----------
-        _db : `~sdss_brain.helpers.database.DatabaseHandler`
+        db : `~sdss_brain.helpers.database.DatabaseHandler`
             A db handler for any loaded sdssdb ORM or db connection for the object
         mapped_version : str
             The name of survey/category in the mapped_versions dictionary
+        remote : `~sdss_brain.api.handler.ApiHandler`
+            An api handler for loaded APIs or urls, and sending http requests
     '''
     _db = None
     mapped_version = None
