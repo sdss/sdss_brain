@@ -13,6 +13,7 @@
 
 from __future__ import print_function, division, absolute_import
 import httpx
+import re
 import warnings
 from io import BytesIO
 from typing import Union, Type
@@ -212,6 +213,12 @@ class BaseClient(object):
         if not self.url:
             raise ValueError('No url set.  Cannot make a request. Please specify a '
                              'url or route segment.')
+
+        # look for any bracketed named arguments in the url
+        parts = re.findall(r'{(.*?)}', self.url)
+        if parts:
+            raise BrainError(f'Request url contains bracket arguments: "{", ".join(parts)}". '
+                             'Cannot send request until these are properly replaced.')
 
     def _check_response(self, resp: Type[httpx.Response]) -> None:
         """ Checks the returned httpx response

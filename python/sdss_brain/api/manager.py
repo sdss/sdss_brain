@@ -179,6 +179,29 @@ class ApiProfile(object):
     test: bool, optional
         If True, use the development url, by default None
 
+    Attributes
+    ----------
+        description : str
+            A description of the API
+        documentation : str
+            A url link to any documentation of the API
+        auth_type : str
+            The type of authentication needed for the API
+        domains : dict
+            The available domains this API can be accessed on
+        mirrors : dict
+            The available domains acting as mirrors
+        url : str
+            The current constructed base API url
+        current_domain : str
+            The current domain the API it set to use
+        name : str
+            The name of the API profile
+        token: str
+            The authenticated token, if any
+        info : dict
+            A dictionary of information extracted from Pydantic datamodel
+
     Raises
     ------
     ValueError
@@ -194,6 +217,9 @@ class ApiProfile(object):
         else:
             self._validated_model = ApiProfileModel.parse_obj(apis[name])
             self.info = self._validated_model.dict()
+
+        self.description = self.info.get('description', '')
+        self.documentation = self.info.get('docs', '')
 
         # load the domains and mirrors
         self.domains = self._get_domains()

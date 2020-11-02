@@ -13,6 +13,7 @@
 
 from __future__ import print_function, division, absolute_import
 
+import numpy as np
 import warnings
 from astropy.io import fits
 from sdss_brain.tools import Spectrum
@@ -29,6 +30,7 @@ class Cube(Spectrum):
 class MangaCube(Spectrum):
     """ Class representing a MaNGA IFU datacube for a single galaxy """
     specutils_format: str = 'MaNGA cube'
+    _api = ('marvin', 'cubes/{plateifu}/')
 
     def _load_object_from_db(self, data=None):
 
@@ -66,9 +68,49 @@ class MangaCube(Spectrum):
         mask = self.data.get3DCube('mask')
 
         # construct a new astropy FITS HDUList
-        hdulist = fits.HDUList([fits.PrimaryHDU(data=None), fits.ImageHDU(flux, header=self.header),
+        hdulist = fits.HDUList([fits.PrimaryHDU(data=None),
+                                fits.ImageHDU(flux, name='FLUX', header=self.header),
                                 fits.ImageHDU(ivar, name='IVAR'), fits.ImageHDU(mask, name='MASK'),
                                 fits.ImageHDU(self.data.wavelength.wavelength, name='WAVE')])
+
+        # load the spectrum
+        self._load_spectrum(hdulist)
+
+    def _load_object_from_api(self):
+        self.remote.client.request(method='post', data={'release': self.release})
+        self.data = self.remote.client.data['data']
+
+        self.mangaid = self.data['mangaid']
+        self.ra = self.data['ra']
+        self.dec = self.data['dec']
+        self.redshift = self.data['redshift']
+        self.wavelength = np.array(self.data['wavelength'])
+
+        # TODO - fix header - see above
+        header = fits.Header.fromstring(self.data['header'])
+        head = [(k, int(v) if v.isnumeric() else float(v) if v.replace('.', '').isnumeric(
+        ) else v.strip(), header.comments[i]) for i, (k, v) in enumerate(header.items())]
+        self.header = fits.Header(head)
+
+        # example to retrieve flux for central spaxel
+        # TODO - look into improving speed of 3d flux retrieval
+        # TODO - improve url extension-ing
+        self.shape = np.array(self.data['shape'])
+        x_cen, y_cen = self.shape // 2
+        self.remote.client.request(f'cubes/{self.plateifu}/quantities/{x_cen}/{y_cen}/',
+                                   data={'release': self.release})
+
+        # construct a FITS hdulist
+        flux = np.zeros(shape=((len(self.wavelength),) + tuple(self.shape)))
+        ivar = np.zeros(shape=((len(self.wavelength),) + tuple(self.shape)))
+        mask = np.zeros(shape=((len(self.wavelength),) + tuple(self.shape)))
+        flux[:, x_cen, y_cen] = np.array(self.remote.client.data['data']['flux']['value'])
+        ivar[:, x_cen, y_cen] = np.array(self.remote.client.data['data']['flux']['ivar'])
+        mask[:, x_cen, y_cen] = np.array(self.remote.client.data['data']['flux']['mask'])
+        hdulist = fits.HDUList([fits.PrimaryHDU(data=None),
+                                fits.ImageHDU(flux, name='FLUX', header=self.header),
+                                fits.ImageHDU(ivar, name='IVAR'), fits.ImageHDU(mask, name='MASK'),
+                                fits.ImageHDU(self.wavelength, name='WAVE')])
 
         # load the spectrum
         self._load_spectrum(hdulist)

@@ -13,6 +13,7 @@
 
 from __future__ import print_function, division, absolute_import
 
+import re
 from typing import Type, Union
 from sdss_brain.api.client import SDSSClient, SDSSAsyncClient
 from sdss_brain.api.manager import apim, ApiProfile
@@ -52,6 +53,7 @@ class ApiHandler(object):
         self.api = None
         self.url = None
         self.client = None
+        self.timeout = 30
         self._kls = SDSSAsyncClient if async_client else SDSSClient
 
         self._determine_input(api_input)
@@ -109,7 +111,7 @@ class ApiHandler(object):
             self.api = apim.apis.get(value, None)
 
         # set the SDSS client
-        self.client = self._kls(self.url, use_api=self.api)
+        self.client = self._kls(self.url, use_api=self.api, timeout=self.timeout)
         if self.api and not self.client.api:
             self.client.set_api(self.api)
 
@@ -145,7 +147,7 @@ class ApiHandler(object):
             else:
                 self.api.change_domain(domain)
         self.url = route
-        self.client = self._kls(self.url, use_api=self.api)
+        self.client = self._kls(self.url, use_api=self.api, timeout=self.timeout)
 
     def _check_profile(self, value: Type[ApiProfile]) -> None:
         """ Check the API Profile
@@ -159,5 +161,63 @@ class ApiHandler(object):
             A valid SDSS ApiProfile
         """
         self.api = value
-        self.client = self._kls(use_api=self.api)
+        self.client = self._kls(use_api=self.api, timeout=self.timeout)
 
+    def resolve_url(self, params: dict):
+        """ Resolve any url bracket parameters
+
+        Format the url to replace any bracket name arguments with the
+        input parameters.  All bracket arguments must be replaced and filled
+        in before a valid http request can be sent.
+
+        Parameters
+        ----------
+        params : dict
+            A dictionary of parameters to format the url with
+
+        Raises
+        ------
+        ValueError
+            when no url is set
+        TypeError
+            when input params is not a dictionary
+        """
+        if not self.url:
+            raise ValueError('No url to resolve.  Consider setting one.')
+
+        if type(params) != dict:
+            raise TypeError('Input params must be a dictionary.')
+
+        self.url = self.url.format(**params)
+        self.client.set_url(self.url)
+
+    @property
+    def has_valid_url(self) -> bool:
+        """ Check if the url has no bracket arguments """
+        if self.url:
+            parts = self.extract_url_brackets()
+            return not parts
+
+    def extract_url_brackets(self) -> list:
+        """ Extract named parameters from any url brackets
+
+        Extracts any named parameter arguments from a url, for cases where brackets
+        ({}) are used to denote an argument subtitution.  For example,
+        "cubes/{plateifu}/extensions/{extname}/{x}/{y}"
+
+        Returns
+        -------
+        list
+            A list of url parameter names
+        """
+        parts = []
+        if self.url:
+            parts = re.findall(r'{(.*?)}', self.url)
+        return parts
+
+    def close(self):
+        """ Close the synchronous SDSSClient httpx client """
+        try:
+            self.client.client.close()
+        except AttributeError:
+            pass
