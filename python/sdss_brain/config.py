@@ -14,7 +14,7 @@
 from __future__ import print_function, division, absolute_import
 from sdss_brain import cfg_params, log, tree
 from sdss_brain.auth import User
-from sdss_brain.api.manager import apim
+from sdss_brain.api.manager import ApiManager
 from sdss_brain.exceptions import BrainError
 
 
@@ -216,8 +216,8 @@ class Config(object):
             If True, uses the development API, by default None
         """
         default_api = self._custom_config.get('default_api', None)
-        name =  name or default_api
-        self.apis = apim
+        name = name or default_api
+        self.apis = ApiManager()
         if name:
             self.apis.set_profile(name, domain=domain, test=test)
 

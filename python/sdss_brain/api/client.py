@@ -19,7 +19,7 @@ from io import BytesIO
 from typing import Union, Type
 from sdss_brain import log
 from sdss_brain.auth import User
-from sdss_brain.api.manager import apim, ApiProfile
+from sdss_brain.api.manager import ApiManager, ApiProfile
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError
 
@@ -27,6 +27,9 @@ try:
     from tqdm import tqdm
 except ImportError:
     tqdm = None
+
+
+apim = ApiManager()
 
 
 class BaseClient(object):

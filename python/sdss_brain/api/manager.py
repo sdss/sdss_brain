@@ -472,6 +472,7 @@ class ApiProfile(object):
             params['scheme'] = 'http'
             params['netloc'] = self._create_local_domain(port, ngrokid)
         else:
+            params['scheme'] = 'https'
             params['netloc'] = self._all_domains[domain].name
         self.url = urlunparse(params.values())
 
