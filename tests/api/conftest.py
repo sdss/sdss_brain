@@ -15,6 +15,7 @@ from __future__ import print_function, division, absolute_import
 import pytest
 
 import sdss_brain.api.manager
+from sdss_brain.auth.user import User
 
 
 api_prof = {'marvin': {'description': 'API for accessing MaNGA data via Marvin',
@@ -36,7 +37,17 @@ def mock_api(monkeypatch):
 
 
 @pytest.fixture()
-def mock_profile(mock_api):
+def mock_user():
+    """ fixture to create a new mocked sdss user """
+    user = User('sdss')
+    user.netrc = True
+    user._valid_netrc = True
+    yield user
+    user = None
+
+
+@pytest.fixture()
+def mock_profile(mock_api, mock_user):
     """ fixture to create a new mocked API profile """
     from sdss_brain.api.manager import ApiProfile
     profile = ApiProfile('marvin')

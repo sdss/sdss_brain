@@ -124,8 +124,9 @@ class TestClient(object):
         with pytest.raises(BrainError, match='No API profile set. Cannot created token auth header.'):
             s._create_token_auth_header()
 
-    def test_token_fails_to_get(self, mock_profile):
+    def test_token_fails_to_get(self, mock_profile, mock_user):
         s = SDSSClient('/general/getroutemap', use_api=mock_profile)
+        s.user = mock_user
         mock_profile.check_for_token = lambda: None
         mock_profile.get_token = lambda x: None
         with pytest.raises(ValueError, match='No token retrieved for API marvin.  Check for a valid user'):
