@@ -261,6 +261,21 @@ class HindBrain(Base):
         # set this straight to the value since the MMA converts it into a DatabaseHandler
         cls._db = value
 
+    @classmethod
+    def set_api_object(cls, value: api_type) -> None:
+        """ Sets up the tool to create a new API handler
+
+        Sets up the tool to create a new `~sdss_brain.api.handler.ApiHandler` on the
+        given class.  Valid input can be any explicit url, a string API profile name,
+        or a tuple containing (API profile name, url route segment, optional domain name).
+
+        Parameters
+        ----------
+        value : api_type
+            The type of remote API input
+        """
+        cls._api = value
+
 
 class Brain(HindBrain, MMAccess):
     """ The hind Brain with support for ``sdss_access``
