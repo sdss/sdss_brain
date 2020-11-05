@@ -42,7 +42,7 @@ domains:
   dr16:
     name: dr16.sdss.org
     public: true
-    description: public domain for DR15 data access
+    description: public domain for DR16 data access
 
   local:
     name: localhost

@@ -9,6 +9,10 @@ attach a database object to the tool or provide one during tool instantiation.  
 and uses, `sdssdb <https://sdssdb.readthedocs.io>`_ for all database-related items.  Schema not defined
 in ``sdssdb`` are currently not supported.
 
+Remember that once you attach a database object to a tool, you must override the `_load_object_from_db` method
+with logic instructing the tool with what to do with the database object.  For an example, see the
+`MangaCube tool <https://github.com/sdss/sdss_brain/blob/master/python/sdss_brain/tools/cubes.py#L33>`_
+
 Adding a Database to a Tool
 ---------------------------
 
@@ -99,6 +103,7 @@ no matter what input is provided.  Here we load the ORM model ``Field`` from the
 schema.
 ::
 
+    >>> from sdss_brain.helpers import DatabaseHandler
     >>> from sdssdb.peewee.sdss5db.targetdb import Field
     >>> d = DatabaseHandler(Field)
     >>> d
