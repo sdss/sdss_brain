@@ -227,6 +227,26 @@ class BaseClient(object):
                              'Cannot send request until these are properly replaced.')
 
     def prepare_data(self, data: dict = None):
+        """ Add the SDSS release to input request data
+
+        Automatically adds the client SDSS data release to the input request data
+        for cases where the API web server needs it.
+
+        Parameters
+        ----------
+        data : dict, optional
+            any input request data, by default None
+
+        Returns
+        -------
+        dict
+            The request data with release added
+
+        Raises
+        ------
+        TypeError
+            when the input data is not a dict
+        """
 
         # set the release dict and return it when no input data
         release = {'release': self.release}

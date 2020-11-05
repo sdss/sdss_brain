@@ -282,11 +282,102 @@ Sending HTTP Requests with SDSSClient
 -------------------------------------
 
 All http requests are sent using the `~sdss_brain.api.client.SDSSClient`, which is a convenience wrapper class around the
-`httpx <https://www.python-httpx.org/>`_ Python package for sending requests.  ``httpx`` is a modern request framework
-aiming to mirror the API of the `requests <https://requests.readthedocs.io/en/master/>`_ python package.  `httpx`` also
+`httpx <https://www.python-httpx.org/>`_ python package for sending requests.  ``httpx`` is a modern request framework
+aiming to mirror the API of the `requests <https://requests.readthedocs.io/en/master/>`_ python package.  ``httpx`` also
 provides built-in async support.  See `~sdss_brain.api.client.SDSSAsyncClient` for the async version of the remote client.
 
-The main advantage of using the ``SDSSClient`` is integration with SDSS APIs and SDSS user authentication.
+The main advantage of using the ``SDSSClient`` is integration with SDSS APIs and SDSS user authentication, although it can be
+used with any explicit url.  Let's submit a "hello world" request to the Marvin API using the public domain `dr15.sdss.org`.
+::
+
+    >>> from sdss_brain.api.client import SDSSClient
+
+    >>> # load the client to use the marvin API on public domain DR15,
+    >>> # accessing the "cubes hello world" url route
+    >>> s = SDSSClient('cubes', use_api='marvin', domain='dr15')
+    >>> s
+    <SDSSClient(api="marvin", user="sdss")>
+
+    >>> # check the full url
+    >>> s.url
+    'https://dr15.sdss.org/marvin/api/cubes'
+
+When we instantiate the client with an API and a domain name, the correct base url is constructed behind the scenes.  Any input
+url is then treated as a route segment to be appended to the base url.  The fully constructed url can be shown with
+the ``url`` attribute.  We can now send the request.  ``request`` is a convenience wrapper for sending ``httpx`` get, post, or
+stream requests.  Let's send the request as default without any parameters.
+::
+
+    >>> # send the http request
+    >>> s.request()
+
+When requests are successful, the response content is extracted into the ``data`` attribute.  If the request is not successful,
+an ``httpx.HttpStatusError`` will be raised.
+
+    >>> # access the returned data
+    >>> s.data
+    {'data': 'this is a cube!',
+     'error': None,
+     'inconfig': {'release': 'DR16'},
+     'status': 1,
+     'traceback': None}
+
+To send requests to different urls on a single API, you can pass an explicit url or route segment into the
+``request`` method instead of during client instantiation.  Let's send a public request to retrieve cube information for
+MaNGA galaxy "8485-1901" on release DR15.
+::
+
+    >>> # load the client with the proper API
+    >>> s = SDSSClient(use_api='marvin', domain='dr15', release='DR15')
+
+    >>> # send a POST request
+    >>> s.request('cubes/8485-1901/', method='post')
+
+The full url is ``https://dr15.sdss.org/marvin/api/cubes/8485-1901/`` but we only need to input the portion of the url relative
+to the base url, often referred to as "route", "segment", or "path".  We can access the response data as before.  In this case,
+the response is a dictionary with galaxy metadata contained in a "data" key.
+::
+
+    >>> # access the data
+    >>> s.data
+    {'data': {'dec': 48.6902009334, 'header': ...,
+              'mangaid': '1-209232',
+              'plateifu': '8485-1901',
+              'ra': 232.544703894,
+              'redshift': 0.040744692,
+              'shape': [34, 34],
+              'wavelength': [3621.6, 3622.43, ..],
+              ...
+              }
+     'error': None,
+     'status': 1
+    }
+
+
+    >>> # access the manga ID, the RA and Dec, and redshift
+    >>> s.data['data']['mangaid'], s.data['data']['ra'], s.data['data']['dec'], s.data['data']['redshift']
+    ('1-209232', 232.544703894, 48.6902009334, 0.040744692)
+
+The underlying http response is available in the ``response`` attribute.
+::
+
+    >>> # access the httpx response
+    >>> s.response
+    <Response [200 OK]>
+
+For direct access to the ``httpx`` client, use the ``client`` attribute.
+::
+
+    >>> # access the raw httpx client or async client
+    >>> s.client
+    <httpx.Client at 0xb1ca12d30>
+
+By default, the ``SDSSClient`` uses a generic "sdss" user.  See ``xxx`` for more information on users and authentication.
+::
+
+    >>> # look at the user attached to the client
+    >>> s.user
+    <User("sdss", netrc=True, htpass=False, cred=False)>
 
 
 .. _apim:
@@ -315,7 +406,7 @@ You can list all the available domains used by SDSS.
      Domain(name='internal.sdss.org', public=False, description='domain for accessing internal SDSS information'),
      Domain(name='magrathea.sdss.org', public=False, description="mirror domain for SDSS services, e.g. SDSS MaNGA's Marvin"),
      Domain(name='dr15.sdss.org', public=True, description='public domain for DR15 data access'),
-     Domain(name='dr16.sdss.org', public=True, description='public domain for DR15 data access'),
+     Domain(name='dr16.sdss.org', public=True, description='public domain for DR16 data access'),
      Domain(name='localhost', public=False, description='domain when running services locally')]
 
 or you can list the available APIs.
@@ -346,6 +437,18 @@ Each list of domains or apis can also be rendered as an Astropy `~astropy.table.
          dr15      dr15.sdss.org   True                        public domain for DR15 data access
          dr16      dr16.sdss.org   True                        public domain for DR16 data access
         local          localhost  False                      domain when running services locally
+
+Displaying the API information will also include any links to API documentation that exists for the given API.
+::
+
+    >>> apim.display('apis')
+    <Table length=3>
+     key        base                       description                    ...  auth                               docs
+     str6      str13                          str48                       ...  str5                              object
+    ------ ------------- ------------------------------------------------ ... ----- ---------------------------------------------------------------
+    marvin        marvin          API for accessing MaNGA data via Marvin ... token https://sdss-marvin.readthedocs.io/en/stable/reference/web.html
+      icdb collaboration API for accessing SDSS collaboration information ... netrc                                                            None
+     valis         valis                         API for SDSS data access ... netrc                                                            None
 
 The ``ApiManager`` also provides a mechanism for identifying an API and domain given a url string.
 ::
