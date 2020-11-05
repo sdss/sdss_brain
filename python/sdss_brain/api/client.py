@@ -58,6 +58,8 @@ class BaseClient(object):
         Any httpx request headers to attach to the client, by default None
     no_progress : bool, optional
         If True, turns off the tqdm progress bar for streaming responses, by default None
+    release : str, optional
+        The data release to use for the request
 
     Attributes
     ----------
@@ -79,13 +81,14 @@ class BaseClient(object):
     def __init__(self, route: str = None, user: Union[str, Type[User]] = None,
                  use_api: Union[str, Type[ApiProfile]] = None, test: bool = None,
                  domain: str = None, headers: dict = None, no_progress: bool = None,
-                 **kwargs):
+                 release: str = None, **kwargs):
         self.user = None
         self.api = None
         self.url = None
         self.response = None
         self.data = None
         self.no_progress = no_progress
+        self.release = release or config.release
 
         # set the user
         self.set_user(user)
@@ -222,6 +225,22 @@ class BaseClient(object):
         if parts:
             raise BrainError(f'Request url contains bracket arguments: "{", ".join(parts)}". '
                              'Cannot send request until these are properly replaced.')
+
+    def prepare_data(self, data: dict = None):
+
+        # set the release dict and return it when no input data
+        release = {'release': self.release}
+        if not data:
+            return release
+
+        # otherwise check the data type
+        if type(data) != dict:
+            raise TypeError('input request data is not of type dict')
+
+        # add the release to the request data
+        if data and 'release' not in data:
+            data.update(release)
+        return data
 
     def _check_response(self, resp: Type[httpx.Response]) -> None:
         """ Checks the returned httpx response
@@ -387,9 +406,13 @@ class SDSSClient(BaseClient):
         # validate the input
         self._validate_request(url, method)
 
+        # add any token auth to headers
         headers = None
         if self.api and self.api.auth_type == 'token':
             headers = self._create_token_auth_header()
+
+        # prepare the data with the release
+        data = self.prepare_data(data)
 
         try:
             # try to send the request
@@ -488,13 +511,19 @@ class SDSSAsyncClient(BaseClient):
         BrainError
             when there is an error sending the request
         """
+        # validate the input
         self._validate_request(url, method)
 
+        # add any token auth to headers
         headers = None
         if self.api and self.api.auth_type == 'token':
             headers = self._create_token_auth_header()
 
+        # prepare the data with the release
+        data = self.prepare_data(data)
+
         try:
+            # try to send the request
             if method == 'stream':
                 resp = await self._stream_request()
             else:
@@ -505,6 +534,7 @@ class SDSSAsyncClient(BaseClient):
         except httpx.RequestError as exc:
             raise BrainError(f'An error occurred requesting {exc.request.url!r}') from exc
         else:
+            # check the response and set the data attribute
             self._check_response(resp)
         finally:
             await self.client.aclose()

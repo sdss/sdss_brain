@@ -16,8 +16,10 @@ from __future__ import print_function, division, absolute_import
 import os
 import re
 from typing import Type, Union
+from sdss_brain.config import config
 from sdss_brain.api.client import SDSSClient, SDSSAsyncClient
 from sdss_brain.api.manager import apim, ApiProfile, strjoin
+from sdss_brain.exceptions import BrainError
 
 
 api_type = Union[str, list, tuple, Type[ApiProfile]]
@@ -50,11 +52,12 @@ class ApiHandler(object):
         The client for sending http requests
     """
 
-    def __init__(self, api_input: api_type = None, async_client=False):
+    def __init__(self, api_input: api_type = None, async_client: bool = False, release: str = None):
         self.api = None
         self.url = None
         self.client = None
         self.timeout = 30
+        self.release = release or config.release
         self._kls = SDSSAsyncClient if async_client else SDSSClient
 
         self._determine_input(api_input)
@@ -112,7 +115,8 @@ class ApiHandler(object):
             self.api = apim.apis.get(value, None)
 
         # set the SDSS client
-        self.client = self._kls(self.url, use_api=self.api, timeout=self.timeout)
+        self.client = self._kls(self.url, use_api=self.api, timeout=self.timeout,
+                                release=self.release)
         if self.api and not self.client.api:
             self.client.set_api(self.api)
 
@@ -148,7 +152,8 @@ class ApiHandler(object):
             else:
                 self.api.change_domain(domain)
         self.url = route
-        self.client = self._kls(self.url, use_api=self.api, timeout=self.timeout)
+        self.client = self._kls(self.url, use_api=self.api, timeout=self.timeout,
+                                release=self.release)
 
     def _check_profile(self, value: Type[ApiProfile]) -> None:
         """ Check the API Profile
@@ -162,7 +167,7 @@ class ApiHandler(object):
             A valid SDSS ApiProfile
         """
         self.api = value
-        self.client = self._kls(use_api=self.api, timeout=self.timeout)
+        self.client = self._kls(use_api=self.api, timeout=self.timeout, release=self.release)
 
     def extend_url(self, route: str) -> str:
         """ Extend the current url by a route segment
@@ -181,6 +186,9 @@ class ApiHandler(object):
         str
             A new combined url
         """
+        if not self.url:
+            raise AttributeError('No preset base url.  Cannot extend it. Consider setting one.')
+
         return strjoin(self.url, route)
 
     def resolve_url(self, params: dict):
@@ -241,3 +249,32 @@ class ApiHandler(object):
             self.client.client.close()
         except AttributeError:
             pass
+
+    def load_url(self, route: str) -> None:
+        """ Loads a url constructed from an API base url
+
+        Construct a new url, given the input route segment, for a given
+        API profile.
+
+        Parameters
+        ----------
+        route : str
+            The url path route segment
+
+        Raises
+        ------
+        TypeError
+            when input route is not a string
+        BrainError
+            when no API profile is set on the handler
+        """
+        if type(route) != str:
+            raise TypeError('Input route must be a string.')
+
+        if not self.api:
+            raise BrainError('No API profile is set.  Cannot construct a url.')
+
+        self.url = self.api.construct_route(route)
+        self.client.set_url(self.url)
+
+
