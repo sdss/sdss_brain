@@ -45,18 +45,18 @@ class Spectrum(Brain):
     spectrum: Type[Spectrum1D] = None
     specutils_format: str = None
 
-    def _load_object_from_file(self, data=None) -> None:
-        self.data = data or load_fits_file(self.filename)
+    def _load_object_from_file(self) -> None:
+        self.data = load_fits_file(self.filename)
         self.header = self.data['PRIMARY'].header
         self._load_spectrum()
 
-    def _load_object_from_db(self, data=None) -> None:
+    def _load_object_from_db(self) -> None:
         raise BrainNotImplemented('This method must be implemented by the user')
 
-    def _load_object_from_api(self, data=None) -> None:
+    def _load_object_from_api(self) -> None:
         # for now, do a simple get request to grab the file into memory
         # TODO replace this with better API request framework
-        self.data = data or load_from_url(self.get_full_path(url=True))
+        self.data = load_from_url(self.get_full_path(url=True))
         self.header = self.data['PRIMARY'].header
         self._load_spectrum()
 

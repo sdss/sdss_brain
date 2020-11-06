@@ -109,13 +109,13 @@ class, highlighting how to integrate the MMA into a new tool.
                 data['filename'] = value
             return data
 
-        def _load_object_from_file(self, data=None):
+        def _load_object_from_file(self):
             self.data = load_fits_file(self.filename)
 
-        def _load_object_from_db(self, data=None):
+        def _load_object_from_db(self):
             pass
 
-        def _load_object_from_api(self, data=None):
+        def _load_object_from_api(self):
             pass
 
 To set up database access for your tool, set the ``_db`` class attribute to an appropriate `sdssdb` database
@@ -238,13 +238,13 @@ Using the ``sdss_loader`` decorator, we can rewrite the above example as
     class MangaCube(Brain):
         _db = mangadb
 
-        def _load_object_from_file(self, data=None):
+        def _load_object_from_file(self):
             pass
 
-        def _load_object_from_db(self, data=None):
+        def _load_object_from_db(self):
             pass
 
-        def _load_object_from_api(self, data=None):
+        def _load_object_from_api(self):
             pass
 
 which effectively converts to the following:
@@ -289,13 +289,13 @@ The ``sdss_loader`` decorator is equivalent to stacking multiple decorators, for
     class MangaCube(Brain):
         _db = mangadb
 
-        def _load_object_from_file(self, data=None):
+        def _load_object_from_file(self):
             self.data = load_fits_file(self.filename)
 
-        def _load_object_from_db(self, data=None):
+        def _load_object_from_db(self):
             pass
 
-        def _load_object_from_api(self, data=None):
+        def _load_object_from_api(self):
             pass
 
 .. _regex:

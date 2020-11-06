@@ -32,7 +32,7 @@ class MangaCube(Spectrum):
     specutils_format: str = 'MaNGA cube'
     _api = ('marvin', 'cubes/{plateifu}/')
 
-    def _load_object_from_db(self, data=None):
+    def _load_object_from_db(self):
 
         # do nothing if not connected to the database
         if not self.db.connected:

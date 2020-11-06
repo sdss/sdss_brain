@@ -35,15 +35,15 @@ class Base(abc.ABC):
         return super().__new__(cls)
 
     @abc.abstractmethod
-    def _load_object_from_file(self, data: object = None) -> None:
+    def _load_object_from_file(self) -> None:
         pass
 
     @abc.abstractmethod
-    def _load_object_from_db(self, data=None) -> None:
+    def _load_object_from_db(self) -> None:
         pass
 
     @abc.abstractmethod
-    def _load_object_from_api(self, data=None) -> None:
+    def _load_object_from_api(self) -> None:
         pass
 
 
@@ -73,8 +73,6 @@ class HindBrain(Base):
             The operating mode: auto, local, or remote
         release : str
             The data release of the object, e.g. "DR16"
-        data : object
-            Optional data to instantiate the object with
         download : bool
             If True, downloads the object locally with sdss_access
         ignore_db : bool
@@ -106,7 +104,7 @@ class HindBrain(Base):
         return super().__new__(cls)
 
     def __init__(self, data_input: str = None, filename: str = None,
-                 objectid: str = None, mode: str = None, data: object = None,
+                 objectid: str = None, mode: str = None,
                  release: str = None, download: bool = None,
                  ignore_db: bool = None, use_db: db_type = None, version: str = None,
                  use_api: api_type = None, async_client: bool = None) -> None:
@@ -138,11 +136,10 @@ class HindBrain(Base):
             self._check_remote_url()
 
         # load the data
-        self.data = data
         if self.data_origin == 'file':
-            self._load_object_from_file(data=data)
+            self._load_object_from_file()
         elif self.data_origin == 'db':
-            self._load_object_from_db(data=data)
+            self._load_object_from_db()
         elif self.data_origin == 'api':
             self._load_object_from_api()
 

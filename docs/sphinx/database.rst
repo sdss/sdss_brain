@@ -206,7 +206,7 @@ after we've attached the ``datadb.Cube`` ORM model.
     class MangaCube(Brain):
         _db = datadb.Cube
 
-        def _load_object_from_db(self, data=None):
+        def _load_object_from_db(self):
             # make a database call to retrieve the first Cube row
             self.data = self.db.session.query(self.db.model).join(self.db.models.IFUDesign).\
             filter(self.db.model.plateifu == self.plateifu).first()
