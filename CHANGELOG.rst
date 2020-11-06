@@ -4,7 +4,7 @@
 Change Log
 ==========
 
-* :release:`0.3.0 <unreleased>`
+* :release:`0.3.0 <2020-11-06>`
 * :support:`-` adds function, ``send_post_request``, for sending simple ``httpx`` POST requests
 * :support:`-` adds support classes, ``User``, ``Netrc``, ``Htpass`` for user authentication
 * :feature:`-` adds convenience class for sending http requests, ``SDSSClient``, ``SDSSAsyncClient``
