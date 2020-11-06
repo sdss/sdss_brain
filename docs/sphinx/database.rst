@@ -9,10 +9,6 @@ attach a database object to the tool or provide one during tool instantiation.  
 and uses, `sdssdb <https://sdssdb.readthedocs.io>`_ for all database-related items.  Schema not defined
 in ``sdssdb`` are currently not supported.
 
-Remember that once you attach a database object to a tool, you must override the `_load_object_from_db` method
-with logic instructing the tool with what to do with the database object.  For an example, see the
-`MangaCube tool <https://github.com/sdss/sdss_brain/blob/master/python/sdss_brain/tools/cubes.py#L33>`_
-
 Adding a Database to a Tool
 ---------------------------
 
@@ -195,3 +191,27 @@ Now we have access to all the ORM models on the "targetdb" schema.  We can also 
 
     >>> d.model
     <Model: Field>
+
+Using the handler in a Tool
+---------------------------
+
+Once you've attached a database object to a tool, you have full access to that object through the ``DatabaseHandler``
+to perform queries.  Remember that you must override the `_load_object_from_db` method
+with logic instructing the tool with what to do with the database object.  Let's see an example on the ``MangaCube`` tool
+after we've attached the ``datadb.Cube`` ORM model.
+::
+
+    from sdssdb.sqlalchemy.mangadb import datadb
+
+    class MangaCube(Brain):
+        _db = datadb.Cube
+
+        def _load_object_from_db(self, data=None):
+            # make a database call to retrieve the first Cube row
+            self.data = self.db.session.query(self.db.model).join(self.db.models.IFUDesign).\
+            filter(self.db.model.plateifu == self.plateifu).first()
+
+In the above example, we use the handler to perform a sqlalchemy query to retrieve the first row from the ``cube`` database
+table that matches the tool's plateifu attribute, joining to another table available in the ``datadb`` schema.  For a more
+complete example, see the
+`MangaCube tool <https://github.com/sdss/sdss_brain/blob/master/python/sdss_brain/tools/cubes.py#L33>`_.

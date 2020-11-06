@@ -25,6 +25,7 @@ Contents
   Accessing unreleased ("work") data <work>
   Connecting to Database Objects <database>
   Connecting to Remote Data Sources <remote>
+  Remote Data Access <remote_details>
   About the global configuration <config>
   How to map specific version numbers to Data Release ids <version>
   How to create and parse a custom objectid as valid data input <parsing>
