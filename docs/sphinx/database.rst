@@ -214,4 +214,4 @@ after we've attached the ``datadb.Cube`` ORM model.
 In the above example, we use the handler to perform a sqlalchemy query to retrieve the first row from the ``cube`` database
 table that matches the tool's plateifu attribute, joining to another table available in the ``datadb`` schema.  For a more
 complete example, see the
-`MangaCube tool <https://github.com/sdss/sdss_brain/blob/master/python/sdss_brain/tools/cubes.py#L33>`_.
+`MangaCube tool <https://github.com/sdss/sdss_brain/blob/89f9b765409ebe34b27f7b46534f04fc37d09c5e/python/sdss_brain/tools/cubes.py#L33>`_.

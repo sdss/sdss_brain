@@ -34,8 +34,8 @@ response to the ``data`` attribute. For example,
             self.data = load_from_url(url)
 
 For a real example of retrieving a file, see its use in the
-`Spectrum tool base class <https://github.com/sdss/sdss_brain/blob/master/python/sdss_brain/tools/spectra.py#L56>`_.  This
-example highlights its integration with ``sdss_access`` dynamic path creation.
+`Spectrum tool base class <https://github.com/sdss/sdss_brain/blob/89f9b765409ebe34b27f7b46534f04fc37d09c5e/python/sdss_brain/tools/spectra.py#L56>`_.
+This example highlights its integration with ``sdss_access`` dynamic path creation.
 
 .. _complete:
 
@@ -297,4 +297,4 @@ In the above example, we use the handler to perform an http POST request to the 
 the tool as a parameter.  Note that the plateifu attribute automatically gets resolved into the url of the API.  Once the
 request is successful, we access the response data and extract the "mangaid", "RA" and "Dec" coordinates.  For a more
 complete example, see the
-`MangaCube tool <https://github.com/sdss/sdss_brain/blob/master/python/sdss_brain/tools/cubes.py#L79>`_.
+`MangaCube tool <https://github.com/sdss/sdss_brain/blob/60c80f519d7acce9c2d341d189ee3968c4c0080c/python/sdss_brain/tools/cubes.py#L79>`_.
