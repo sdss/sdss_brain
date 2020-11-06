@@ -372,7 +372,7 @@ For direct access to the ``httpx`` client, use the ``client`` attribute.
     >>> s.client
     <httpx.Client at 0xb1ca12d30>
 
-By default, the ``SDSSClient`` uses a generic "sdss" user.  See ``xxx`` for more information on users and authentication.
+By default, the ``SDSSClient`` uses a generic "sdss" user; see :ref:`auth` for more information.
 ::
 
     >>> # look at the user attached to the client
