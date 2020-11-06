@@ -38,6 +38,7 @@ Reference
 
    api
    mma
+   apilist
    CHANGELOG
 
 

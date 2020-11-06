@@ -27,6 +27,11 @@ from sdss_brain.auth import User
 from sdss_brain.api.io import send_post_request
 from sdss_brain.exceptions import BrainError
 
+try:
+    from tabulate import tabulate
+except ImportError:
+    tabulate = None
+
 
 __all__ = ['Domain', 'ApiProfileModel', 'ApiProfile', 'ApiManager', 'apim']
 
@@ -721,6 +726,47 @@ class ApiManager(object):
             return
 
         return table
+
+    def generate_rst_table(self, value: str, show_docs: bool = True,
+                           show_desc: bool = True, **kwargs) -> str:
+        """ Generate a rst-formatted table
+
+        Generates an rst-formatted table of the available domains or APIs
+        using the `tabulate <https://github.com/astanin/python-tabulate>`_
+        python package.  This method is good for dropping tables into Sphinx
+        documentation.
+
+        Parameters
+        ----------
+        value : str
+            Either "api(s)" or "domain(s)"
+        show_docs : bool, optional
+            If True, include the "docs" column in the API table, by default True
+        show_desc : bool, optional
+            If True, include the "description" column in the API table, by default True
+        kwargs: Any
+            Other kwargs for the tabulate method
+
+        Returns
+        -------
+        str
+            The rst formatted table as a string
+
+        Raises
+        ------
+        ImportError
+            when the tabulate package is not installed.
+        """
+        if not tabulate:
+            raise ImportError('package tabulate not found.  Cannot generate rst table.')
+
+        # create the table as a numpy array of data
+        table = self.display(value, show_docs=show_docs, show_desc=show_desc).as_array()
+
+        # convert the table into an rst table using tabulate
+        rst = tabulate(table, headers='keys', tablefmt='rst', disable_numparse=True, **kwargs)
+
+        return rst
 
 
 apim = ApiManager()
