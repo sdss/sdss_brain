@@ -294,35 +294,58 @@ Once a new API has been built, to make it available to ``sdss_brain``, a new pro
 A new API is defined using the following schema:
 ::
 
-schema:
-  base: the base name of the API. Required.
-  domains: the domains where the API is active. Required.
-  description: a brief description of the API purpose
-  docs: a url link to any API documentation
-  mirrors: the domains for possible mirrors
-  stems: path stems to denote test or alternate servers
-    test: the name of the development stem.
-    affix: whether the alternate base is a prefix or suffix
-  api: whether the API is under an "api" stem
-  routemap: an API route relative to the base url that returns the available routes on the given API
-  auth: the type of authentication the API needs for non-public APIs
-    type: whether the auth is netrc or token
-    route: the API route relative to the base url to use for retrieving a token
+    schema:
+      base: the base name of the API. Required.
+      domains: the domains where the API is active. Required.
+      description: a brief description of the API purpose
+      docs: a url link to any API documentation
+      mirrors: the domains for possible mirrors
+      stems: path stems to denote test or alternate servers
+        test: the name of the development stem.
+        affix: whether the alternate base is a prefix or suffix
+      api: whether the API is under an "api" stem
+      routemap: an API route relative to the base url that returns the available routes on the given API
+      auth: the type of authentication the API needs for non-public APIs
+        type: whether the auth is netrc or token
+        route: the API route relative to the base url to use for retrieving a token
 
 Only the first two items, ``base`` and ``domains`` are required entries.  As an example, let's create an entry for a fake
 API called "infoviz" available on domains "sas.sdss.org" and "dr15.sdss.org".  It also has a test server located at
-``sas.sdss.org/dev/infoviz``.
+``sas.sdss.org/dev/infoviz``.  Our profile entry would like that:
 ::
 
-apis:
-  info:
-    base: infoviz
-    domains:
-      - sas
-      - dr15
-    stems:
-      test: dev
-      affix: prefix
+    apis:
+      info:
+        base: infoviz
+        domains:
+          - sas
+          - dr15
+        stems:
+          test: dev
+          affix: prefix
+
+An `~sdss_brain.api.manager.ApiProfile` is automatically constructed and is made accessible via the
+`~sdss_brain.api.manager.ApiManager`.
+::
+
+    >>> from sdss_brain.api.manager import apim
+
+    >>> # load our new infoviz API
+    >>> info = apim.apis['info']
+    >>> info
+    <ApiProfile("info", current_domain="sas.sdss.org", url="https://sas.sdss.org/infoviz")>
+
+    >>> # access the test server
+    >>> info.change_path(test=True)
+    >>> info
+    <ApiProfile("info", current_domain="sas.sdss.org", url="https://sas.sdss.org/dev/infoviz")>
+
+We can now construct urls to access specific routes on this API.
+::
+
+    >>> info.construct_route('/getinfo/here/')
+    'https://sas.sdss.org/dev/infoviz/getinfo/here/'
+
 
 Setting a global Url or API
 ---------------------------
