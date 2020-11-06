@@ -41,24 +41,24 @@ class BaseCube(Brain):
         drpver = get_mapped_version(self.mapped_version, release=self.release, key='drpver')
         self.path_params = {'plate': self.plate, 'ifu': self.ifu, 'drpver': drpver, 'wave': 'LOG'}
 
-    def _load_object_from_file(self, data=None):
+    def _load_object_from_file(self):
         pass
 
-    def _load_object_from_db(self, data=None):
+    def _load_object_from_db(self):
         pass
 
-    def _load_object_from_api(self, data=None):
+    def _load_object_from_api(self):
         pass
 
 
 class BaseCubeNoAccess(BrainNoAccess):
-    def _load_object_from_file(self, data=None):
+    def _load_object_from_file(self):
         pass
 
-    def _load_object_from_db(self, data=None):
+    def _load_object_from_db(self):
         pass
 
-    def _load_object_from_api(self, data=None):
+    def _load_object_from_api(self):
         pass
 
     def download(self):

@@ -13,9 +13,11 @@
 
 from __future__ import print_function, division, absolute_import
 import abc
+import warnings
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError
 from sdss_brain.helpers import db_type
+from sdss_brain.api.handler import api_type, ApiHandler
 from sdss_brain.mixins.mma import MMAccess, MMAMixIn
 from astropy.io import fits
 
@@ -33,15 +35,15 @@ class Base(abc.ABC):
         return super().__new__(cls)
 
     @abc.abstractmethod
-    def _load_object_from_file(self, data: object = None) -> None:
+    def _load_object_from_file(self) -> None:
         pass
 
     @abc.abstractmethod
-    def _load_object_from_db(self, data=None) -> None:
+    def _load_object_from_db(self) -> None:
         pass
 
     @abc.abstractmethod
-    def _load_object_from_api(self, data=None) -> None:
+    def _load_object_from_api(self) -> None:
         pass
 
 
@@ -71,25 +73,30 @@ class HindBrain(Base):
             The operating mode: auto, local, or remote
         release : str
             The data release of the object, e.g. "DR16"
-        data : object
-            Optional data to instantiate the object with
         download : bool
             If True, downloads the object locally with sdss_access
         ignore_db : bool
             If True, ignores any database connection for local access
         use_db : db_type, see `~sdss_brain.helpers.database.DatabaseHandler`
             a database ORM or connection to override the default with
-
+        use_api : api_type, see `~sdss_brain.api.handler.ApiHandler`
+            An API or URL route to use for remote access to the object
+        async_client : bool
+            If True, sets the remote http client to `~sdss_brain.api.client.SDSSAsyncClient`
     Attributes
     ----------
-        _db : `~sdss_brain.helpers.database.DatabaseHandler`
+        db : `~sdss_brain.helpers.database.DatabaseHandler`
             A db handler for any loaded sdssdb ORM or db connection for the object
         mapped_version : str
             The name of survey/category in the mapped_versions dictionary
+        remote : `~sdss_brain.api.handler.ApiHandler`
+            An api handler for loaded APIs or urls, and sending http requests
     '''
     _db = None
     mapped_version = None
     data_origin = None
+    _api = None
+    async_client = False
 
     def __new__(cls, *args, **kwargs):
         # set any work versions
@@ -97,9 +104,10 @@ class HindBrain(Base):
         return super().__new__(cls)
 
     def __init__(self, data_input: str = None, filename: str = None,
-                 objectid: str = None, mode: str = None, data: object = None,
+                 objectid: str = None, mode: str = None,
                  release: str = None, download: bool = None,
-                 ignore_db: bool = None, use_db: db_type = None, version: str = None) -> None:
+                 ignore_db: bool = None, use_db: db_type = None, version: str = None,
+                 use_api: api_type = None, async_client: bool = None) -> None:
 
         # set a version for sdsswork data
         checked_release = release or config.release
@@ -111,7 +119,8 @@ class HindBrain(Base):
         else:
             if not self._version and checked_release.lower() == 'work':
                 raise BrainError('You are using a "work" release but have no work versions set! '
-                                 'Try setting a global "work_version" dict or specify a "version" input!')
+                                 'Try setting a global "work_version" dict or specify a "version" '
+                                 'input!')
 
         # initialize the MMA
         self._mma.__init__(self, data_input=data_input, filename=filename,
@@ -119,11 +128,18 @@ class HindBrain(Base):
                            release=release, download=download,
                            ignore_db=ignore_db, use_db=use_db or self._db)
 
-        self.data = data
+        # set up any ApiHandler
+        remote = use_api or self._api or config.apis.profile
+        async_client = async_client or self.async_client
+        if remote:
+            self._api = ApiHandler(remote, async_client=async_client)
+            self._check_remote_url()
+
+        # load the data
         if self.data_origin == 'file':
-            self._load_object_from_file(data=data)
+            self._load_object_from_file()
         elif self.data_origin == 'db':
-            self._load_object_from_db(data=data)
+            self._load_object_from_db()
         elif self.data_origin == 'api':
             self._load_object_from_api()
 
@@ -131,6 +147,45 @@ class HindBrain(Base):
         objname = f"objectid='{self.objectid}'" if self.objectid else f"filename='{self.filename}'"
         return (f"<{self.__class__.__name__} {objname}, mode='{self.mode}', "
                 f"data_origin='{self.data_origin}'>")
+
+    @property
+    def remote(self):
+        """ An instance of an ApiHandler """
+        return self._api
+
+    def resolve_remote_url(self):
+        """ Resolve the remote url using instance attributes
+
+        Attempts to resolve the remote url and match the named arguments
+        in the url to any instance attributes that are set.  Otherwise issues a warning
+        for the user to resolve manually.
+        """
+        if not self.remote or (self.remote and not self.remote.url):
+            return
+
+        names = self.remote.extract_url_brackets()
+        if names:
+            params = {}
+            for name in names:
+                if hasattr(self, name):
+                    params[name] = getattr(self, name)
+            try:
+                self.remote.resolve_url(params)
+            except KeyError as exc:
+                raise BrainError(f'Cannot resolve remote url. Missing keys {exc} found.')from exc
+            else:
+                if not self.remote.has_valid_url:
+                    raise BrainError('Still invalid url')
+
+    def _check_remote_url(self):
+        """ Check for a valid remote url and issue warning otherwise """
+        if self._api and self._api.has_valid_url is False:
+            try:
+                self.resolve_remote_url()
+            except BrainError as exc:
+                warnings.warn('API url contains bracket arguments. Http request will not send '
+                              'correctly.  Consider resolving the url with '
+                              f'self.remote.resolve_url. {exc}')
 
     def __del__(self):
         ''' Destructor for closing open objects '''
@@ -142,9 +197,12 @@ class HindBrain(Base):
         if self.data_origin == 'file' and isinstance(self.data, fits.HDUList):
             self.data.close()
         elif self.data_origin == 'db':
-            pass
+            if hasattr(self, 'db'):
+                self.db.close()
+            self.data = None
         elif self.data_origin == 'api':
-            pass
+            if hasattr(self, 'remote'):
+                self.remote.close()
 
     def __enter__(self):
         ''' constructor for context manager '''
@@ -199,6 +257,21 @@ class HindBrain(Base):
         """
         # set this straight to the value since the MMA converts it into a DatabaseHandler
         cls._db = value
+
+    @classmethod
+    def set_api_object(cls, value: api_type) -> None:
+        """ Sets up the tool to create a new API handler
+
+        Sets up the tool to create a new `~sdss_brain.api.handler.ApiHandler` on the
+        given class.  Valid input can be any explicit url, a string API profile name,
+        or a tuple containing (API profile name, url route segment, optional domain name).
+
+        Parameters
+        ----------
+        value : api_type
+            The type of remote API input
+        """
+        cls._api = value
 
 
 class Brain(HindBrain, MMAccess):

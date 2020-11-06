@@ -12,20 +12,14 @@
 
 
 from __future__ import print_function, division, absolute_import
-import httpx
 import pathlib
 import gzip
-from io import BytesIO
 from typing import Union
 from astropy.io import fits
 from sdss_brain import log
+from sdss_brain.api.client import SDSSClient
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError
-
-try:
-    from tqdm import tqdm
-except ImportError:
-    tqdm = None
 
 
 def get_mapped_version(name: str, release: str = None, key: str = None) -> Union[dict, str]:
@@ -141,24 +135,9 @@ def load_from_url(url: str, no_progress: bool = None) -> fits.HDUList:
     -------
         an Astropy `~astropy.io.fits.HDUList`
     '''
-
-    b = BytesIO()
-    with httpx.stream("GET", url) as r:
-        r.raise_for_status()
-        total = int(r.headers["Content-Length"])
-        if not tqdm or no_progress:
-            for data in r.iter_bytes():
-                b.write(data)
+    with SDSSClient(url, no_progress=no_progress) as client:
+        client.request(method='stream')
+        if url.endswith('.gz'):
+            return fits.open(gzip.open(client.data, 'rb'))
         else:
-            with tqdm(total=total, unit_scale=True, unit_divisor=1024, unit="B") as progress:
-                num_bytes_downloaded = r.num_bytes_downloaded
-                for data in r.iter_bytes():
-                    b.write(data)
-                    progress.update(r.num_bytes_downloaded - num_bytes_downloaded)
-                    num_bytes_downloaded = r.num_bytes_downloaded
-        b.seek(0)
-
-    if url.endswith('.gz'):
-        return fits.open(gzip.open(b, 'rb'))
-    else:
-        return fits.open(b)
+            return fits.open(client.data)

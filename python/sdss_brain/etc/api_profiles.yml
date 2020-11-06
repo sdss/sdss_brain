@@ -1,0 +1,107 @@
+# This file contains a list of domains and APIs available for SDSS
+#
+
+# this section contains a list of the used SDSS domains
+#
+# The domains schema is defined as the following:
+# schema:
+#   name: the full domain name. Required.
+#   public: whether or not the domain is public
+#   description: a brief description of the domain purpose
+
+domains:
+  data:
+    name: data.sdss.org
+    description: domain for accessing SDSS data on the SAS
+
+  sas:
+    name: sas.sdss.org
+    description: domain for accessing various SAS services
+
+  api:
+    name: api.sdss.org
+    description: domain for accessing SDSS APIs
+
+  lore:
+    name: lore.sdss.utah.edu
+    description: domain for accessing internal content on SDSS host lore
+
+  internal:
+    name: internal.sdss.org
+    description: domain for accessing internal SDSS information
+
+  magrathea:
+    name: magrathea.sdss.org
+    description: mirror domain for SDSS services, e.g. SDSS MaNGA's Marvin
+
+  dr15:
+    name: dr15.sdss.org
+    public: true
+    description: public domain for DR15 data access
+
+  dr16:
+    name: dr16.sdss.org
+    public: true
+    description: public domain for DR16 data access
+
+  local:
+    name: localhost
+    description: domain when running services locally
+
+
+# this section contains a list of available SDSS APIs.  For definition purposes,
+# any programmatic, non-web interface serving SDSS data/info hosted by nginx or
+# or apache counts as an API
+#
+# The API profile schema is defined as the following:
+# schema:
+#   description: a brief description of the API purpose
+#   docs: a url link to any API documentation
+#   base: the base name of the API. Required.
+#   domains: the domains where the API is active. Required.
+#   mirrors: the domains for possible mirrors
+#   stems:
+#     test: the name of the development stem.
+#     public: the name of the development public stem
+#     affix: whether the alternate base is a prefix or suffix
+#   api: whether the API is under an "api" stem
+#   routemap: an API route that returns the available routes on the given API
+#   auth: the type of authentication the API needs for non-public APIs
+
+apis:
+  marvin:
+    description: API for accessing MaNGA data via Marvin
+    docs: https://sdss-marvin.readthedocs.io/en/stable/reference/web.html
+    base: marvin
+    domains:
+      - sas
+      - lore
+      - dr15
+      - dr16
+    mirrors:
+      - magrathea
+    stems:
+      test: test
+      public: public
+      affix: prefix
+    api: true
+    routemap: general/getroutemap/
+    auth:
+      type: token
+      route: general/login/
+
+  icdb:
+    description: API for accessing SDSS collaboration information
+    base: collaboration
+    domains:
+      - internal
+    stems:
+      test: dev
+      affix: prefix
+    api: true
+
+  valis:
+    description: API for SDSS data access
+    base: valis
+    domains:
+      - api

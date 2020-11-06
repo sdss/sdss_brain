@@ -69,10 +69,10 @@ def get_mocked(kls):
         def _load_spectrum(self):
             pass
 
-        def _load_object_from_file(self, data):
+        def _load_object_from_file(self):
             pass
 
-        def _load_object_from_file(self, data):
+        def _load_object_from_file(self):
             pass
 
         def _load_object_from_api(self):

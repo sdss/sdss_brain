@@ -129,17 +129,5 @@ data without a properly set ``.netrc`` file will result in an error.
     HTTPStatusError: 401 Client Error: Unauthorized for url: https://data.sdss.org/sas/ebosswork/eboss/spectro/redux/v5_13_0/spectra/lite/3606/spec-3606-55182-0537.fits
     For more information check: https://httpstatuses.com/401
 
-SDSS uses ``.netrc`` authentication to access data content on many domains. To set this up, create and
-edit a file in your home directory ocalled ``.netrc`` and copy these lines inside::
+See :ref:`netrc` for how to set up a ``.netrc`` file for authentication to access proprietary SDSS data content.
 
-    machine api.sdss.org
-       login <username>
-       password <password>
-
-    machine data.sdss.org
-       login <username>
-       password <password>
-
-Replace ``<username>`` and ``<password>`` with your login credentials. The default SDSS username and
-password is also acceptable for anonymous access.  **Finally, run** ``chmod 600 ~/.netrc`` **to make
-the file only accessible to your user.**

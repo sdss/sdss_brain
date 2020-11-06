@@ -4,6 +4,14 @@
 Change Log
 ==========
 
+* :release:`0.3.0 <unreleased>`
+* :support:`-` adds function, ``send_post_request``, for sending simple ``httpx`` POST requests
+* :support:`-` adds support classes, ``User``, ``Netrc``, ``Htpass`` for user authentication
+* :feature:`-` adds convenience class for sending http requests, ``SDSSClient``, ``SDSSAsyncClient``
+* :support:`-` adds classes ``ApiManager``, ``Domain`` for API management
+* :feature:`-` adds ``ApiProfile`` class for constructing API connections
+* :feature:`6` adds ``ApiHandler`` class to support adding remote API data access to tools
+
 * :release:`0.2.0 <2020-10-20>`
 * :feature:`5` adds ``DatabaseHandler`` class to support `sdssdb` database objects
 

@@ -20,6 +20,7 @@ The ``Config`` class contains the following attributes:
 - **release**: the data release to use
 - **download**: If True, downloads any files accessed with `sdss_access`
 - **ignore_db**: If True, ignores any database connections used with ``Brain``-based tools
+- **work_versions**: defines the specified versions to use when accessing "sdsswork" files
 
 Only valid releases are allowed when setting a new release.  Allowed releases are those returned by the
 SDSS `tree` package, using the ``get_available_releases`` method.  Valid releases are typically any public
@@ -44,6 +45,23 @@ To set global "working" versions:
     # access the set work versions
     config.work_versions
 
+To set a new global user for remote data access:
+::
+
+    # set a new global user
+    config.set_user('sdss')
+
+To set a global API to use for remote data access:
+::
+
+    # set the new global API as the MaNGA marvin API.
+    config.set_api('marvin')
+
+Note that most APIs do not allow data access to all types of SDSS data.  APIs are often data specific.  In cases where you
+know you only want to work with a certain type of data, which has an available API for remote access, you can set it globally
+in your Python session with this config.
+
+
 .. _config_file:
 
 The Custom Config File
@@ -57,6 +75,10 @@ are loaded when the ``Brain`` config is instantiated.  The following entries are
 - **download**: If True, downloads any data files accessed with `sdss_access`
 - **default_release**: Sets the default data release to use
 - **work_versions**: Sets the specified versions to use when accessing "sdsswork" files
+- **netrc_path**: The path to a local ``.netrc`` file
+- **default_api**: The name of the default API to use
+- **default_username**: The name of the default SDSS user
+- **default_password**: The password for the SDSS user
 
 The following example config file instructs the ``Brain`` to always ignore database connections, to not
 download data files by default, to use DR15 as the default release, and to set the work versions for
