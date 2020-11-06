@@ -69,7 +69,7 @@ class TestClient(object):
     @pytest.mark.parametrize('method', ['get', 'post'])
     def test_context(self, method):
         url = f'https://httpbin.org/{method}'
-        vals = {'value': 'stuff'}
+        vals = {'value': 'stuff', 'release': 'DR15'}
         with SDSSClient(url) as client:
             client.request(method=method, data=vals)
             data = client.data
@@ -79,7 +79,7 @@ class TestClient(object):
             assert data['url'] == url
         elif method == 'get':
             assert data['args'] == vals
-            assert data['url'] == url + '?value=stuff'
+            assert data['url'] == url + '?value=stuff&release=DR15'
 
     @pytest.mark.parametrize('method, exp', [('get', bytes), ('stream', io.BytesIO)])
     @pytest.mark.parametrize('noprogress', [False, True], ids=['pbar', 'nopbar'])
