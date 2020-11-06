@@ -418,6 +418,19 @@ or you can list the available APIs.
      <ApiProfile("icdb", current_domain="internal.sdss.org", url="https://internal.sdss.org/collaboration/api")>,
      <ApiProfile("valis", current_domain="api.sdss.org", url="https://api.sdss.org/valis")>]
 
+APIs can be accessed on the ``apis`` attribute.
+::
+
+    >>> # access the available APIs
+    >>> apim.apis
+    {'marvin': <ApiProfile("marvin", current_domain="sas.sdss.org", url="https://sas.sdss.org/marvin/api")>,
+     'icdb': <ApiProfile("icdb", current_domain="internal.sdss.org", url="https://internal.sdss.org/collaboration/api")>,
+     'valis': <ApiProfile("valis", current_domain="api.sdss.org", url="https://api.sdss.org/valis")>}
+
+    >>> # select the marvin API
+    >>> apim.apis['marvin']
+    <ApiProfile("marvin", current_domain="sas.sdss.org", url="https://sas.sdss.org/marvin/api")>
+
 Each list of domains or apis can also be rendered as an Astropy `~astropy.table.Table`, with
 `~sdss_brain.api.manager.ApiManager.display`.
 ::
@@ -462,6 +475,87 @@ The ``ApiManager`` also provides a mechanism for identifying an API and domain g
 
 The Api Profile
 ---------------
+
+Just as ``sdssdb`` database profiles in ``sdssdb.yml`` define connections to different SDSS databases and map to
+`~sdssdb.connection.DatabaseConnection` objects, API profiles defined in ``api_profiles.yml`` define connections to
+available SDSS APIs, and map to `~sdss_brain.api.manager.ApiProfile` objects.
+
+Each API profile carries with it a list of domains and/or mirrors the API can be accessed on, any authentication type needed
+for access, and the currently constructed root or base url for accessing content on that API.
+
+The following examples are written using the MaNGA Marvin API, but the same applies to any other API.  By default, an
+API is set to use the first domain in the list of domains, and will construct the base url for the API on that domain.
+::
+
+    >>> # access the "marvin" API profile
+    >>> from sdss_brain.api.manager import ApiProfile
+    >>> prof = ApiProfile('marvin')
+    >>> prof
+    <ApiProfile("marvin", current_domain="sas.sdss.org", url="https://sas.sdss.org/marvin/api")>
+
+You can view the available domains.
+::
+
+    >>> # display the list of available domains
+    >>> prof.domains
+    {'sas': Domain(name='sas.sdss.org', public=False, description='domain for accessing various SAS services'),
+     'lore': Domain(name='lore.sdss.utah.edu', public=False, description='domain for accessing internal content on SDSS host lore'),
+     'dr15': Domain(name='dr15.sdss.org', public=True, description='public domain for DR15 data access'),
+     'dr16': Domain(name='dr16.sdss.org', public=True, description='public domain for DR16 data access'),
+     'local': Domain(name='localhost', public=False, description='domain when running services locally')}
+
+You can change the domain the API uses to any other available one.  Let's change to the DR15 domain.
+::
+
+    >>> # change to dr15.sdss.org
+    >>> prof.change_domain('dr15')
+    >>> prof
+    <ApiProfile("marvin", current_domain="dr15.sdss.org", url="https://dr15.sdss.org/marvin/api")>
+
+The base url has now been updated.  For development, we often set up a system on a localhost domain.  ``localhost`` domains
+require a port number or ngrok id to be given as input.  `ngrok <https://ngrok.com/>`_ is a service used for opening up local
+web servers publicly.
+::
+
+    >>> # change to localhost domain on port 5000
+    >>> prof.change_domain('local', port=5000)
+    >>> prof.url
+    'http://localhost:5000/marvin/api'
+
+    >>> # change to localhost domain served with ngrok
+    >>> prof.change_domain('local', ngrokid=12345)
+    >>> prof.url
+    'http://12345.ngrok.io/marvin/api'
+
+Often APIs have test sites available to check changes and new features before pushing to production.  These paths can be
+accessed with the ``change_path`` method.  Setting the ``test=True`` keyword switches the path to the designated test site.
+Calling ``change_path`` without arguments sets the API to its production path.
+
+::
+
+    >>> # change back to the production site on the SAS domain
+    >>> prof.change_domain('sas')
+    >>> prof.url
+    'https://sas.sdss.org/marvin/api'
+
+    >>> # change to the test site
+    >>> prof.change_path(test=True)
+    >>> prof.url
+    'https://sas.sdss.org/test/marvin/api'
+
+    >>> # switch back to production
+    >>> prof.change_path()
+    >>> prof.url
+    'https://sas.sdss.org/marvin/api'
+
+The ``url`` attribute always defines the base url to the top level API.  To build urls that point to specific routes on the
+API, use the ``construct_route`` method.  Let's construct a new url to access the cube data for MaNGA galaxy "8485-1901".
+::
+
+    >>> # build a new url to a specific known API route
+    >>> prof.construct_route('cubes/8485-1901/')
+    'https://sas.sdss.org/marvin/api/cubes/8485-1901/'
+
 
 
 Defining a new API Profile
