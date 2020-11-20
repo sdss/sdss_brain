@@ -16,6 +16,7 @@ from __future__ import print_function, division, absolute_import
 import os
 import pytest
 import respx
+from httpx import Response
 from sdss_brain import cfg_params
 from sdss_brain.config import config
 from sdss_brain.auth import User
@@ -83,7 +84,8 @@ class TestUser(object):
     @respx.mock
     def test_validate_user(self, goodnet, user):
         url = 'https://internal.sdss.org/dev/collaboration/api/login'
-        request = respx.post(url, content=user_data, status_code=200)
+        #request = respx.post(url, content=user_data, status_code=200)
+        request = respx.post(url).mock(return_value=Response(200, json=user_data))
 
         user.validate_user('test')
         assert user.is_sdss_cred_valid is True
