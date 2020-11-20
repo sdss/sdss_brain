@@ -4,6 +4,11 @@
 Change Log
 ==========
 
+* :release:`0.3.1 <2020-11-20>`
+* :support:`-` adding ``change_domain`` convenience method to ``ApiHandler``
+* :support:`-` raising exception when invalid users attempts to set a work release or IPL
+* :bug:`-` fixing ``Brain`` ``__del__`` dunder to exit cleanly when `db` and `remote` are None
+
 * :release:`0.3.0 <2020-11-06>`
 * :support:`-` adds function, ``send_post_request``, for sending simple ``httpx`` POST requests
 * :support:`-` adds support classes, ``User``, ``Netrc``, ``Htpass`` for user authentication
