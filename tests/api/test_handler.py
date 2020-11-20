@@ -65,5 +65,12 @@ class TestHandler(object):
         a = ApiHandler('marvin', async_client=async_client)
         assert isinstance(a.client, client)
 
+    def test_change_domains(self):
+        a = ApiHandler(('marvin', 'general/getroutemap', 'sas'))
+        assert a.client.url == 'https://sas.sdss.org/marvin/api/general/getroutemap'
+        a.change_domain('dr15', test=True)
+        assert 'dr15.sdss.org' == a.api.current_domain
+        assert 'dr15.sdss.org/test/marvin' in a.client.url
+
 
 

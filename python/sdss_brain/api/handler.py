@@ -277,4 +277,36 @@ class ApiHandler(object):
         self.url = self.api.construct_route(route)
         self.client.set_url(self.url)
 
+    def change_domain(self, domain: str, test: bool = None) -> None:
+        """ Change the domain of the set API
+
+        Changes the domain on the loaded API and updates the http client
+        to use the new API.
+
+        Parameters
+        ----------
+        domain : str
+            The name of the domain to switch to
+        test : bool, optional
+            If True, uses the test server, by default None
+
+        Raises
+        ------
+        AttributeError
+            when no API profile is set on the handler
+        """
+        if not self.api:
+            raise AttributeError('Cannot change domain.  No api profile set.')
+
+        # change to the new API domain and optionally, the test server
+        self.api.change_domain(domain)
+        if test:
+            self.api.change_path(test=test)
+
+        # update the API on the client
+        self.client.set_api(self.api)
+
+        # reset the url
+        self.client.set_url(self.url)
+
 
