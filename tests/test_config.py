@@ -18,7 +18,9 @@ from sdss_brain.config import config, tree, Config
 from sdss_brain.exceptions import BrainError
 
 # set release to DR16
-config.set_release("DR16")
+@pytest.fixture(autouse=True)
+def set_default():
+    config.set_release("DR16")
 
 
 @pytest.fixture()
@@ -28,6 +30,7 @@ def mockedcfg(monkeypatch):
     monkeypatch.setitem(cfg_params, 'download', True)
     monkeypatch.setitem(cfg_params, 'work_versions', {})
     config = Config()
+    config.set_user('test')
     yield config
     config = None
 
@@ -35,14 +38,23 @@ def mockedcfg(monkeypatch):
 class TestConfig(object):
 
     def test_release_fail(self):
-        with pytest.raises(BrainError) as cm:
+        with pytest.raises(BrainError, match='trying to set an invalid release version'):
             config.release = 'DR4'
-        assert 'trying to set an invalid release version' in str(cm.value)
 
     def test_set_release_fail(self):
-        with pytest.raises(BrainError) as cm:
+        with pytest.raises(BrainError, match='trying to set an invalid release version'):
             config.set_release('DR4')
-        assert 'trying to set an invalid release version' in str(cm.value)
+
+    @pytest.mark.parametrize('release', ['work', 'MPL8'])
+    def test_release_bad_user(self, mockedcfg, release):
+        with pytest.raises(BrainError, match='User test is not validated.'):
+            mockedcfg.set_release(release)
+
+    def test_public_invalid_user(self, mockedcfg):
+        mockedcfg.set_release('DR14')
+        assert mockedcfg.release == 'DR14'
+        mockedcfg.set_release('DR8')
+        assert mockedcfg.release == 'DR8'
 
     def test_set_release(self):
         old = 'DR16'
@@ -71,3 +83,4 @@ class TestConfig(object):
         exp = {'drpver': 'v2_4_3', 'apred': 'r12'}
         config.set_work_versions(exp)
         assert config.work_versions == exp
+

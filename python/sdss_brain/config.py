@@ -87,6 +87,12 @@ class Config(object):
             raise BrainError(f'trying to set an invalid release version {value}. '
                              f'Valid releases are: {", ".join(self._allowed_releases)}')
 
+        # if work release or IPL, check for a validated user
+        if 'dr' not in value.lower() and not self.user.validated:
+            raise BrainError(f'User {self.user} is not validated. Can only access public data. '
+                             'Cannot access "work" data or internal SDSS releases.  Consider '
+                             'validating the user, or check your SDSS netrc credentials.')
+
         # replant the tree
         if value.lower() == 'work':
             tree.replant_tree('sdsswork')
