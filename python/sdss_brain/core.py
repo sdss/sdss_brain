@@ -197,11 +197,11 @@ class HindBrain(Base):
         if self.data_origin == 'file' and isinstance(self.data, fits.HDUList):
             self.data.close()
         elif self.data_origin == 'db':
-            if hasattr(self, 'db'):
+            if hasattr(self, 'db') and self.db is not None:
                 self.db.close()
             self.data = None
         elif self.data_origin == 'api':
-            if hasattr(self, 'remote'):
+            if hasattr(self, 'remote') and self.remote is not None:
                 self.remote.close()
 
     def __enter__(self):
