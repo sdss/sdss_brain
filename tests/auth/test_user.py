@@ -84,7 +84,6 @@ class TestUser(object):
     @respx.mock
     def test_validate_user(self, goodnet, user):
         url = 'https://internal.sdss.org/dev/collaboration/api/login'
-        #request = respx.post(url, content=user_data, status_code=200)
         request = respx.post(url).mock(return_value=Response(200, json=user_data))
 
         user.validate_user('test')
