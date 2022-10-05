@@ -26,5 +26,5 @@ def test_send_post_request():
 
 
 def test_send_failure():
-    with pytest.raises(httpx.HTTPStatusError, match='500 Server Error'):
+    with pytest.raises(httpx.HTTPStatusError, match='500 INTERNAL SERVER ERROR'):
         send_post_request('https://httpbin.org/status/500')

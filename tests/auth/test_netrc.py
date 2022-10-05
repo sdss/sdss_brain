@@ -39,6 +39,7 @@ def goodnet(netrc):
 def bestnet(goodnet):
     goodnet.write(write('data.sdss.org'), mode='a')
     goodnet.write(write('api.sdss.org'), mode='a')
+    goodnet.write(write('data.sdss5.org'), mode='a')
     yield goodnet
 
 
@@ -65,7 +66,7 @@ class TestNetrc(object):
     def test_valid_netrc(self, bestnet):
         n = Netrc()
         assert n.is_valid is True
-        assert n.valid_hosts == ['data.sdss.org', 'api.sdss.org']
+        assert {'data.sdss.org', 'api.sdss.org', 'data.sdss5.org'}.issubset(set(n.valid_hosts))
 
 
 class TestNetrcFails(object):

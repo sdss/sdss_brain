@@ -21,7 +21,7 @@ from sdss_brain.auth.user import User
 api_prof = {'marvin': {'description': 'API for accessing MaNGA data via Marvin',
                        'docs': 'https://sdss-marvin.readthedocs.io/en/stable/reference/web.html',
                        'base': 'marvin',
-                       'domains': ['sas', 'lore', 'dr15', 'dr16'],
+                       'domains': ['sas', 'lore', 'dr15', 'dr16', 'dr17'],
                        'mirrors': ['magrathea'],
                        'stems': {'test': 'test', 'public': 'public', 'affix': 'prefix'},
                        'api': True,

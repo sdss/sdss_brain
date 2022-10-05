@@ -20,7 +20,6 @@ from httpx import Response
 from sdss_brain import cfg_params
 from sdss_brain.config import config
 from sdss_brain.auth import User
-from sdss_brain.exceptions import BrainError
 
 
 @pytest.fixture(autouse=True)
@@ -38,6 +37,7 @@ def goodnet(setup_paths):
     tmpnet.write('')
     os.chmod(str(tmpnet), 0o600)
     tmpnet.write(write('data.sdss.org'), mode='a')
+    tmpnet.write(write('data.sdss5.org'), mode='a')
     tmpnet.write(write('api.sdss.org'), mode='a')
     yield tmpnet
 
@@ -83,7 +83,7 @@ class TestUser(object):
 
     @respx.mock
     def test_validate_user(self, goodnet, user):
-        url = 'https://internal.sdss.org/dev/collaboration/api/login'
+        url = 'https://internal.sdss.org/collaboration/api/login'
         request = respx.post(url).mock(return_value=Response(200, json=user_data))
 
         user.validate_user('test')
