@@ -14,6 +14,10 @@ domains:
     name: data.sdss.org
     description: domain for accessing SDSS data on the SAS
 
+  data5:
+    name: data.sdss5.org
+    description: domain for accessing SDSS-V data on the SAS
+
   sas:
     name: sas.sdss.org
     description: domain for accessing various SAS services
@@ -43,6 +47,11 @@ domains:
     name: dr16.sdss.org
     public: true
     description: public domain for DR16 data access
+
+  dr17:
+    name: dr17.sdss.org
+    public: true
+    description: public domain for DR17 data access
 
   local:
     name: localhost
@@ -78,6 +87,7 @@ apis:
       - lore
       - dr15
       - dr16
+      - dr17
     mirrors:
       - magrathea
     stems:
@@ -102,6 +112,7 @@ apis:
 
   valis:
     description: API for SDSS data access
+    docs: https://api.sdss.org/valis/docs
     base: valis
     domains:
       - api
