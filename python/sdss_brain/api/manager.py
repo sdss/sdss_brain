@@ -321,22 +321,25 @@ class ApiProfile(object):
         if not user.validated and not user.is_netrc_valid:
             raise BrainError(f'User {user.name} is not netrc validated!  Cannot access credentials.')
 
-        username, password = user.netrc.read_netrc('api.sdss.org')
+        # construct the token url
+        valid_host = user._validated_netrc_host or 'api.sdss.org'
+        username, password = user.netrc.read_netrc(valid_host)
         token_url = self.construct_token_url()
+
+        # submit the token login request
         data = send_post_request(token_url, data={'username': username, 'password': password})
-        token = data.get('token',
-                         data.get('access_token',
-                                  data.get('user_token',
-                                           data.get('sdss_token', None))))
-        if not token:
-            raise BrainError('Token request successful but could not extract token '
-                             'from response data. Check the returned json response '
-                             'for prope key name')
-        else:
+        if token := data.get('token',
+                             data.get('access_token',
+                                      data.get('user_token',
+                                               data.get('sdss_token', None)))):
             tok_name = f'{self.name.upper()}_API_TOKEN'
             log.info(f'Save this token as either a "{tok_name}" environment variable in your '
                      f'.bashrc or as "{tok_name.lower()}" in your custom sdss_brain.yml config file.')
             return token
+        else:
+            raise BrainError('Token request successful but could not extract token '
+                             'from response data. Check the returned json response '
+                             'for prope key name')
 
     @property
     def is_domain_public(self) -> bool:

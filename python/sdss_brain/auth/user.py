@@ -57,6 +57,7 @@ class User(object):
         self._valid_netrc = False
         self._valid_htpass = False
         self._valid_sdss_cred = False
+        self._validated_netrc_host = None
 
         self._setup_auths()
 
@@ -75,6 +76,12 @@ class User(object):
         except BrainError:
             self.netrc = None
         else:
+            net_hosts = ['data.sdss.org', 'api.sdss.org', 'data.sdss5.org', 'wiki.sdss.org']
+            self._valid_netrc = any(self.user in
+                                    self.netrc.read_netrc(vhost:= h)
+                                    for h in net_hosts)
+            self._validated_netrc_host = vhost if self._valid_netrc else None
+
             self._valid_netrc = (self.user in self.netrc.read_netrc('data.sdss.org') or
                                  self.user in self.netrc.read_netrc('api.sdss.org') or
                                  self.user in self.netrc.read_netrc('data.sdss5.org') or
@@ -145,6 +152,8 @@ class User(object):
                     user, passwd = self.netrc.read_netrc(host)
                 except ValueError:
                     pass
+                else:
+                    self._validated_netrc_host = host
 
             if user != self.user:
                 raise ValueError(f'netrc user {user} mismatched with input user {self.user}!')
