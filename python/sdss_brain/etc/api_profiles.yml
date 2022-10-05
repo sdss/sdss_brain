@@ -116,3 +116,6 @@ apis:
     base: valis
     domains:
       - api
+    auth:
+      type: token
+      route: auth/login
