@@ -166,8 +166,7 @@ class User(object):
             cred.authenticate_via_trac()
             self._valid_sdss_cred = cred.authenticated is True
         else:
-            # TODO change this dev login to production site when ready
-            cred_url = 'https://internal.sdss.org/dev/collaboration/api/login'
+            cred_url = 'https://internal.sdss.org/collaboration/api/login'
             data = send_post_request(cred_url, data={'username': self.user, 'password': password})
             self._valid_sdss_cred = data.get('authenticated', False) == 'True'
             self.member = data.get('member', None)
