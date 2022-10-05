@@ -76,7 +76,9 @@ class User(object):
             self.netrc = None
         else:
             self._valid_netrc = (self.user in self.netrc.read_netrc('data.sdss.org') or
-                                 self.user in self.netrc.read_netrc('api.sdss.org'))
+                                 self.user in self.netrc.read_netrc('api.sdss.org') or
+                                 self.user in self.netrc.read_netrc('data.sdss5.org') or
+                                 self.user in self.netrc.read_netrc('wiki.sdss.org'))
 
         # setup htpass
         try:
@@ -93,12 +95,12 @@ class User(object):
     @property
     def is_netrc_valid(self) -> bool:
         """ Checks if the netrc credentials are validated for the given user """
-        return False if not self.netrc else self._valid_netrc
+        return self._valid_netrc if self.netrc else False
 
     @property
     def is_htpass_valid(self) -> bool:
         """ Checks if htpasswd credentials are validated for the given user """
-        return False if not self.htpass else self._valid_htpass
+        return self._valid_htpass if self.htpass else False
 
     @property
     def is_sdss_cred_valid(self) -> bool:
@@ -138,16 +140,17 @@ class User(object):
         """
         # look up user info from validated netrc
         if self.is_netrc_valid:
-            try:
-                user, passwd = self.netrc.read_netrc('data.sdss.org')
-            except ValueError:
-                user, passwd = self.netrc.read_netrc('api.sdss.org')
+            for host in self.netrc.allowed_hosts:
+                try:
+                    user, passwd = self.netrc.read_netrc(host)
+                except ValueError:
+                    pass
 
             if user != self.user:
                 raise ValueError(f'netrc user {user} mismatched with input user {self.user}!')
 
             # if no password set, use the netrc password
-            password = passwd if not password else password
+            password = password or passwd
 
         # ensure a password is specified
         if not password:
