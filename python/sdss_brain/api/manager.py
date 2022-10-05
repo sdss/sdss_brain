@@ -87,7 +87,9 @@ class Domain(BaseModel):
 
     @validator('name')
     def check_domain_name(cls, value):
-        if value != 'localhost' and not value.endswith('sdss.org') and not value.endswith('sdss.utah.edu'):
+        if (value != 'localhost' and not value.endswith('sdss.org')
+            and not value.endswith('sdss5.org')
+            and not value.endswith('sdss.utah.edu')):
             raise ValueError(f'Domain name {value} does not fit format of "xxx.sdss.org" or "xxx.sdss.utah.edu"')
 
         return value

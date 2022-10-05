@@ -4,6 +4,8 @@
 Change Log
 ==========
 
+* :support:`16` updates User and Netrc support for ``sdss5`` user
+
 * :release:`0.3.1 <2020-11-20>`
 * :support:`-` adding ``change_domain`` convenience method to ``ApiHandler``
 * :support:`-` raising exception when invalid users attempts to set a work release or IPL

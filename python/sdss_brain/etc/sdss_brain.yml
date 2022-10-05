@@ -7,6 +7,7 @@ netrc_path: null
 
 mapped_versions:
   manga:
+    DR17: {drpver: v3_1_1, dapver: 3.1.0}
     DR16: {drpver: v2_4_3, dapver: 2.2.1}
     DR15: {drpver: v2_4_3, dapver: 2.2.1}
     DR14: {drpver: v2_1_2, dapver: null}
@@ -19,6 +20,7 @@ mapped_versions:
     MPL5: {drpver: v2_0_1, dapver: 2.0.2}
     MPL4: {drpver: v1_5_1, dapver: 1.1.1}
   eboss:
+    DR17: v5_13_2
     DR16: v5_13_0
     DR15: v5_10_0
     DR14: v5_10_0
@@ -28,6 +30,7 @@ mapped_versions:
     DR10: v5_5_12
     DR9: v5_4_45
   apogee:
+    DR17: dr17
     DR16: r12
     DR15: r8
     DR14: r8

@@ -273,7 +273,7 @@ def create_releases(name):
 
     # expand the path envvars
     for k, v in dd.items():
-        release = 'WORK' if 'WORK' in k else k
+        release = 'SDSSWORK' if 'WORK' in k else k
         tree.replant_tree(release.lower())
         dd[k]['path'] = os.path.expandvars(v.get('path', ''))
 

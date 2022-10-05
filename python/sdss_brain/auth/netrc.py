@@ -37,7 +37,8 @@ class Netrc(object):
     def __init__(self, path: str = None):
         path = path or cfg_params.get('netrc_path', None) or '~/.netrc'
         self.path = pathlib.Path(path).expanduser()
-        self.allowed_hosts = ['data.sdss.org', 'api.sdss.org', 'magrathea.sdss.org']
+        self.allowed_hosts = ['data.sdss.org', 'api.sdss.org', 'magrathea.sdss.org',
+                              'data.sdss5.org', 'wiki.sdss.org']
         self._valid_hosts = {}
 
         self.check_netrc()
