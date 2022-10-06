@@ -34,7 +34,14 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    - name: Setup SDSS netrc
+    - name: Setup SDSS data netrc
+      uses: extractions/netrc@v1
+      with:
+        machine: data.sdss.org
+        username: sdss
+        password: test
+
+    - name: Setup SDSS API netrc
       uses: extractions/netrc@v1
       with:
         machine: api.sdss.org
