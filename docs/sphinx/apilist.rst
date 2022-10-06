@@ -21,6 +21,7 @@ internal   internal.sdss.org   False     domain for accessing internal SDSS info
 magrathea  magrathea.sdss.org  False     mirror domain for SDSS services, e.g. SDSS MaNGA's Marvin
 dr15       dr15.sdss.org       True      public domain for DR15 data access
 dr16       dr16.sdss.org       True      public domain for DR16 data access
+dr17       dr17.sdss.org       True      public domain for DR17 data access
 local      localhost           False     domain when running services locally
 =========  ==================  ========  =========================================================
 
@@ -30,10 +31,10 @@ APIs
 ----
 Available APIs serving various SDSS content and/or data
 
-======  =============  ================================================  ============================  =========  ======  ===============================================================
-key     base           description                                       domains                       mirrors    auth    docs
-======  =============  ================================================  ============================  =========  ======  ===============================================================
-marvin  marvin         API for accessing MaNGA data via Marvin           sas, lore, dr15, dr16, local  magrathea  token   https://sdss-marvin.readthedocs.io/en/stable/reference/web.html
-icdb    collaboration  API for accessing SDSS collaboration information  internal, local                          netrc
-valis   valis          API for SDSS data access                          api, local                               netrc
-======  =============  ================================================  ============================  =========  ======  ===============================================================
+======  =============  ================================================  ============================  =========  ======  =============== ===============================================================
+key     base           description                                       domains                       mirrors    auth    users           docs
+======  =============  ================================================  ============================  =========  ======  =============== ===============================================================
+marvin  marvin         API for accessing MaNGA data via Marvin           sas, lore, dr15, dr16, local  magrathea  token   sdss, collab    https://sdss-marvin.readthedocs.io/en/stable/reference/web.html
+icdb    collaboration  API for accessing SDSS collaboration information  internal, local                          netrc   collab
+valis   valis          API for SDSS data access                          api, local                               token   collab          https://api.sdss.org/valis/docs
+======  =============  ================================================  ============================  =========  ======  =============== ===============================================================

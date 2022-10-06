@@ -332,7 +332,7 @@ class ApiProfile(object):
                              'from response data. Check the returned json response '
                              'for prope key name')
 
-    def get_token(self, user: str) -> str:
+    def get_token(self, user: str) -> dict:
         """ Request and receive a valid API auth token
 
         Requests an auth token for the specified user.  This uses found netrc
@@ -341,6 +341,12 @@ class ApiProfile(object):
         the custom sdss_brain.yml configuration file as "xxx_api_token", where
         "XXX" is the API profile name.
 
+        Returns a dictionary containing an "access" key with your main auth token.
+        Optionally contains a "refresh" key with a token for refreshing your
+        access token.  The refresh token should be saved in an "XXX_API_REFRESH_TOKEN"
+        environment variable or in the custom sdss_brain.yml config file as
+        "xxx_api_refresh_token".
+
         Parameters
         ----------
         user : str
@@ -348,8 +354,8 @@ class ApiProfile(object):
 
         Returns
         -------
-        str
-            A valid API auth token
+        dict
+            A dict of valid API "access" and "refresh" auth token(s)
 
         Raises
         ------
