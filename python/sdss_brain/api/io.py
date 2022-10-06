@@ -17,7 +17,7 @@ import httpx
 from sdss_brain.exceptions import BrainError
 
 
-def send_post_request(url: str, data: dict = None) -> dict:
+def send_post_request(url: str, data: dict = None, headers: dict = None) -> dict:
     """ A simple httpx post request
 
     A simple standalone httpx post request to a specified url, and
@@ -29,6 +29,8 @@ def send_post_request(url: str, data: dict = None) -> dict:
         The url to send the request to
     data : dict, optional
         Input data to send along with the request, by default None
+    headers : dict, optional
+        Optional custom request header info, by default None
 
     Returns
     -------
@@ -41,7 +43,7 @@ def send_post_request(url: str, data: dict = None) -> dict:
         when an error occurs sending the request
     """
     try:
-        resp = httpx.post(url, data=data)
+        resp = httpx.post(url, data=data, headers=headers)
     except httpx.RequestError as exc:
         raise BrainError(f'An error occurred requesting {exc.request.url!r}') from exc
     else:
