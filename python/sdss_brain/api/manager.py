@@ -58,8 +58,7 @@ def urljoin(url1: str, url2: str) -> str:
 
     e = urlparse(url1)
     t = urlparse(url2)
-    final = urlunparse(tuple(strjoin(*z) for z in zip(e, t)))
-    return final
+    return urlunparse(tuple(strjoin(*z) for z in zip(e, t)))
 
 
 def strjoin(str1: str, str2: str) -> str:
@@ -119,8 +118,8 @@ def check_domain(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         inst, domain = args
-        port = kwargs.get('port', None)
-        ngrokid = kwargs.get('ngrokid', None)
+        port = kwargs.get('port')
+        ngrokid = kwargs.get('ngrokid')
 
         if domain not in inst._all_domains:
             raise ValueError(
@@ -129,10 +128,11 @@ def check_domain(func):
         if (port or ngrokid) and domain != 'local':
             raise ValueError('Domain must be local if a port or ngrokid is set!')
 
-        if domain == 'local' and not (port or ngrokid):
+        if domain == 'local' and not port and not ngrokid:
             raise ValueError('A port or ngrokid must be specified when domain is local')
 
         return func(*args, **kwargs)
+
     return wrapper
 
 
@@ -151,7 +151,7 @@ class ApiProfileModel(BaseModel):
     @validator('domains', 'mirrors')
     def domains_in_list(cls, values):
         if not set(values).issubset(set(domains)):
-            raise ValueError(f'Not all of the input domains/mirrors are in the list of domains.yml!')
+            raise ValueError('Not all of the input domains/mirrors are in the list of domains.yml!')
         return values
 
     @validator('stems')
@@ -221,9 +221,9 @@ class ApiProfile(object):
         # load and validate the name from the list of API profiles
         if name not in apis:
             raise ValueError(f'API Profile {name} not in the apis.yml file. Consider adding it.')
-        else:
-            self._validated_model = ApiProfileModel.parse_obj(apis[name])
-            self.info = self._validated_model.dict()
+
+        self._validated_model = ApiProfileModel.parse_obj(apis[name])
+        self.info = self._validated_model.dict()
 
         self.description = self.info.get('description', '')
         self.documentation = self.info.get('docs', '')
@@ -231,10 +231,10 @@ class ApiProfile(object):
         # load the domains and mirrors
         self.domains = self._get_domains()
         self.mirrors = self._get_domains(mirror=True)
-        self._all_domains = {**self.domains} if not self.mirrors else {**self.domains, **self.mirrors}
+        self._all_domains = {**self.domains, **self.mirrors} if self.mirrors else {**self.domains}
 
         # select the current domain
-        domain = next(iter(self.domains)) if not domain else domain
+        domain = domain or next(iter(self.domains))
         self._select_current_domain(domain, port=port, ngrokid=ngrokid)
 
         # construct the API url
@@ -266,21 +266,71 @@ class ApiProfile(object):
         token = f'{self.name.upper()}_API_TOKEN'
         return os.getenv(token) or cfg_params.get(token.lower(), None)
 
-    def construct_token_url(self) -> str:
-        """ Construct a login url for requesting tokens """
+    @property
+    def refresh_token(self) -> str:
+        """ Returns an authentication refresh token """
+        return self.check_for_refresh_token()
+
+    def check_for_refresh_token(self) -> str:
+        """ Checks for a proper auth refresh token set as a envvar or in custom config """
+        token = f'{self.name.upper()}_API_REFRESH_TOKEN'
+        return os.getenv(token) or cfg_params.get(token.lower(), None)
+
+    def construct_token_url(self, refresh: bool = None) -> str:
+        """ Construct a login url for requesting tokens
+
+        Constructs an API url endpoint for logging in
+
+        Parameters
+        ----------
+        refresh : bool, optional
+            Set to construct a refresh route endpoint, by default None
+
+        Returns
+        -------
+        str
+            The URL of the API login endpoint
+
+        Raises
+        ------
+        ValueError
+            when no token route is found in the API profile
+        """
         # check the API auth_type
         auth = self.info.get('auth', None)
         if auth['type'] != 'token':
             log.info(f'Auth type for API {self.name} is not "token".  No token needed.')
             return
 
-        # get the token route for the given API
-        token_route = auth.get('route', None)
-        if not token_route:
+        # check for refresh route info
+        param = 'refresh' if refresh else 'route'
+        if refresh and not (token_route := auth.get('refresh', None)):
+            log.warning('No refresh route found. Using normal login route.')
+            token_route = auth.get('route', None)
+            param = 'route'
+
+        # get either the refresh or login route
+        if token_route := auth.get(param, None):
+            return self.construct_route(token_route)
+        else:
             raise ValueError(f'No token route specified for API profile {self.name}. '
                              'I do not where to request a token from.')
 
-        return self.construct_route(token_route)
+    def _extract_access_token(self, data: dict) -> str:
+        """ Extract the access token from the response data """
+        # extract the token(s)
+        if token := data.get('token',
+                             data.get('access_token',
+                                      data.get('user_token',
+                                               data.get('sdss_token', None)))):
+            tok_name = f'{self.name.upper()}_API_TOKEN'
+            log.info(f'Save this access token as either a "{tok_name}" environment variable in your '
+                     f'.bashrc or as "{tok_name.lower()}" in your custom sdss_brain.yml config file.')
+            return token
+        else:
+            raise BrainError('Token request successful but could not extract token '
+                             'from response data. Check the returned json response '
+                             'for prope key name')
 
     def get_token(self, user: str) -> str:
         """ Request and receive a valid API auth token
@@ -319,7 +369,7 @@ class ApiProfile(object):
         if type(user) == str:
             user = User(user)
         if not user.validated and not user.is_netrc_valid:
-            raise BrainError(f'User {user.name} is not netrc validated!  Cannot access credentials.')
+            raise BrainError(f'User {user.user} is not netrc validated!  Cannot access credentials.')
 
         # construct the token url
         valid_host = user._validated_netrc_host or 'api.sdss.org'
@@ -328,18 +378,51 @@ class ApiProfile(object):
 
         # submit the token login request
         data = send_post_request(token_url, data={'username': username, 'password': password})
-        if token := data.get('token',
-                             data.get('access_token',
-                                      data.get('user_token',
-                                               data.get('sdss_token', None)))):
-            tok_name = f'{self.name.upper()}_API_TOKEN'
-            log.info(f'Save this token as either a "{tok_name}" environment variable in your '
+
+        # extract the token
+        token = self._extract_access_token(data)
+
+        if refresh := data.get('refresh_token'):
+            tok_name = f'{self.name.upper()}_API_REFRESH_TOKEN'
+            log.info(f'Save this refresh token as either a "{tok_name}" environment variable in your '
                      f'.bashrc or as "{tok_name.lower()}" in your custom sdss_brain.yml config file.')
-            return token
-        else:
-            raise BrainError('Token request successful but could not extract token '
-                             'from response data. Check the returned json response '
-                             'for prope key name')
+
+        out = {'access': token}
+        if refresh:
+            out['refresh'] = refresh
+        return out
+
+    def refresh_auth_token(self) -> str:
+        """ Refresh an auth access token
+
+        Uses the ``refresh_token`` to refresh your API authorization.
+        Regenerates a new ``token`` to be used with the API.
+
+        Returns
+        -------
+        str
+            A new access token to replace your expired one
+        """
+
+        auth = self.info.get('auth', None)
+        if auth['type'] != 'token':
+            log.info(f'Auth type for API {self.name} is not "token".  No token needed.')
+            return
+
+        # construct the refresh token url
+        token_url = self.construct_token_url(refresh=True)
+
+        if not self.refresh_token:
+            log.warning('No refresh token found.  Cannot')
+            return
+
+        hdrs = {'Authorization': f'Bearer {self.refresh_token}'}
+        data = send_post_request(token_url, headers=hdrs)
+
+        # extract the token
+        token = self._extract_access_token(data)
+
+        return {'access': token}
 
     @property
     def is_domain_public(self) -> bool:
