@@ -13,10 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    # Enable tmate debugging of manually-triggered workflows if the input option was provided
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
-
     - name: Set up Python 3.8
       uses: actions/setup-python@v4
       with:
@@ -51,6 +47,10 @@ jobs:
         machine: api.sdss.org
         username: sdss
         password: test
+
+    # Enable tmate debugging of manually-triggered workflows if the input option was provided
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
 
     - name: Test with pytest
       run: |
