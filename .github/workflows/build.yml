@@ -39,18 +39,14 @@ jobs:
       with:
         machine: data.sdss.org
         username: sdss
-        password: test
+        password: stest
 
     - name: Setup SDSS API netrc
       uses: extractions/netrc@v1
       with:
         machine: api.sdss.org
         username: sdss
-        password: test
-
-    # Enable tmate debugging of manually-triggered workflows if the input option was provided
-    - name: Setup tmate session
-      uses: mxschmitt/action-tmate@v3
+        password: stest
 
     - name: Test with pytest
       run: |
