@@ -36,10 +36,14 @@ def mock_api(monkeypatch):
     monkeypatch.setattr(sdss_brain.api.manager, 'apis', api_prof)
 
 @pytest.fixture
-def mock_netrc():
+def mock_netrc(mocker):
     """ fixture to create a new mocked netrc object """
+    mocker.patch.object(Netrc, 'check_netrc', autospec=True)
+    mocker.patch.object(Netrc, 'check_host', autospec=True)
+
     n = Netrc()
     n.check_netrc = lambda: True
+    n.check_host = lambda: True
     n.read_netrc = lambda x : ("sdss", "test")
     yield n
     n = None
