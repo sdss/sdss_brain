@@ -26,7 +26,7 @@ api_prof = {'marvin': {'description': 'API for accessing MaNGA data via Marvin',
                        'stems': {'test': 'test', 'public': 'public', 'affix': 'prefix'},
                        'api': True,
                        'routemap': 'general/getroutemap/',
-                       'auth': {'type': 'token', 'route': 'general/login/'}}
+                       'auth': {'type': 'token', 'route': 'general/login/', 'refresh': '/general/refresh/'}}
             }
 
 
@@ -52,5 +52,6 @@ def mock_profile(mock_api, mock_user):
     from sdss_brain.api.manager import ApiProfile
     profile = ApiProfile('marvin')
     profile.check_for_token = lambda: 'xyz123'
+    profile.check_for_refresh_token = lambda: 'abc123'
     yield profile
     profile = None

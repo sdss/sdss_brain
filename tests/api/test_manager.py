@@ -15,6 +15,7 @@ from __future__ import print_function, division, absolute_import
 
 import pytest
 import pydantic
+from httpx import Response
 from astropy.table import Table
 from sdss_brain.api.manager import ApiProfile, ApiProfileModel, Domain, apim
 
@@ -120,6 +121,29 @@ class TestProfile(object):
         assert url == 'https://sas.sdss.org/marvin/api/general/login/'
         assert mock_profile.auth_type == 'token'
 
+        url = mock_profile.construct_token_url(refresh=True)
+        assert url == 'https://sas.sdss.org/marvin/api/general/refresh/'
+
+    def test_check_tokens(self, mock_profile):
+        assert mock_profile.check_for_token() == 'xyz123'
+        assert mock_profile.check_for_refresh_token() == 'abc123'
+
+    def test_get_token(self, respx_mock, mock_profile, monkeypatch):
+        monkeypatch.setattr(mock_profile, 'check_for_token', lambda: None)
+
+        url = 'https://sas.sdss.org/marvin/api/general/login/'
+        respx_mock.post(url).mock(return_value=Response(200, json={'access_token': 'xyz123', 'refresh_token': 'abc123'}))
+
+        tokens = mock_profile.get_token('sdss')
+        assert tokens['access'] == 'xyz123'
+        assert tokens['refresh'] == 'abc123'
+
+    def test_refresh_token(self, respx_mock, mock_profile):
+        url = 'https://sas.sdss.org/marvin/api/general/refresh/'
+        respx_mock.post(url).mock(return_value=Response(200, json={'access_token': '123xyz'}))
+
+        tokens = mock_profile.refresh_auth_token()
+        assert tokens['access'] == '123xyz'
 
 class TestManager(object):
 
