@@ -16,7 +16,7 @@ import pytest
 
 import sdss_brain.api.manager
 from sdss_brain.auth.user import User
-
+from sdss_brain.auth.netrc import Netrc
 
 api_prof = {'marvin': {'description': 'API for accessing MaNGA data via Marvin',
                        'docs': 'https://sdss-marvin.readthedocs.io/en/stable/reference/web.html',
@@ -35,12 +35,21 @@ def mock_api(monkeypatch):
     """ fixture to mock the apis dictionary """
     monkeypatch.setattr(sdss_brain.api.manager, 'apis', api_prof)
 
+@pytest.fixture
+def mock_netrc():
+    """ fixture to create a new mocked netrc object """
+    n = Netrc()
+    n.check_netrc = lambda: True
+    n.read_netrc = lambda x : ("sdss", "test")
+    yield n
+    n = None
+
 
 @pytest.fixture()
-def mock_user():
+def mock_user(mock_netrc):
     """ fixture to create a new mocked sdss user """
     user = User('sdss')
-    user.netrc = True
+    user.netrc = mock_netrc
     user._valid_netrc = True
     yield user
     user = None

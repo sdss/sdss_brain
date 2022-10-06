@@ -128,13 +128,13 @@ class TestProfile(object):
         assert mock_profile.check_for_token() == 'xyz123'
         assert mock_profile.check_for_refresh_token() == 'abc123'
 
-    def test_get_token(self, respx_mock, mock_profile, monkeypatch):
+    def test_get_token(self, mock_user, respx_mock, mock_profile, monkeypatch):
         monkeypatch.setattr(mock_profile, 'check_for_token', lambda: None)
 
         url = 'https://sas.sdss.org/marvin/api/general/login/'
         respx_mock.post(url).mock(return_value=Response(200, json={'access_token': 'xyz123', 'refresh_token': 'abc123'}))
 
-        tokens = mock_profile.get_token('sdss')
+        tokens = mock_profile.get_token(mock_user)
         assert tokens['access'] == 'xyz123'
         assert tokens['refresh'] == 'abc123'
 
