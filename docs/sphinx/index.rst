@@ -19,6 +19,7 @@ Contents
 
 .. toctree::
   :maxdepth: 2
+  :caption: Content
 
   Introduction to sdss_brain <intro>
   Convenience Tools <tools>
@@ -31,20 +32,11 @@ Contents
   How to create and parse a custom objectid as valid data input <parsing>
   Users and Authentication <auth>
 
-Reference
----------
-
 .. toctree::
    :maxdepth: 1
+   :caption: Reference
 
    api
    mma
    apilist
    CHANGELOG
-
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
-* :ref:`modindex`
