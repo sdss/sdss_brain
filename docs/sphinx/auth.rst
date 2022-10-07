@@ -26,9 +26,16 @@ edit a file in your home directory ocalled ``.netrc`` and copy these lines insid
        login <username>
        password <password>
 
+    machine data.sdss5.org
+       login <username>
+       password <password>
+
 Replace ``<username>`` and ``<password>`` with your login credentials. The default SDSS username and
 password is also acceptable for anonymous access.  **Finally, run** ``chmod 600 ~/.netrc`` **to make
 the file only accessible to your user.**
+
+The machine host ``data.sdss5.org`` is for accessing proprietary SDSS-V data, where ``data.sdss.org`` is
+for accessing any legacy proprietary SDSS data.
 
 .. _token:
 
@@ -57,7 +64,7 @@ To check if a valid token is already set, access the ``token`` attribute or use 
 
 ``check_for_token`` looks for a valid API token in your list of environment variables or as a parameter set on your custom
 ``sdss_brain.yml`` configuration file.  To retrieve a valid token, use the `~sdss_brain.api.manager.ApiProfile.get_token`
-method.  Tokens are mapped to specific users, either the "sdss" user or your SDSS username.  The ``get_token`` method
+method.  Tokens are mapped to specific users, either the "sdss/sdss5" users or your SDSS username.  The ``get_token`` method
 looks for user credentials in your ``.netrc`` file, so make sure you pass the username that is listed under the
 ``api.sdss.org`` machine in your ``.netrc``.
 ::
@@ -82,6 +89,38 @@ authentication.  The ``SDSSClient`` will check for a valid token for its current
 its currently set `~sdss_brain.api.manager.ApiProfile`.  If you haven't already set a token, you can do so with the
 client's `~sdss_brain.api.client.SDSSClient.get_token` method.
 
+.. _refresh:
+
+Token Refreshing
+----------------
+
+With OAuth tokens, authorization access tokens will expire after a certain amount of time.  You can refresh your access with a
+``refresh_token``, issued by certain APIs with calls to `~sdss_brain.api.manager.ApiProfile.get_token`, e.g. Valis.  Refresh tokens
+should be stored in an **[NAME]_API_REFRESH_TOKEN** environment variable or as a **[name]_api_refresh_token** parameter in
+your ``sdss_brain.yml`` custom configuration file.  **[NAME]** references the name of the specific API.  For example,
+with the "valis" API, you would set either a **VALIS_API_REFRESH_TOKEN** environment variable
+or **valis_api_refresh_token** configuration parameter.
+
+To check if a valid refresh token is already set, access the ``refresh_token`` attribute or use the
+`~sdss_brain.api.manager.ApiProfile.check_for_refresh_token` method.
+::
+
+    >>> # check for a valid refresh token
+    >>> prof.check_for_refresh_token()
+    None
+
+If a valid refresh token exists, you can refresh your access token using the `~sdss_brain.api.manager.ApiProfile.refresh_auth_token` method.
+::
+
+    >>> # refresh an access token
+    >>> prof.refresh_auth_token()
+
+This will issue a new access ``token`` which you should replace in your **[NAME]_API_TOKEN** environment variable or your
+``sdss_brain.yml`` custom configuration file.
+
+.. note::
+    Not all APIs will issue refresh tokens.  In these cases, ``refresh_token`` will remain None.  Currently only the
+    Valis API issues refresh tokens for its authorization.
 
 .. _users:
 
@@ -92,10 +131,11 @@ Remote data access requires a valid SDSS user, represented by the `~sdss_brain.a
 either with ``.netrc`` or SDSS credentials, as indicated with the ``netrc`` and ``cred`` indicators in the ``repr``.
 Alternatively, you can check with the ``user.is_netrc_valid`` and ``user.is_sdss_valid`` properties.
 
-The "sdss" user
-^^^^^^^^^^^^^^^
+The "sdss(5)" user
+^^^^^^^^^^^^^^^^^^
 
-By default ``sdss_brain`` sets the default user in the global config to the generic "sdss" user.  The "sdss" user is the default
+The "sdss" user, or equivalently "sdss5" for SDSS-V, is a general, anonymous user that has access to SDSS data.  By default
+``sdss_brain`` sets the default user in the global config to the generic "sdss" user.  The "sdss" user is the default
 used for all remote data access and API requests using `~sdss_brain.api.client.SDSSClient`.
 ::
 

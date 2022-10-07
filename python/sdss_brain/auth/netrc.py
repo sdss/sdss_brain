@@ -16,7 +16,7 @@ from __future__ import print_function, division, absolute_import
 import netrc
 import pathlib
 import warnings
-from sdss_brain import cfg_params
+from sdss_brain import cfg_params, log
 from sdss_brain.exceptions import BrainError
 
 
@@ -135,15 +135,15 @@ class Netrc(object):
         ------
         BrainError
             when netrc file fails to pass checks
-        ValueError
-            when input host is not valid
         """
 
         if not self.check_netrc():
             raise BrainError('netrc did not pass checks.  Cannot read!')
 
         if not self.check_host(host):
-            raise ValueError(f'{host} must be a valid host in the netrc')
+            # change from ValueErorr raise, to issue warning and return
+            log.error(f'{host} must be a valid host in the netrc')
+            return None, None
 
         netfile = netrc.netrc(self.path)
         user, acct, passwd = netfile.authenticators(host)  # pylint: disable=unused-variable

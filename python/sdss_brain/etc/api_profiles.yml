@@ -75,7 +75,10 @@ domains:
 #     affix: whether the alternate base is a prefix or suffix
 #   api: whether the API is under an "api" stem
 #   routemap: an API route that returns the available routes on the given API
-#   auth: the type of authentication the API needs for non-public APIs
+#   auth:
+#     type: the type of authentication the API needs for non-public APIs
+#     route: the route of the login
+#     refresh: the route to refresh the token
 
 apis:
   marvin:
@@ -119,3 +122,4 @@ apis:
     auth:
       type: token
       route: auth/login
+      refresh: auth/refresh

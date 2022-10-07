@@ -82,10 +82,10 @@ class User(object):
                                     for h in net_hosts)
             self._validated_netrc_host = vhost if self._valid_netrc else None
 
-            self._valid_netrc = (self.user in self.netrc.read_netrc('data.sdss.org') or
-                                 self.user in self.netrc.read_netrc('api.sdss.org') or
-                                 self.user in self.netrc.read_netrc('data.sdss5.org') or
-                                 self.user in self.netrc.read_netrc('wiki.sdss.org'))
+            # self._valid_netrc = (self.user in self.netrc.read_netrc('data.sdss.org') or
+            #                      self.user in self.netrc.read_netrc('api.sdss.org') or
+            #                      self.user in self.netrc.read_netrc('data.sdss5.org') or
+            #                      self.user in self.netrc.read_netrc('wiki.sdss.org'))
 
         # setup htpass
         try:
@@ -141,6 +141,8 @@ class User(object):
         Raises
         ------
         ValueError
+            when no matching user can be found in the netrc file
+        ValueError
             when the netrc username does not match the input user
         ValueError
             when no valid password is input nor extracted from the netrc
@@ -154,7 +156,14 @@ class User(object):
                     pass
                 else:
                     self._validated_netrc_host = host
+                    # on successful user, break out of loop
+                    break
 
+            # if there is no user, fail
+            if not user:
+                raise ValueError('No user found for any of the allowed netrc hosts.')
+
+            # if users are mismatched, fail
             if user != self.user:
                 raise ValueError(f'netrc user {user} mismatched with input user {self.user}!')
 
