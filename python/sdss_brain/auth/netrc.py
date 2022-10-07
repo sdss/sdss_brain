@@ -141,9 +141,9 @@ class Netrc(object):
             raise BrainError('netrc did not pass checks.  Cannot read!')
 
         if not self.check_host(host):
-            raise ValueError(f'{host} must be a valid host in the netrc')
-            #log.error(f'{host} must be a valid host in the netrc')
-            #return None, None
+            # change from ValueErorr raise, to issue warning and return
+            log.error(f'{host} must be a valid host in the netrc')
+            return None, None
 
         netfile = netrc.netrc(self.path)
         user, acct, passwd = netfile.authenticators(host)  # pylint: disable=unused-variable
