@@ -4,6 +4,8 @@
 Change Log
 ==========
 
+# :support:`23` switches docs Sphinx theme to Furo
+* :feature:`21` adds support for API auth token refreshing
 * :support:`16` updates User and Netrc support for ``sdss5`` user
 
 * :release:`0.3.1 <2020-11-20>`
