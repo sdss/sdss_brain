@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import TypeVar, Union
 ProdModel = TypeVar('ProdModel', bound='ProductModel')
 ModelType = TypeVar('ModelType', bound='Model')
+ModelsType = TypeVar('ModelsType', bound='Models')
 
 from datamodel_code_generator import generate
 from pydantic import BaseModel
@@ -484,6 +485,25 @@ class Models(list):
             name = self[self.index(index)]
         return Model.from_datamodel(name, release=release)
 
+    @classmethod
+    def from_datamodels(cls, release: str = None) -> ModelsType:
+        """ Instantiate a new list of models
+
+        Class method to instantiate a new list of datamodels
+        for a given data release.
+
+        Parameters
+        ----------
+        release : str, optional
+            the data release, by default None
+
+        Returns
+        -------
+        ModelsType
+            an instance of a list of models
+        """
+        return cls(list_datamodels(release=release))
 
 
-models = Models(list_datamodels())
+
+models = Models(list_datamodels(release=config.release))

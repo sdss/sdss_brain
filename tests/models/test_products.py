@@ -10,9 +10,9 @@ import respx
 from httpx import Response
 from pydantic import BaseModel
 
-from sdss_brain.datamodel.products import (Model, Models, models, generate_product_model,
+from sdss_brain.datamodel.products import (Model, Models, generate_product_model,
                                            create_product_schema, get_datamodel, list_datamodels,
-                                           generate_product_list, ProdModel, SDSSDataModel,
+                                           generate_product_list, SDSSDataModel,
                                            get_product_model)
 
 def test_models():
@@ -146,7 +146,7 @@ def test_model(fakemodel):
 
 
 def test_model_fromdm(fakemodel, testmodel):
-    model = Model.from_datamodel(testmodel)
+    model = Model.from_datamodel(testmodel, release='DR17')
     assert model == fakemodel
 
 
