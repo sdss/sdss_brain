@@ -1,0 +1,1075 @@
+{
+  "title": "ProductModel",
+  "description": "Pydantic model representing a data product JSON file\n\nParameters\n----------\ngeneral : `.GeneralSection`\n    The general metadata section of the datamodel\nchangelog : `.ChangeLog`\n    An automated log of data product changes across releases\nreleases : Dict[str, `.ReleaseModel`]\n    A dictionary of information specific to that release",
+  "type": "object",
+  "properties": {
+    "general": {
+      "$ref": "#/definitions/GeneralSection"
+    },
+    "changelog": {
+      "$ref": "#/definitions/ChangeLog",
+      "repr": false
+    },
+    "releases": {
+      "title": "Releases",
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/ReleaseModel"
+      },
+      "repr": false
+    },
+    "notes": {
+      "title": "Notes",
+      "type": "string",
+      "repr": false
+    }
+  },
+  "required": [
+    "general",
+    "changelog",
+    "releases"
+  ],
+  "definitions": {
+    "Phase": {
+      "title": "Phase",
+      "description": "Pydantic model representing an SDSS phase\n\nParameters\n----------\nname : str\n    The name of the phase\nid : int\n    The id of the phase\nstart : int\n    The year the phase started\nend : int\n    The year the phase ended\nactive : bool\n    Whether the phase is currently active",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "integer"
+        },
+        "start": {
+          "title": "Start",
+          "type": "integer",
+          "repr": false
+        },
+        "end": {
+          "title": "End",
+          "type": "integer",
+          "repr": false
+        },
+        "active": {
+          "title": "Active",
+          "default": false,
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "id"
+      ]
+    },
+    "Survey": {
+      "title": "Survey",
+      "description": "Pydantic model representing an SDSS survey\n\nParameters\n----------\nname : str\n    The short name of the survey\nlong : str\n    The full name of the survey\ndescription : str\n    A description of the survey\nphase : `.Phase`\n    The main phase the survey was in\nid : str\n    An internal reference id for the survey\n\nRaises\n------\nValueError\n    when the survey phase is not a valid SDSS Phase",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "long": {
+          "title": "Long",
+          "type": "string",
+          "repr": false
+        },
+        "description": {
+          "title": "Description",
+          "type": "string",
+          "repr": false
+        },
+        "phase": {
+          "title": "Phase",
+          "repr_attr": "id",
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/definitions/Phase"
+            }
+          ]
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "aliases": {
+          "title": "Aliases",
+          "default": [],
+          "type": "array",
+          "items": {},
+          "repr": false
+        }
+      },
+      "required": [
+        "name",
+        "description"
+      ]
+    },
+    "Release": {
+      "title": "Release",
+      "description": "Pydantic model presenting an SDSS release\n\nParameters\n----------\nname : str\n    The name of the release\ndescription : str\n    A description of the release\npublic : bool\n    Whether the release is public or not\nrelease_date : `datetime.date`\n    The date of the release\n\nRaises\n------\nValueError\n    when the release name does not start with a valid SDSS release code",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string",
+          "repr": false
+        },
+        "public": {
+          "title": "Public",
+          "default": false,
+          "type": "boolean"
+        },
+        "release_date": {
+          "title": "Release Date",
+          "default": "unreleased",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string",
+              "format": "date"
+            }
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "description"
+      ]
+    },
+    "GeneralSection": {
+      "title": "GeneralSection",
+      "description": "Pydantic model representing the YAML general section\n\nParameters\n----------\nname : str\n    The file species name of the data product (or sdss_access path_name)\nshort : str\n    A one sentence summary of the data product\ndescription : str\n    A longer description of the data product\nenvironments : List[str]\n    A list of environment variables associated with the data product\ndatatype : str\n    The type of data product, e.g. FITS\nfilesize : str\n    An estimated size of the data product\nreleases : List[str]\n    A list of SDSS releases the data product is in\nnaming_convention : str\n    A description of the naming convention\ngenerated_by : str\n    An identifiable piece of the code that generates the data product\ndesign : bool\n    If True, the datamodel is in the design phase, before any file exists yet\nvac : bool\n    True if the datamodel is a VAC\nrecommended_science_product : bool\n    True if the product is recommended for science use\n\nRaises\n------\nValueError\n    when any of the releases are not a valid SDSS Release",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "short": {
+          "title": "Short",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string",
+          "repr": false
+        },
+        "environments": {
+          "title": "Environments",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "surveys": {
+          "title": "Surveys",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/definitions/Survey"
+              }
+            ]
+          },
+          "repr": false
+        },
+        "datatype": {
+          "title": "Datatype",
+          "type": "string"
+        },
+        "filesize": {
+          "title": "Filesize",
+          "type": "string"
+        },
+        "releases": {
+          "title": "Releases",
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/definitions/Release"
+              }
+            ]
+          },
+          "repr": false
+        },
+        "naming_convention": {
+          "title": "Naming Convention",
+          "type": "string",
+          "repr": false
+        },
+        "generated_by": {
+          "title": "Generated By",
+          "type": "string",
+          "repr": false
+        },
+        "design": {
+          "title": "Design",
+          "type": "boolean"
+        },
+        "vac": {
+          "title": "Vac",
+          "type": "boolean"
+        },
+        "recommended_science_product": {
+          "title": "Recommended Science Product",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name",
+        "short",
+        "description",
+        "datatype",
+        "filesize",
+        "naming_convention",
+        "generated_by"
+      ]
+    },
+    "ChangeTable": {
+      "title": "ChangeTable",
+      "description": "Pydantic model representing a YAML changelog Yanny table section\n\nRepresents a computed section of the changelog, for a specific Yanny table.\nFor each similar Yanny table between releases, the changes in row number\nand structure columns are computed.\n\nParameters\n----------\ndelta_nrows : int\n    The difference in rows between Yanny tables\nadded_cols : List[str]\n    A list of any added Yanny table columns\nremoved_cols : List[str]\n    A list of any removed Yanny table columns",
+      "type": "object",
+      "properties": {
+        "delta_nrows": {
+          "title": "Delta Nrows",
+          "type": "integer"
+        },
+        "added_cols": {
+          "title": "Added Cols",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "removed_cols": {
+          "title": "Removed Cols",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        }
+      }
+    },
+    "ChangeMember": {
+      "title": "ChangeMember",
+      "description": "Pydantic model representing a YAML changelog HDF5 member section\n\nRepresents a computed section of the changelog, for a specific HDF member.\nFor each similar HDF5 member between releases, the changes in member number,\nattributes, and dataset dimensions, size and shape are computed.\n\nParameters\n----------\ndelta_nmembers : int\n    The difference in member number between HDF5 groups\ndelta_nattrs : int\n    The difference in attribute number between HDF5 members\nadded_attrs : List[str]\n    A list of any added HDF5 Attributes\nremoved_attrs : List[str]\n    A list of any removed HDF5 Attributes\n    The difference in dataset dimension number between HDF5 members\nnew_shape : int\n    The difference in dataset shape between HDF5 members\ndelta_size : int\n    The difference in dataset size between HDF5 members",
+      "type": "object",
+      "properties": {
+        "delta_nmembers": {
+          "title": "Delta Nmembers",
+          "type": "integer"
+        },
+        "delta_nattrs": {
+          "title": "Delta Nattrs",
+          "type": "integer"
+        },
+        "added_attrs": {
+          "title": "Added Attrs",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "removed_attrs": {
+          "title": "Removed Attrs",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "delta_ndim": {
+          "title": "Delta Ndim",
+          "type": "integer"
+        },
+        "new_shape": {
+          "title": "New Shape",
+          "type": "array",
+          "items": {},
+          "repr": false
+        },
+        "delta_size": {
+          "title": "Delta Size",
+          "type": "integer"
+        }
+      }
+    },
+    "ChangeRelease": {
+      "title": "ChangeRelease",
+      "description": "Pydantic model representing a YAML changelog release section\n\nRepresents a computed section of the changelog, for the specified\nrelease.  Changelog is computed between the data products of release (key)\nand the release indicated in `from`.\n\nParameters\n----------\nfrom_ : str\n    The release the changelog is computed from\ndelta_nhdus : int\n    The difference in number of HDUs\nadded_hdus : List[str]\n    A list of any added HDUs\nremoved_hdus : List[str]\n    A list of any removed HDUs\nprimary_delta_nkeys : int\n    The difference in primary header keywords\nadded_primary_header_kwargs : List[str]\n    A list of any added primary header keywords\nremoved_primary_header_kwargs : List[str]\n    A list of any removed primary header keywords\ndelta_nkeys : int\n    The difference in number of Yanny header keys\nadded_header_keys : List[str]\n    A list of any added Yanny header keywords\nremoved_header_keys : List[str]\n    A list of any removed Yanny header keywords\ndelta_tables : int\n    The difference in number of Yanny tables\nadded_tables : List[str]\n    A list of any added Yanny tables\nremoved_tables : List[str]\n    A list of any removed Yanny tables\ntables : Dict[str, ChangeTable]\n    A dictionary of table column and row changes\nnew_libver : tuple\n    The difference in HDF5 library version\ndelta_nattrs : int\n    The difference in the number of HDF5 Attributes\nadded_attrs : List[str]\n    A list of any added HDF5 Attributes\nremoved_attrs : List[str]\n    A list of any removed HDF5 Attributes\ndelta_nmembers : int\n    The difference in number members in HDF5 file\nadded_members : List[str]\n    A list of any added HDF5 groups or datasets\nremoved_members : List[str]\n    A list of any removed HDF5 groups or datasets\nmembers : Dict[str, ChangeMember]\n    A dictionary of HDF5 group/dataset member changes",
+      "type": "object",
+      "properties": {
+        "from": {
+          "title": "From",
+          "type": "string"
+        },
+        "note": {
+          "title": "Note",
+          "type": "string"
+        },
+        "delta_nhdus": {
+          "title": "Delta Nhdus",
+          "type": "integer"
+        },
+        "added_hdus": {
+          "title": "Added Hdus",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "removed_hdus": {
+          "title": "Removed Hdus",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "primary_delta_nkeys": {
+          "title": "Primary Delta Nkeys",
+          "type": "integer"
+        },
+        "added_primary_header_kwargs": {
+          "title": "Added Primary Header Kwargs",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "removed_primary_header_kwargs": {
+          "title": "Removed Primary Header Kwargs",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "delta_nkeys": {
+          "title": "Delta Nkeys",
+          "type": "integer"
+        },
+        "addead_header_keys": {
+          "title": "Addead Header Keys",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "removed_header_keys": {
+          "title": "Removed Header Keys",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "delta_ntables": {
+          "title": "Delta Ntables",
+          "type": "integer"
+        },
+        "addead_tables": {
+          "title": "Addead Tables",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "removed_tables": {
+          "title": "Removed Tables",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "tables": {
+          "title": "Tables",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ChangeTable"
+          }
+        },
+        "new_libver": {
+          "title": "New Libver",
+          "type": "array",
+          "items": {}
+        },
+        "delta_nattrs": {
+          "title": "Delta Nattrs",
+          "type": "integer"
+        },
+        "addead_attrs": {
+          "title": "Addead Attrs",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "removed_attrs": {
+          "title": "Removed Attrs",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "delta_nmembers": {
+          "title": "Delta Nmembers",
+          "type": "integer"
+        },
+        "addead_members": {
+          "title": "Addead Members",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "removed_members": {
+          "title": "Removed Members",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "members": {
+          "title": "Members",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ChangeMember"
+          }
+        }
+      },
+      "required": [
+        "from"
+      ]
+    },
+    "ChangeLog": {
+      "title": "ChangeLog",
+      "description": "Pydantic model representing the YAML changelog section\n\nParameters\n----------\ndescription : str\n    A description of the changelog\nreleases : Dict[str, `.ChangeRelease`]\n    A dictionary of the file changes between the given release and previous one",
+      "type": "object",
+      "properties": {
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "releases": {
+          "title": "Releases",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ChangeRelease"
+          },
+          "repr": false
+        }
+      },
+      "required": [
+        "description"
+      ]
+    },
+    "Access": {
+      "title": "Access",
+      "description": "Pydantic model representing the YAML releases access section\n\nParameters\n----------\nin_sdss_access : bool\n    Whether or not the data product has an sdss_access entry\npath_name : str\n    The path name in sdss_access for the data product\npath_template : str\n    The path template in sdss_access for the data product\npath_kwargs : List[str]\n    A list of path keywords in the path_template for the data product\naccess_string : str\n    The full sdss_access entry, \"path_name=path_template\"",
+      "type": "object",
+      "properties": {
+        "in_sdss_access": {
+          "title": "In Sdss Access",
+          "type": "boolean"
+        },
+        "path_name": {
+          "title": "Path Name",
+          "type": "string"
+        },
+        "path_template": {
+          "title": "Path Template",
+          "type": "string",
+          "repr": false
+        },
+        "path_kwargs": {
+          "title": "Path Kwargs",
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "repr": false
+        },
+        "access_string": {
+          "title": "Access String",
+          "type": "string",
+          "repr": false
+        }
+      },
+      "required": [
+        "in_sdss_access"
+      ]
+    },
+    "Header": {
+      "title": "Header",
+      "description": "Pydantic model representing a YAML header section\n\nRepresents an individual FITS Header Key\n\nParameters\n----------\nkey : str\n    The name of the header keyword\nvalue : str\n    The value of the header keyword\ncomment : str\n    A comment for the header keyword, if any",
+      "type": "object",
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "default": "",
+          "type": "string"
+        },
+        "comment": {
+          "title": "Comment",
+          "default": "",
+          "type": "string",
+          "repr": false
+        }
+      },
+      "required": [
+        "key"
+      ]
+    },
+    "Column": {
+      "title": "Column",
+      "description": "Pydantic model representing a YAML column section\n\nRepresents a FITS binary table column\n\nParameters\n----------\nname : str\n    The name of the table column\ndescription : str\n    A description of the table column\ntype : str\n    The data type of the table column\nunit : str\n    The unit of the table column",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string",
+          "repr": false
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "unit": {
+          "title": "Unit",
+          "default": "",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "type"
+      ]
+    },
+    "HDU": {
+      "title": "HDU",
+      "description": "Pydantic model representing a YAML hdu section\n\nRepresents a FITS HDU extension\n\nParameters\n----------\nname : str\n    The name of the HDU extension\nis_image : bool\n    Whether the HDU is an image extension\ndescription : str\n    A description of the HDU extension\nsize : str\n    An estimated size of the HDU extension\nheader : List[`.Header`]\n    A list of header values for the extension\ncolumns : Dict[str, `.Column`]\n    A list of any binary table columns for the extension",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "is_image": {
+          "title": "Is Image",
+          "type": "boolean"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string",
+          "repr": false
+        },
+        "size": {
+          "title": "Size",
+          "type": "string"
+        },
+        "header": {
+          "title": "Header",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Header"
+          },
+          "repr": false
+        },
+        "columns": {
+          "title": "Columns",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/Column"
+          },
+          "repr": false
+        }
+      },
+      "required": [
+        "name",
+        "is_image",
+        "description",
+        "size"
+      ]
+    },
+    "ParColumn": {
+      "title": "ParColumn",
+      "description": "Pydantic model representing a YAML par column section\n\nRepresents a typedef column definition in a Yanny parameter file\n\nParameters\n----------\nname : str\n    The name of the column\ndescription : str\n    A description of the column\ntype : str\n    The data type of the column\nunit : str\n    The unit of the column, if any\nis_array : bool\n    If the column is an array type\nis_enum : bool\n    If the column is an enum type\nexample : str\n    An example value for the column",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "title": "Type",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "is_array": {
+          "title": "Is Array",
+          "type": "boolean",
+          "repr": false
+        },
+        "is_enum": {
+          "title": "Is Enum",
+          "type": "boolean",
+          "repr": false
+        },
+        "enum_values": {
+          "title": "Enum Values",
+          "type": "array",
+          "items": {},
+          "repr": false
+        },
+        "example": {
+          "title": "Example",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "array",
+              "items": {}
+            }
+          ],
+          "repr": false
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "description",
+        "unit",
+        "is_array",
+        "is_enum",
+        "example"
+      ]
+    },
+    "ParTable": {
+      "title": "ParTable",
+      "description": "Pydantic model representing a YAML par table section\n\nRepresents the structure of a single Yanny parameter table\n\nParameters\n----------\nname : str\n    The name of the table\ndescription : str\n    A description of the table\nn_rows : int\n    The number of rows in the table\nstructure : list\n    A list of column definitions for the table",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "n_rows": {
+          "title": "N Rows",
+          "type": "integer"
+        },
+        "structure": {
+          "title": "Structure",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ParColumn"
+          },
+          "repr": false
+        }
+      },
+      "required": [
+        "name",
+        "description",
+        "n_rows",
+        "structure"
+      ]
+    },
+    "ParModel": {
+      "title": "ParModel",
+      "description": "Pydantic model representing a YAML par section\n\nRepresents a Yanny parameter file\n\nParameters\n----------\ncomments : str\n    Any header comments in the parameter file\nheader : list\n    A list of header key-value pairs in the parameter file\ntables : dict\n    A dictionary of tables in the parameter file",
+      "type": "object",
+      "properties": {
+        "comments": {
+          "title": "Comments",
+          "type": "string",
+          "repr": false
+        },
+        "header": {
+          "title": "Header",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Header"
+          },
+          "repr": false
+        },
+        "tables": {
+          "title": "Tables",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/ParTable"
+          }
+        }
+      },
+      "required": [
+        "tables"
+      ]
+    },
+    "HdfEnum": {
+      "title": "HdfEnum",
+      "description": " Pydantic Enum for HDF5 Group or Dataset ",
+      "enum": [
+        "group",
+        "dataset"
+      ],
+      "type": "string"
+    },
+    "HdfAttr": {
+      "title": "HdfAttr",
+      "description": "Pydantic model representing a YAML hdfs attrs section\n\nRepresents the Attributes of an HDF5 file.  Each group or dataset has a\nset of attributes (attrs), which contains metadata about the group or dataset.\n\nParameters\n----------\nkey : str\n    The name of the attribute\nvalue : str\n    The value of the attribute\ncomment : str\n    A description of the attribute\ndtype : str\n    The numpy dtype of the attribute\nis_empty : bool\n    If the attribute is an HDF5 Empty atribute\nshape : tuple\n    The shape of the attribute, if any",
+      "type": "object",
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            }
+          ]
+        },
+        "comment": {
+          "title": "Comment",
+          "type": "string",
+          "repr": false
+        },
+        "dtype": {
+          "title": "Dtype",
+          "type": "string",
+          "repr": false
+        },
+        "is_empty": {
+          "title": "Is Empty",
+          "type": "boolean",
+          "repr": false
+        },
+        "shape": {
+          "title": "Shape",
+          "type": "array",
+          "items": {},
+          "repr": false
+        }
+      },
+      "required": [
+        "key",
+        "comment",
+        "dtype"
+      ]
+    },
+    "HdfGroup": {
+      "title": "HdfGroup",
+      "description": "Pydantic model representing a YAML HDF Group section\n\nRepresents a Group of an HDF5 file.\n\nParameters\n----------\nn_members : int\n    The number of members in the group",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "parent": {
+          "title": "Parent",
+          "type": "string"
+        },
+        "object": {
+          "$ref": "#/definitions/HdfEnum",
+          "repr": false
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "pytables": {
+          "title": "Pytables",
+          "type": "boolean"
+        },
+        "attrs": {
+          "title": "Attrs",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HdfAttr"
+          },
+          "repr": false
+        },
+        "n_members": {
+          "title": "N Members",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "parent",
+        "object",
+        "description",
+        "n_members"
+      ]
+    },
+    "HdfDataset": {
+      "title": "HdfDataset",
+      "description": "Pydantic model representing a YAML HDF Dataset section\n\nRepresents a Dataset of an HDF5 file.\n\nParameters\n----------\nshape : tuple\n    The dimensional shape of the dataset\nsize : int\n    The size or number or elements in the dataset\nndim : int\n    The number of dimensions in the dataset\ndtype : str\n    The numpy dtype of the dataset\nnbytes : int\n    The number of bytes in the dataset\nis_virutal : bool\n    Whether the dataset is virtual\nis_empty : bool\n    Whether the dataset is an HDF5 Empty object",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "parent": {
+          "title": "Parent",
+          "type": "string"
+        },
+        "object": {
+          "$ref": "#/definitions/HdfEnum",
+          "repr": false
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "pytables": {
+          "title": "Pytables",
+          "type": "boolean"
+        },
+        "attrs": {
+          "title": "Attrs",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HdfAttr"
+          },
+          "repr": false
+        },
+        "shape": {
+          "title": "Shape",
+          "type": "array",
+          "items": {}
+        },
+        "size": {
+          "title": "Size",
+          "type": "integer"
+        },
+        "ndim": {
+          "title": "Ndim",
+          "type": "integer"
+        },
+        "dtype": {
+          "title": "Dtype",
+          "type": "string"
+        },
+        "nbytes": {
+          "title": "Nbytes",
+          "type": "integer"
+        },
+        "is_virtual": {
+          "title": "Is Virtual",
+          "type": "boolean",
+          "repr": false
+        },
+        "is_empty": {
+          "title": "Is Empty",
+          "type": "boolean",
+          "repr": false
+        }
+      },
+      "required": [
+        "name",
+        "parent",
+        "object",
+        "description",
+        "shape",
+        "size",
+        "ndim",
+        "dtype"
+      ]
+    },
+    "HdfModel": {
+      "title": "HdfModel",
+      "description": "Pydantic model representing a YAML hfds section\n\nRepresents a base HDF5 file, which is also an HDF5 Group.\nSee HdfGroup, HdfDataset, and HdfBase Moodels for more information on\nthe fields.\n\nParameters\n----------\nlibver : tuple\n    The HDF5 library version used to create the file\nmembers : dict\n    All groups and datasets in the HDF5 file",
+      "type": "object",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "parent": {
+          "title": "Parent",
+          "type": "string"
+        },
+        "object": {
+          "$ref": "#/definitions/HdfEnum",
+          "repr": false
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "pytables": {
+          "title": "Pytables",
+          "type": "boolean"
+        },
+        "attrs": {
+          "title": "Attrs",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HdfAttr"
+          },
+          "repr": false
+        },
+        "n_members": {
+          "title": "N Members",
+          "type": "integer"
+        },
+        "libver": {
+          "title": "Libver",
+          "default": [],
+          "type": "array",
+          "items": {}
+        },
+        "members": {
+          "title": "Members",
+          "type": "object",
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/HdfGroup"
+              },
+              {
+                "$ref": "#/definitions/HdfDataset"
+              }
+            ]
+          },
+          "repr": false
+        }
+      },
+      "required": [
+        "name",
+        "parent",
+        "object",
+        "description",
+        "n_members"
+      ]
+    },
+    "ReleaseModel": {
+      "title": "ReleaseModel",
+      "description": "Pydantic model representing an item in the YAML releases section\n\nContains any information on the data product that is specific to a given\nrelease, or that changes across releases.\n\nParameters\n----------\ntemplate : str\n    The full template representation of the path to the data product\nexample : str\n    A real example path of the data product\nlocation : str\n    The symbolic location of the data product\nenvironment : str\n    The SAS environment variable the product lives under\naccess : `.Access`\n    Information on any relevant sdss_access entry\nhdus : Dict[str, `.HDU`]\n    A dictionary of HDU content for the product for the given release",
+      "type": "object",
+      "properties": {
+        "template": {
+          "title": "Template",
+          "type": "string"
+        },
+        "example": {
+          "title": "Example",
+          "type": "string",
+          "repr": false
+        },
+        "location": {
+          "title": "Location",
+          "type": "string",
+          "repr": false
+        },
+        "environment": {
+          "title": "Environment",
+          "type": "string"
+        },
+        "survey": {
+          "title": "Survey",
+          "type": "string"
+        },
+        "access": {
+          "$ref": "#/definitions/Access"
+        },
+        "hdus": {
+          "title": "Hdus",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/definitions/HDU"
+          },
+          "repr": false
+        },
+        "par": {
+          "$ref": "#/definitions/ParModel",
+          "repr": false
+        },
+        "hdfs": {
+          "$ref": "#/definitions/HdfModel",
+          "repr": false
+        }
+      },
+      "required": [
+        "template",
+        "example",
+        "location",
+        "environment",
+        "access"
+      ]
+    }
+  }
+}
