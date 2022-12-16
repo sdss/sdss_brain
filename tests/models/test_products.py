@@ -19,11 +19,11 @@ def test_models():
     mods = Models(['aaa', 'bbb', 'ccc'])
     assert mods[1] == 'bbb'
 
-    mm = mods.get_model(0)
+    mm = mods.get_model(0, release='DR17')
     assert isinstance(mm, Model)
     assert mm.name == ''
 
-    am = mods.get_model('aaa')
+    am = mods.get_model('aaa', release='DR17')
     assert am == mm
 
 

@@ -19,11 +19,13 @@ from datamodel_code_generator import generate
 from pydantic import BaseModel
 
 from sdss_brain import log
+from sdss_brain.exceptions import BrainError
 from sdss_brain.api.handler import ApiHandler
 from sdss_brain.config import config
 
 try:
     from datamodel.products import SDSSDataModel
+    SDSSDataModel = None
 except ImportError:
     SDSSDataModel = None
 
@@ -110,6 +112,11 @@ def create_product_model(model: dict) -> ProdModel:
         log.warning('Cannot not import ProductModel from product_schema module.')
         return
 
+    # if no model data return
+    if not model:
+        log.warning('No input model data provided.')
+        return
+
     return ProductModel(**model)
 
 
@@ -145,8 +152,13 @@ def get_product_model(product: str, release: str = None, schema: bool = None) ->
     a.resolve_url({'product': product})
 
     # send the request and get the response
-    a.client.request(data={'release': release or config.release})
-    return a.client.data
+    try:
+        a.client.request(data={'release': release or config.release})
+    except BrainError as ee:
+        log.error(f'Error getting product model: {ee}')
+        return
+    else:
+        return a.client.data
 
 
 def generate_product_model(product: str, release: str = None, days: int = 7) -> ProdModel:
