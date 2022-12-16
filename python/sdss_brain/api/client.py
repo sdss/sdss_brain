@@ -278,9 +278,14 @@ class BaseClient(object):
         BrainError
             when the response is not ok
         """
-        resp.raise_for_status()
-        if resp.is_error:
-            raise BrainError('There was an error in the response!')
+
+        try:
+            resp.raise_for_status()
+        except httpx.HTTPStatusError as ee:
+            msg = resp.read()
+            log.error(f'Response Error: {msg}')
+            err = f'HTTP Error: {resp.status_code} {resp.reason_phrase}: {msg}'
+            raise BrainError(err) from ee
 
         self.response = resp
         self._return_data()
@@ -426,13 +431,16 @@ class SDSSClient(BaseClient):
         # validate the input
         self._validate_request(url, method)
 
-        # add any token auth to headers
-        headers = None
-        if self.api and self.api.auth_type == 'token':
-            headers = self._create_token_auth_header()
-
         # prepare the data with the release
         data = self.prepare_data(data)
+
+        # check if release if public
+        public_release = config.is_release_public(data["release"])
+
+        # add any token auth to headers
+        headers = None
+        if self.api and self.api.auth_type == 'token' and not public_release:
+            headers = self._create_token_auth_header()
 
         try:
             # try to send the request
@@ -534,13 +542,16 @@ class SDSSAsyncClient(BaseClient):
         # validate the input
         self._validate_request(url, method)
 
-        # add any token auth to headers
-        headers = None
-        if self.api and self.api.auth_type == 'token':
-            headers = self._create_token_auth_header()
-
         # prepare the data with the release
         data = self.prepare_data(data)
+
+        # check if release if public
+        public_release = config.is_release_public(data["release"])
+
+        # add any token auth to headers
+        headers = None
+        if self.api and self.api.auth_type == 'token' and not public_release:
+            headers = self._create_token_auth_header()
 
         try:
             # try to send the request

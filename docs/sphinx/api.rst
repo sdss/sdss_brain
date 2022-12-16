@@ -72,6 +72,17 @@ Core
    :undoc-members:
    :show-inheritance:
 
+.. _api_models:
+
+Models
+------
+
+.. automodule:: sdss_brain.datamodel.products
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
 .. _mixins:
 
 Mixins

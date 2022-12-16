@@ -63,7 +63,7 @@ class TestClient(object):
 
     def test_bad_status(self):
         s = SDSSClient('https://httpbin.org/status/500')
-        with pytest.raises(httpx.HTTPStatusError, match='500 INTERNAL SERVER ERROR'):
+        with pytest.raises(BrainError, match='500 INTERNAL SERVER ERROR'):
             s.request()
 
     @pytest.mark.parametrize('method', ['get', 'post'])

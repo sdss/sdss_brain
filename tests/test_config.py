@@ -84,3 +84,10 @@ class TestConfig(object):
         config.set_work_versions(exp)
         assert config.work_versions == exp
 
+    def test_public_release(self):
+        assert config.is_release_public() == True
+        assert config.is_release_public("IPL1") == False
+        config.set_release('IPL1')
+        assert config.is_release_public() == False
+        config.set_release('DR16')
+

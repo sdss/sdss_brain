@@ -127,6 +127,11 @@ class Config(object):
         """ List the allowed releases based on the available tree environment configurations """
         return self._allowed_releases
 
+    def is_release_public(self, release: str = None) -> bool:
+        """ Check if the release is a public release """
+        release = release or self.release
+        return release in tree.get_available_releases(public=True)
+
     def _load_defaults(self) -> None:
         """ Load the Brain config yaml file and update any parameters """
 
