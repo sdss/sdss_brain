@@ -183,8 +183,8 @@ def generate_product_model(product: str, release: str = None, days: int = 7) -> 
     """
     # create or update the schema definition file
     if not product_schema_path.exists() or not check_schema_mod_time(days=days):
-        schema = get_product_model(product, release=release, schema=True)
-        create_product_schema(schema)
+        if schema := get_product_model(product, release=release, schema=True):
+            create_product_schema(schema)
 
     # generate the product object model
     model = get_product_model(product, release=release)
