@@ -25,7 +25,6 @@ from sdss_brain.config import config
 
 try:
     from datamodel.products import SDSSDataModel
-    SDSSDataModel = None
 except ImportError:
     SDSSDataModel = None
 
