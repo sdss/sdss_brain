@@ -39,9 +39,13 @@ class DataModelMixIn:
             log.warning('No data or datamodel attributes specified.  Cannot check.')
             return
 
-        model_hdus = set(self.datamodel.list_hdus(names=True))
+        model_hdus = self.datamodel.list_hdus(names=True)
+        if not model_hdus:
+            log.warning(f'No HDUS found for model {self.datamodel.name} in release {self.release}.')
+            return
+
         data_hdus = {i.name for i in self.data}
-        if missing := data_hdus - model_hdus:
+        if missing := data_hdus - set(model_hdus):
             log.warning("HDU extension mismatch between loaded data and expected datamodel. "
                         f"Loaded data has extra extensions: {missing}")
             return False

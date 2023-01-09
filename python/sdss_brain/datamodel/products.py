@@ -354,11 +354,12 @@ class Model:
             when the data release specified is not an allowed release
         """
         release = release or self.release or config.release
-        if release not in self.releases:
-            raise ValueError(f'Release {release} is not a valid release for model {self.name}.')
-
-        self.release_model = copy.deepcopy(self._model.releases[release])
         self.release = release
+        if release not in self.releases:
+            log.warning(f'Release {release} is not a valid release for model "{self.name}".')
+            self.release_model = None
+        else:
+            self.release_model = copy.deepcopy(self._model.releases[release])
 
     @release_check
     def get_hdu(self, ext: Union[int, str]):
