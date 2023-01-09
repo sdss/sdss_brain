@@ -30,6 +30,7 @@ class Cube(Spectrum):
 class MangaCube(Spectrum):
     """ Class representing a MaNGA IFU datacube for a single galaxy """
     specutils_format: str = 'MaNGA cube'
+    datamodel: str = 'mangaCube'
     _api = ('marvin', 'cubes/{plateifu}/')
 
     def _load_object_from_db(self):

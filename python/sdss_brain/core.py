@@ -19,6 +19,7 @@ from sdss_brain.exceptions import BrainError
 from sdss_brain.helpers import db_type
 from sdss_brain.api.handler import api_type, ApiHandler
 from sdss_brain.mixins.mma import MMAccess, MMAMixIn
+from sdss_brain.mixins.datamodel import DataModelMixIn
 from astropy.io import fits
 
 
@@ -274,7 +275,7 @@ class HindBrain(Base):
         cls._api = value
 
 
-class Brain(HindBrain, MMAccess):
+class Brain(DataModelMixIn, HindBrain, MMAccess):
     """ The hind Brain with support for ``sdss_access``
 
     See `~HindBrain`, `~sdss_brain.mixins.mma.MMAccess`, and `~sdss_brain.mixins.access.AccessMixIn`
@@ -283,7 +284,7 @@ class Brain(HindBrain, MMAccess):
     """
 
 
-class BrainNoAccess(HindBrain, MMAMixIn):
+class BrainNoAccess(DataModelMixIn, HindBrain, MMAMixIn):
     """ A version of `~Brain` without support for ``sdss_access``
 
     See `~HindBrain` and `~sdss_brain.mixins.mma.MMAMixIn` for detailed

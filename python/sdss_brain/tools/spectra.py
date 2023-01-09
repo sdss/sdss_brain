@@ -24,6 +24,7 @@ from astropy.io.fits import HDUList
 from specutils import Spectrum1D
 from typing import Type, Union, BinaryIO
 
+from sdss_brain import log
 from sdss_brain.core import Brain
 from sdss_brain.exceptions import BrainNotImplemented, BrainMissingDependency
 from sdss_brain.helpers import (sdss_loader, get_mapped_version, load_fits_file, parse_data_input,
@@ -57,6 +58,9 @@ class Spectrum(Brain):
         # for now, do a simple get request to grab the file into memory
         # TODO replace this with better API request framework
         self.data = load_from_url(self.get_full_path(url=True))
+        if not self.data:
+            log.warning('Failed to retrieve remote data.')
+            return
         self.header = self.data['PRIMARY'].header
         self._load_spectrum()
 
@@ -166,10 +170,12 @@ class Eboss(Spectrum):
             the "full" spectral data.Default is True.
     """
     specutils_format: str = 'SDSS-III/IV spec'
+    datamodel: str = 'specFull'
 
     def __init__(self, *args: str, lite: bool = True, **kwargs: str) -> None:
         self.lite = lite
         self.path_name = f'spec{"-lite" if lite else ""}'
+        self.__class__.datamodel = f'spec{"Lite" if self.lite else "Full"}'
         super(Eboss, self).__init__(*args, **kwargs)
 
     def __repr__(self):
@@ -184,6 +190,7 @@ class Eboss(Spectrum):
 class ApStar(Spectrum):
     """ Class representing an APOGEE combined spectrum for a single star """
     specutils_format: str = 'APOGEE apStar'
+    datamodel: str = 'apStar'
 
 
 @sdss_loader(name='apVisit', defaults={'prefix': 'ap'}, delimiter='--',
@@ -191,6 +198,7 @@ class ApStar(Spectrum):
 class ApVisit(Spectrum):
     """ Class representing an APOGEE single visit spectrum for a given star """
     specutils_format: str = 'APOGEE apVisit'
+    datamodel: str = 'apVisit'
 
 
 # example of overloading the methods manually
