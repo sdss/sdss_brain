@@ -53,3 +53,34 @@ class TestEbossWorkFails(object):
     def test_release_version_set(self):
         with pytest.raises(BrainError, match='version is only used for "work" data.'):
             Eboss('3606-55182-0537', release='DR14', version={'run2d': 'v5_10_0'})
+
+
+@pytest.mark.use_test_data('eboss', fake_missing=True)
+class TestEbossDataModel(WorkTests):
+    mock = get_mocked(Eboss)
+    version = 'run2d'
+
+    def assert_model(self, inst):
+        assert hasattr(inst, 'datamodel')
+        assert inst.datamodel is not None
+        assert inst.release == inst.datamodel.release
+        assert inst.datamodel.name == 'specLite'
+
+    def get_tool(self, release):
+        e = Eboss('3606-55182-0537', release=release)
+        self.assert_model(e)
+        assert e.datamodel.release == release
+        return e
+
+    def test_datamodel(self):
+        e = self.get_tool('DR14')
+        assert e.datamodel.release_model is not None
+
+    def test_dm_no_release(self):
+        e =  self.get_tool('WORK')
+        assert e.datamodel.release_model is None
+
+
+
+
+
