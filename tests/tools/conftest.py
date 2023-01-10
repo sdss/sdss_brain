@@ -16,6 +16,7 @@ import pytest
 import pathlib
 from sdss_brain.config import config
 from tests.conftest import object_data, check_path
+from tests.models.test_products import testmodel
 
 
 @pytest.fixture()
@@ -90,6 +91,12 @@ class WorkTests(object):
     """
     version = None
     mock = None
+    model = None
+
+    @pytest.fixture(autouse=True)
+    def mock_model(self, mocker, testmodel):
+        testmodel.general.name = self.model
+        mocker.patch('sdss_brain.datamodel.products.get_datamodel', return_value=testmodel)
 
     def assert_file(self, inst, path):
         assert inst.filename is not None

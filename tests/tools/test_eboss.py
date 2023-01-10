@@ -19,7 +19,6 @@ from sdss_brain.exceptions import BrainError
 from .conftest import WorkTests, get_mocked
 from tests.conftest import object_data
 
-
 releases = object_data.get('eboss').keys()
 
 
@@ -59,6 +58,7 @@ class TestEbossWorkFails(object):
 class TestEbossDataModel(WorkTests):
     mock = get_mocked(Eboss)
     version = 'run2d'
+    model = 'specLite'
 
     def assert_model(self, inst):
         assert hasattr(inst, 'datamodel')
@@ -73,7 +73,7 @@ class TestEbossDataModel(WorkTests):
         return e
 
     def test_datamodel(self):
-        e = self.get_tool('DR14')
+        e = self.get_tool('DR17')
         assert e.datamodel.release_model is not None
 
     def test_dm_no_release(self):
