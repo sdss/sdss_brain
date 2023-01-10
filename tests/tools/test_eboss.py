@@ -16,7 +16,7 @@ import pytest
 from sdss_brain.tools.spectra import Eboss
 from sdss_brain.config import config
 from sdss_brain.exceptions import BrainError
-from .conftest import WorkTests, get_mocked
+from .conftest import WorkTests, get_mocked, BaseTests
 from tests.conftest import object_data
 
 releases = object_data.get('eboss').keys()
@@ -42,7 +42,7 @@ class TestEbossWorkVersions(WorkTests):
         assert Eboss._version == {'run2d': 'v5_10_0'}
 
 
-class TestEbossWorkFails(object):
+class TestEbossWorkFails(BaseTests):
 
     def test_no_work_version_set(self, monkeypatch):
         monkeypatch.setattr(config, 'work_versions', {})
