@@ -354,11 +354,12 @@ class Model:
             when the data release specified is not an allowed release
         """
         release = release or self.release or config.release
-        if release not in self.releases:
-            raise ValueError(f'Release {release} is not a valid release for model {self.name}.')
-
-        self.release_model = copy.deepcopy(self._model.releases[release])
         self.release = release
+        if release not in self.releases:
+            log.warning(f'Release {release} is not a valid release for model "{self.name}".')
+            self.release_model = None
+        else:
+            self.release_model = copy.deepcopy(self._model.releases[release])
 
     @release_check
     def get_hdu(self, ext: Union[int, str]):
@@ -395,9 +396,27 @@ class Model:
         return self.release_model.hdus[extname]
 
     @release_check
-    def list_hdus(self):
-        """ List the available HDUs """
-        return self.release_model.hdus
+    def list_hdus(self, names: bool = None) -> Union[list, dict]:
+        """ List the available HDUs
+
+        Returns a dictionary of HDU model objects from the datamodel.
+        To return a list of HDU string names, set the ``names``
+        keyword to True.
+
+        Parameters
+        ----------
+        names : bool, optional
+            If set, returns the HDU extension names, by default None
+
+        Returns
+        -------
+        Union[list, dict]
+            A list or dict of available HDUs
+        """
+        if names:
+            return [i.name for i in self.release_model.hdus.values()]
+        else:
+            return self.release_model.hdus
 
     @classmethod
     def from_datamodel(cls, model: Union[str, ProdModel], release: str = None) -> ModelType:
@@ -518,3 +537,33 @@ class Models(list):
 
 
 models = Models(list_datamodels(release=config.release))
+
+
+def create_object_model(name: str, release: str = None) -> ModelType:
+    """ Create a datamodel object
+
+    Create a datamodel object for a given file species
+    product name and data release.
+
+    Parameters
+    ----------
+    name : str
+        a file species product name
+    release : str, optional
+        the SDSS data release, by default None
+
+    Returns
+    -------
+    ModelType
+        an instance of a product datamodel
+    """
+    if not name:
+        return None
+
+    mod = Model.from_datamodel(name, release=release)
+    if mod and not mod.name:
+        log.warning(f'No model found for product: {name}.')
+        return
+
+    return mod
+

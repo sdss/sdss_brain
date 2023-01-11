@@ -16,6 +16,7 @@ import pytest
 import pathlib
 from sdss_brain.config import config
 from tests.conftest import object_data, check_path
+from tests.models.test_products import testmodel
 
 
 @pytest.fixture()
@@ -80,8 +81,15 @@ def get_mocked(kls):
 
     return Mocked
 
+class BaseTests(object):
+    model = None
 
-class WorkTests(object):
+    @pytest.fixture(autouse=True)
+    def mock_model(self, mocker, testmodel):
+        testmodel.general.name = self.model
+        mocker.patch('sdss_brain.datamodel.products.get_datamodel', return_value=testmodel)
+
+class WorkTests(BaseTests):
     """ Class that tests that the class attributes and path_params
 
     This class tests that a Brain sub-class sets instance attributes and path_params
@@ -90,6 +98,7 @@ class WorkTests(object):
     """
     version = None
     mock = None
+    model = None
 
     def assert_file(self, inst, path):
         assert inst.filename is not None

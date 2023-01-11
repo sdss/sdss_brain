@@ -20,6 +20,7 @@ mapped_versions:
     MPL5: {drpver: v2_0_1, dapver: 2.0.2}
     MPL4: {drpver: v1_5_1, dapver: 1.1.1}
   eboss:
+    DR18: v6_0_4
     DR17: v5_13_2
     DR16: v5_13_0
     DR15: v5_10_0
@@ -29,6 +30,7 @@ mapped_versions:
     DR11: v5_6_5
     DR10: v5_5_12
     DR9: v5_4_45
+    IPL1: v6_0_9
   apogee:
     DR17: dr17
     DR16: r12
@@ -38,3 +40,4 @@ mapped_versions:
     DR12: r5
     DR11: r4
     DR10: r3
+    IPL1: 1.0

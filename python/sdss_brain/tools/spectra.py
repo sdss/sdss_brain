@@ -22,8 +22,9 @@ except ImportError:
 from astropy.io.registry import IORegistryError
 from astropy.io.fits import HDUList
 from specutils import Spectrum1D
-from typing import Type, Union, BinaryIO
+from typing import Type, Union, BinaryIO, List
 
+from sdss_brain import log
 from sdss_brain.core import Brain
 from sdss_brain.exceptions import BrainNotImplemented, BrainMissingDependency
 from sdss_brain.helpers import (sdss_loader, get_mapped_version, load_fits_file, parse_data_input,
@@ -57,6 +58,9 @@ class Spectrum(Brain):
         # for now, do a simple get request to grab the file into memory
         # TODO replace this with better API request framework
         self.data = load_from_url(self.get_full_path(url=True))
+        if not self.data:
+            log.warning('Failed to retrieve remote data.')
+            return
         self.header = self.data['PRIMARY'].header
         self._load_spectrum()
 
@@ -166,10 +170,12 @@ class Eboss(Spectrum):
             the "full" spectral data.Default is True.
     """
     specutils_format: str = 'SDSS-III/IV spec'
+    datamodel: str = 'specFull'
 
     def __init__(self, *args: str, lite: bool = True, **kwargs: str) -> None:
         self.lite = lite
         self.path_name = f'spec{"-lite" if lite else ""}'
+        self.__class__.datamodel = f'spec{"Lite" if self.lite else "Full"}'
         super(Eboss, self).__init__(*args, **kwargs)
 
     def __repr__(self):
@@ -184,6 +190,7 @@ class Eboss(Spectrum):
 class ApStar(Spectrum):
     """ Class representing an APOGEE combined spectrum for a single star """
     specutils_format: str = 'APOGEE apStar'
+    datamodel: str = 'apStar'
 
 
 @sdss_loader(name='apVisit', defaults={'prefix': 'ap'}, delimiter='--',
@@ -191,6 +198,7 @@ class ApStar(Spectrum):
 class ApVisit(Spectrum):
     """ Class representing an APOGEE single visit spectrum for a given star """
     specutils_format: str = 'APOGEE apVisit'
+    datamodel: str = 'apVisit'
 
 
 # example of overloading the methods manually
@@ -214,3 +222,120 @@ class AspcapStar(Spectrum):
         # set the path params using the instance attributes extracted from _parse_input
         self.path_params = {'telescope': self.telescope, 'apred': apred,
                             'field': self.field, 'obj': self.obj, 'aspcap': self.aspcap}
+
+
+def create_tool(species: str, base: Union[tuple, list, Spectrum] = None, specutils_format: str = None,
+                release: str = None,  api: str = None, base_api_route: str = None,
+                path_name: str = None, mapped_version: str = None, pattern: str = None, delimiter: str = None,
+                defaults: dict = None, order: List[str] = None, keys: list = None, keymap: dict = None,
+                exclude: list = None, include: list = None) -> Type[Spectrum]:
+    """ Dynamically create a new tool
+
+    Creates a new tool class dynamically from a datamodel file species product name. The new tool is
+    subclassed from `~.sdss_brain.tools.spectra.Spectrum`, but the base class can be customized with
+    the ``base`` option.  The new class is wrapped in the ``sdss_loader`` decorator, which provides
+    convenience for specifying a unique object identifier for the tool, and any sdss_access information.
+
+    Keyword arguments ``specutils_format``, ``api``, and ``base_api_route``, along with the ``species``
+    argument are used to define tool class attributes.
+
+    The remainder of the keyword arguments are those passed to the ``sdss_loader`` decorator for defining
+    a unique object id pattern, as well as the pertinent sdss_access parameters.
+
+    Parameters
+    ----------
+    species : str
+        a file species product name
+    base : Union[tuple, list, Spectrum], optional
+        a new base class or tuple of classes to subclass from, by default Spectrum
+    specutils_format : str, optional
+        the format identifier used by specutils.Spectrum1D, by default None
+    release : str, optional
+        the SDSS data release, by default None
+    api : str, optional
+        the name of the API to use, by default None
+    base_api_route : str, optional
+        the base API route for this tool, by default None
+    path_name : str, optional
+        the sdss_access template path name, by default None
+    mapped_version : str, optional
+        a mapping key to map a specific version onto a release, e.g. "manga:drpver", by default None
+    defaults : dict, optional
+        default values for the sdss_access template keyword arguments, by default None
+    pattern : str, optional
+        the regex pattern to match with, by default None
+    delimiter : str, optional
+        the delimiter to use when joining keys for the objectid pattern creation, by default None
+    order : List[str], optional
+        a list of access keywords to order the objectid pattern by, by default None
+    keys : list, optional
+        optional list of names to construct a named pattern.  Default is to use any sdss_access keys.
+    keymap : dict, optional
+        optional dict mapping names to specific patterns to use, by default None
+    exclude : list, optional
+        a list of access keywords to exclude in the objectid pattern creation, by default None
+    include : list, optional
+        a list of access keywords to include in the objectid pattern creation, by default None
+
+    Returns
+    -------
+    Spectrum
+        a new tool class
+
+    Raises
+    ------
+    ValueError
+        when no mapped_version is specified
+    """
+    # create class name
+    name = species[0].title() + species[1:]
+
+    # set class attributes
+    kwds = {'datamodel': species, 'specutils_format': specutils_format}
+
+    # check for any api info
+    if api:
+        api_tup = (api, base_api_route)
+        kwds['_api'] = api_tup
+
+    # resolve the bases
+    if not base:
+        base = (Spectrum,)
+    elif isinstance(base, list):
+        base = tuple(base)
+    elif not isinstance(base, tuple):
+        base = (base,)
+    from types import resolve_bases
+    resolved_bases = resolve_bases(base)
+
+    # create the new class
+    kls = type(name, resolved_bases, kwds)
+
+    # TODO - improve the inputs and code around mapped_versions
+    # TODO - improve the inputs and code around path keywords and object id creation
+    # NOTE - can we reduce the number of inputs and auto-input to sdss_loader?
+
+    # check inputs
+    if not mapped_version:
+        raise ValueError('A mapped_version must be specified.')
+
+    # look up path name if none is specified
+    if not path_name:
+        # create datamodel
+        from sdss_brain.datamodel.products import create_object_model
+        model = create_object_model(species, release=release)
+
+        info = model.get_access_info()
+        if not info or info['in_sdss_access'] is False:
+            log.warning(f'No access info found for datamodel {name} in {release}.')
+            return
+
+        path_name = info['path_name']
+
+
+    # apply the sdss_loader decorator
+    kls = sdss_loader(name=path_name, defaults=defaults or {}, delimiter=delimiter,
+                    mapped_version=mapped_version, order=order, pattern=pattern,
+                    keys=keys, keymap=keymap, exclude=exclude, include=include)(kls)
+
+    return kls

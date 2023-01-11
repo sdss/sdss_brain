@@ -100,6 +100,9 @@ class BaseClient(object):
         # set the URL
         self.set_url(route)
 
+        # automatically follow redirects
+        kwargs['follow_redirects'] = True
+
         # set the httpx.Client or httpx.AsyncClient
         self.client = self._kls(headers=headers, **kwargs)  # pylint: disable=not-callable
 

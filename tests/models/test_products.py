@@ -5,7 +5,6 @@
 import pytest
 import json
 import pathlib
-import importlib
 import respx
 from httpx import Response
 from pydantic import BaseModel
