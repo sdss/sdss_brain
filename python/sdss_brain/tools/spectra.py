@@ -22,7 +22,7 @@ except ImportError:
 from astropy.io.registry import IORegistryError
 from astropy.io.fits import HDUList
 from specutils import Spectrum1D
-from typing import Type, Union, BinaryIO, TypeVar
+from typing import Type, Union, BinaryIO, List
 
 from sdss_brain import log
 from sdss_brain.core import Brain
@@ -227,7 +227,7 @@ class AspcapStar(Spectrum):
 def create_tool(species: str, base: Union[tuple, list, Spectrum] = None, specutils_format: str = None,
                 release: str = None,  api: str = None, base_api_route: str = None,
                 path_name: str = None, mapped_version: str = None, pattern: str = None, delimiter: str = None,
-                defaults: dict = None, order: list[str] = None, keys: list = None, keymap: dict = None,
+                defaults: dict = None, order: List[str] = None, keys: list = None, keymap: dict = None,
                 exclude: list = None, include: list = None) -> Type[Spectrum]:
     """ Dynamically create a new tool
 
@@ -266,7 +266,7 @@ def create_tool(species: str, base: Union[tuple, list, Spectrum] = None, specuti
         the regex pattern to match with, by default None
     delimiter : str, optional
         the delimiter to use when joining keys for the objectid pattern creation, by default None
-    order : list[str], optional
+    order : List[str], optional
         a list of access keywords to order the objectid pattern by, by default None
     keys : list, optional
         optional list of names to construct a named pattern.  Default is to use any sdss_access keys.
