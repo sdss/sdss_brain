@@ -73,19 +73,19 @@ class, highlighting how to integrate the MMA into a new tool.
 
     import re
     from sdss_brain.core import Brain
-    from sdss_brain.helpers import get_mapped_version, load_fits_file
+    from sdss_brain.helpers import load_fits_file
+    from sdss_brain.datamodel import get_mapped_version
     from sdssdb.sqlalchemy.mangadb.datadb import Cube
 
     class MangaCube(Brain):
         _db = Cube
-        mapped_version = 'manga' # set the release mapping key
         path_name = 'mangacube'  # set path name for sdss_access
 
         def _set_access_path_params(self):
             ''' set sdss_access parameters '''
 
             # set path keyword arguments
-            drpver = get_mapped_version(self.mapped_version, release=self.release, key='drpver')
+            drpver = get_mapped_version("drpver", release=self.release)
             self.path_params = {'plate': self.plate, 'ifu':self.ifu, 'drpver': drpver}
 
         def _parse_input(self, value):
@@ -234,7 +234,7 @@ creating new classes from the ``Brain``.  Available class decorators are:
 Using the ``sdss_loader`` decorator, we can rewrite the above example as
 ::
 
-    @sdss_loader(name='mangacube', defaults={'wave':'LOG'}, mapped_version='manga:drpver', pattern=r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
+    @sdss_loader(name='mangacube', defaults={'wave':'LOG'}, mapped_version='drpver', pattern=r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
     class MangaCube(Brain):
         _db = mangadb
 
@@ -252,12 +252,11 @@ which effectively converts to the following:
 
     class MangaCube(Brain):
         _db = mangadb
-        mapped_version = 'manga'
         path_name = 'mangacube'
 
         @property
         def drpver(self):
-            return get_mapped_version(self.mapped_version, release=self.release, key='drpver')
+            return get_mapped_version("drpver", release=self.release)
 
         def _set_access_path_params(self):
             ''' set sdss_access parameters '''
@@ -284,7 +283,7 @@ sdss_access template keys:
 The ``sdss_loader`` decorator is equivalent to stacking multiple decorators, for example
 ::
 
-    @access_loader(name='mangacube', defaults={'wave':'LOG'}, mapped_version='manga:drpver')
+    @access_loader(name='mangacube', defaults={'wave':'LOG'}, mapped_version='drpver')
     @parser_loader(pattern=r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
     class MangaCube(Brain):
         _db = mangadb

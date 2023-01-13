@@ -14,11 +14,11 @@
 from __future__ import print_function, division, absolute_import
 
 import inspect
-from functools import wraps
+from functools import wraps, partialmethod
 from typing import Callable, Type, TypeVar
 
 from sdss_brain import log
-from sdss_brain.helpers import get_mapped_version, parse_data_input
+from sdss_brain.helpers import parse_data_input
 
 T = TypeVar('T')
 
@@ -63,14 +63,13 @@ def create_mapped_properties(kls: Type[T], mapped_version: str):
 
     Creates new read-only properties that extracts a specific version id to an input
     release.  This allows the version id to be updated when the global "release" is
-    changed.  See `~sdss_brain.helpers.get_mapped_version` for more details.
-    ``mapped_version`` is a mapping key, "[mapping]:[property,]", where [mapping]
-    is the name of the key in the "mapped_version" attribute in the brain configuration yaml file,
-    and [property,] is a list of version ids to become properties.
+    changed.  See `~sdss_brain.datamodel.versions.get_mapped_version` for more details.
+    ``mapped_version`` is a mapping key, "[property,]", where [property,] is a list
+    of version reference names to become properties.
 
-    For example a key of "manga:drpver" creates a new read-only property called "drpver" and uses
+    For example a key of "drpver" creates a new read-only property called "drpver" and uses
     `get_mapped_version` to extract the correct version number for a given release from the
-    "mapped_version['manga']" key in ~sdss_brain.yaml.
+    list of versions from the SDSS datamodel.
 
     Parameters
     ----------
@@ -79,17 +78,18 @@ def create_mapped_properties(kls: Type[T], mapped_version: str):
         mapped_version : str
             The mapping key to map a specific version onto a release
     '''
-    mapkey, attrkey = mapped_version.split(':')
     # set the mapped_version class attribute
-    kls.mapped_version = mapkey
-    if attrkey:
-        # loop over all named values found
-        for attr in attrkey.split(','):
+    if keys := mapped_version.split(','):
+        for attr in keys:
             # create read-only property that extracts the correct version number
             # for a given release or returns a valid work version
-            setattr(kls, attr, property(lambda self: get_mapped_version(
-                kls.mapped_version, release=self.release, key=attr) or self._version.get(attr, None)))
 
+            # need to bind the version attr name to the method that returns the version
+            # otherwise the method will always return the value of the last "attr" in the loop
+            setattr(kls, f'_{attr}_pm', partialmethod(kls._get_version, attr))
+
+            # bind the partial method to a property
+            setattr(kls, attr, property(getattr(kls, f'_{attr}_pm')))
 
 @register
 def parser_loader(kls: Type[T] = None, *, pattern: str = None, keys: list = None,
@@ -164,14 +164,13 @@ def access_loader(kls: Type[T] = None, *, name: str = None, defaults: dict = {},
     template keywords given a path name.  Default values for template kwargs can be specified
     using the "defaults" argument.
 
-    ``mapped_version`` is a mapping key, "[mapping]:[property,]",
-    where [mapping] is the name of the key in the "mapped_version" attribute in the brain
-    configuration yaml file, and [property,] is a list of version ids to become properties.  See
-    `~sdss_brain.helpers.get_mapped_version` for more details.
+    ``mapped_version`` is a mapping key, "[property,]",
+    where [property,] is a list of version reference names to become properties.  See
+    `~sdss_brain.datamodel.versions.get_mapped_version` for more details.
 
-    For example a key of "manga:drpver" creates a new read-only property called "drpver" and uses
+    For example a key of "drpver" creates a new read-only property called "drpver" and uses
     `get_mapped_version` to extract the correct version number for a given release from the
-    "mapped_version['manga']" key in ~sdss_brain.yaml.
+    list of versions from the SDSS datamodel.
 
     Parameters
     ----------
@@ -180,7 +179,7 @@ def access_loader(kls: Type[T] = None, *, name: str = None, defaults: dict = {},
         defaults : dict
             Default values for the sdss_access template keyword arguments
         mapped_version : str
-            A mapping key to map a specific version onto a release, e.g. "manga:drpver"
+            A mapping key to map a specific version onto a release, e.g. "drpver"
 
     Returns
     -------
@@ -208,27 +207,6 @@ def access_loader(kls: Type[T] = None, *, name: str = None, defaults: dict = {},
     if not kls:
         return wrap
     return wrap(kls)
-
-
-# def sdss_loader(kls=None, *, name=None, defaults={}, mapped_version=None, pattern=None,
-#                 include=None, exclude=None, order=None, delimiter=None):
-#     """ """
-
-#     def wrap(kls):
-#         if name:
-#             kls = access_loader(kls=kls, name=name, defaults=defaults,
-#                                 mapped_version=mapped_version)
-
-#         parser = any([pattern, include, exclude, order])
-#         if parser:
-#             kls = parser_loader(kls=kls, pattern=pattern, include=include, exclude=exclude,
-#                                 order=order, delimiter=delimiter)
-#         return kls
-
-#     if not kls:
-#         return wrap
-
-#     return wrap(kls)
 
 
 def use_decorators(*args):

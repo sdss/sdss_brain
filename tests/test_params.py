@@ -21,7 +21,8 @@ from tests.conftest import get_path
 from astropy.io import fits
 
 from sdss_brain.core import Brain, BrainNoAccess
-from sdss_brain.helpers import get_mapped_version, parse_data_input, parser_loader
+from sdss_brain.helpers import parse_data_input, parser_loader
+from sdss_brain.datamodel import get_mapped_version
 
 
 #
@@ -34,11 +35,10 @@ params = {'plate': '8485', 'ifu': '1901', 'wave': 'LOG', 'drpver': 'v2_4_3'}
 
 
 class BaseCube(Brain):
-    mapped_version = 'manga'
     path_name = 'mangacube'
 
     def _set_access_path_params(self):
-        drpver = get_mapped_version(self.mapped_version, release=self.release, key='drpver')
+        drpver = get_mapped_version('drpver', release=self.release)
         self.path_params = {'plate': self.plate, 'ifu': self.ifu, 'drpver': drpver, 'wave': 'LOG'}
 
     def _load_object_from_file(self):

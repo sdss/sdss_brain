@@ -21,12 +21,13 @@ from astropy.io import fits
 from sdssdb.sqlalchemy.mangadb import database
 
 from sdss_brain.core import Brain
-from sdss_brain.helpers import get_mapped_version, load_fits_file
+from sdss_brain.helpers import load_fits_file
+from sdss_brain.datamodel import get_mapped_version
 
 
 class Cube(Brain):
     _db = database
-    mapped_version = 'manga'
+    #mapped_version = 'manga'
     path_name = 'mangacube'
 
     def _parse_input(self, value):
@@ -42,7 +43,7 @@ class Cube(Brain):
         return data
 
     def _set_access_path_params(self):
-        drpver = get_mapped_version(self.mapped_version, release=self.release, key='drpver')
+        drpver = get_mapped_version('drpver', release=self.release)
         self.path_params = {'plate': self.plate, 'ifu': self.ifu, 'drpver': drpver, 'wave': 'LOG'}
 
     def _load_object_from_file(self):

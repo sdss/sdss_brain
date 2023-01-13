@@ -26,9 +26,11 @@ from typing import Type, Union, BinaryIO, List
 
 from sdss_brain import log
 from sdss_brain.core import Brain
+from sdss_brain.datamodel import get_mapped_version
 from sdss_brain.exceptions import BrainNotImplemented, BrainMissingDependency
-from sdss_brain.helpers import (sdss_loader, get_mapped_version, load_fits_file, parse_data_input,
+from sdss_brain.helpers import (sdss_loader, load_fits_file, parse_data_input,
                                 load_from_url)
+
 
 
 class Spectrum(Brain):
@@ -158,7 +160,7 @@ class Spectrum(Brain):
 
 
 # example of using a custom pattern in the sdss_loader
-@sdss_loader(name='spec-lite', mapped_version='eboss:run2d',
+@sdss_loader(name='spec-lite', mapped_version='run2d',
              pattern=r'(?P<plateid>\d{4,5})-(?P<mjd>\d{5})-(?P<fiberid>\d{1,4})')
 class Eboss(Spectrum):
     """ Class representing a single fiber SDSS spectra from BOSS/EBOSS
@@ -186,7 +188,7 @@ class Eboss(Spectrum):
 # example of using a access keys to define the pattern in the sdss_loader
 # setting a custom delimiter to "--" since APOGEE field names can have "-" in them.
 @sdss_loader(name='apStar', defaults={'apstar': 'stars', 'prefix': 'ap'}, delimiter='--',
-             mapped_version='apogee:apred', order=['telescope', 'field', 'obj'])
+             mapped_version='apred', order=['telescope', 'field', 'obj'])
 class ApStar(Spectrum):
     """ Class representing an APOGEE combined spectrum for a single star """
     specutils_format: str = 'APOGEE apStar'
@@ -194,7 +196,7 @@ class ApStar(Spectrum):
 
 
 @sdss_loader(name='apVisit', defaults={'prefix': 'ap'}, delimiter='--',
-             mapped_version='apogee:apred', order=['telescope', 'field', 'plate', 'mjd', 'fiber'])
+             mapped_version='apred', order=['telescope', 'field', 'plate', 'mjd', 'fiber'])
 class ApVisit(Spectrum):
     """ Class representing an APOGEE single visit spectrum for a given star """
     specutils_format: str = 'APOGEE apVisit'
@@ -206,7 +208,6 @@ class AspcapStar(Spectrum):
     """ Class representing an APOGEE spectrum for a single star with ASPCAP results """
     specutils_format: str = 'APOGEE aspcapStar'
     path_name: str = 'aspcapStar'
-    mapped_version: str = 'apogee'
 
     def _parse_input(self, value):
         # use the sdss_access keys to form the object id and parse it
@@ -217,7 +218,7 @@ class AspcapStar(Spectrum):
 
     def _set_access_path_params(self):
         # extract the apred version id based on the data release
-        apred = get_mapped_version(self.mapped_version, release=self.release, key='apred')
+        apred = get_mapped_version('apred', release=self.release)
 
         # set the path params using the instance attributes extracted from _parse_input
         self.path_params = {'telescope': self.telescope, 'apred': apred,
