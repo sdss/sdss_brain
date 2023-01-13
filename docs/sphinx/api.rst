@@ -82,6 +82,11 @@ Models
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: sdss_brain.datamodel.versions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 
 .. _mixins:
 

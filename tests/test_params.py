@@ -35,7 +35,6 @@ params = {'plate': '8485', 'ifu': '1901', 'wave': 'LOG', 'drpver': 'v2_4_3'}
 
 
 class BaseCube(Brain):
-    mapped_version = 'manga'
     path_name = 'mangacube'
 
     def _set_access_path_params(self):

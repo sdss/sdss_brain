@@ -89,13 +89,10 @@ class HindBrain(Base):
     ----------
         db : `~sdss_brain.helpers.database.DatabaseHandler`
             A db handler for any loaded sdssdb ORM or db connection for the object
-        mapped_version : str
-            The name of survey/category in the mapped_versions dictionary
         remote : `~sdss_brain.api.handler.ApiHandler`
             An api handler for loaded APIs or urls, and sending http requests
     '''
     _db = None
-    mapped_version = None
     data_origin = None
     _api = None
     async_client = False
