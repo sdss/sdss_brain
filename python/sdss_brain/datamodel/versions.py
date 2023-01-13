@@ -131,6 +131,10 @@ def get_mapped_version(key: str = None, release: str = None) -> str:
     if not isinstance(version, dict):
         raise TypeError(f'version info for release {release} is not a valid dict.')
 
+    # if no key specified, return the entire dict
+    if not key:
+        return version
+
     # check for a specific key in the version dictionary
     # original key
     if ver := version.get(key, None):

@@ -70,7 +70,7 @@ class TestConfig(object):
     def test_read_cfg(self):
         assert hasattr(config, '_custom_config')
         assert isinstance(config._custom_config, dict)
-        assert 'mapped_versions' in config._custom_config
+        assert 'version_aliases' in config._custom_config
 
     def test_update_cfg(self, mockedcfg):
         assert config.ignore_db is False
