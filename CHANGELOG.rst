@@ -4,6 +4,8 @@
 Change Log
 ==========
 
+* :feature:`8` moves the version mapping to the datamodel product
+* :feature:`28` integrates the datamodel objects into the tools
 * :feature:`18` adds support for retrieving and loading SDSS datamodels
 * :support:`23` switches docs Sphinx theme to Furo
 * :feature:`21` adds support for API auth token refreshing
