@@ -14,11 +14,11 @@
 from __future__ import print_function, division, absolute_import
 
 import inspect
-from functools import wraps
+from functools import wraps, partialmethod
 from typing import Callable, Type, TypeVar
 
 from sdss_brain import log
-from sdss_brain.helpers import get_mapped_version, parse_data_input
+from sdss_brain.helpers import parse_data_input
 
 T = TypeVar('T')
 
@@ -79,17 +79,18 @@ def create_mapped_properties(kls: Type[T], mapped_version: str):
         mapped_version : str
             The mapping key to map a specific version onto a release
     '''
-    mapkey, attrkey = mapped_version.split(':')
     # set the mapped_version class attribute
-    kls.mapped_version = mapkey
-    if attrkey:
-        # loop over all named values found
-        for attr in attrkey.split(','):
+    if keys := mapped_version.split(','):
+        for attr in keys:
             # create read-only property that extracts the correct version number
             # for a given release or returns a valid work version
-            setattr(kls, attr, property(lambda self: get_mapped_version(
-                kls.mapped_version, release=self.release, key=attr) or self._version.get(attr, None)))
 
+            # need to bind the version attr name to the method that returns the version
+            # otherwise the method will always return the value of the last "attr" in the loop
+            setattr(kls, f'_{attr}_pm', partialmethod(kls._get_version, attr))
+
+            # bind the partial method to a property
+            setattr(kls, attr, property(getattr(kls, f'_{attr}_pm')))
 
 @register
 def parser_loader(kls: Type[T] = None, *, pattern: str = None, keys: list = None,

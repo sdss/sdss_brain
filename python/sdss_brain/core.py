@@ -15,6 +15,7 @@ from __future__ import print_function, division, absolute_import
 import abc
 import warnings
 from sdss_brain.config import config
+from sdss_brain.datamodel import get_mapped_version
 from sdss_brain.exceptions import BrainError
 from sdss_brain.helpers import db_type
 from sdss_brain.api.handler import api_type, ApiHandler
@@ -242,6 +243,27 @@ class HindBrain(Base):
         wv = config.work_versions.copy()
         wv.update(value)
         cls._version = wv
+
+    def _get_version(self, value: str) -> str:
+        """ Get a version tag from the datamodel
+
+        Get a version tag name or number from the datamodel mapping
+        of versions, given a version reference name and SDSS data release.
+        For example, release "DR18" and value "run2d" returns "v6_0_4". If
+        no version found for the input name or release, it checks the mapping
+        of possible "work" versions.
+
+        Parameters
+        ----------
+        value : str
+            version reference name, e.g. "run2d"
+
+        Returns
+        -------
+        str
+            _description_
+        """
+        return get_mapped_version(value, release=self.release) or self._version.get(value, None)
 
     @classmethod
     def set_database_object(cls, value: db_type) -> None:
