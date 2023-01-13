@@ -32,9 +32,9 @@ retrieve all the version metadata, use the `~.sdss_brain.datamodel.versions.get_
 
 Accessing a Mapping
 ^^^^^^^^^^^^^^^^^^^
-To access a mapping you can use the ``get_mapped_version``  helper function.  It accepts as input the version
-reference name, and a release to lookup.  If no version name is specified, it returns the entire mapping
-for the given release.
+To access a mapping you can use the `~.sdss_brain.datamodel.versions.get_mapped_version` helper function.
+It accepts as input the version reference name, and a release to lookup.  If no version name is specified,
+it returns the entire mapping for the given release.
 ::
 
     >>> # access the entire version mapping for DR16
@@ -107,11 +107,12 @@ Version Name Differences
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
 Sometimes the version name specified in an ``sdss_access`` path template and in a datamodel can be different.
-This can happen with to the longetivity of SDSS, a lack of standards around naming conventions, and multiple
-people contributing to the same project/code.  For example, a version name could be ``drpver`` in
-the datamodel, but ``drp_ver`` or ``ver_drp`` or ``drpvers`` in various ``sdss_access`` path templates
-describing data products.  A real example is the version of the APOGEE pipeline is often referenced as
-``apred`` in older path templates, but ``apred_vers`` in the datamodel and in newer path templates.
+This can happen due to the longetivity of SDSS, a lack of standards around naming conventions, and multiple
+people contributing to the same project/code.  For example, a version name could be referenced as
+``drpver`` in the datamodel, but as ``drp_ver`` or ``ver_drp`` or ``drpvers`` in various ``sdss_access``
+path templates describing data products.  A real example is the version of the APOGEE pipeline is
+often referenced as ``apred`` in older path templates, but ``apred_vers`` in the datamodel and in
+newer path templates.
 
 To accommodate these differences, aliases can be defined using the ``version_aliases`` parameter in the
 `sdss_brain.yml` configuration file, which is a dictionary of parameters read in by ``sdss_brain``.  Each
