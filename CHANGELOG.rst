@@ -4,6 +4,7 @@
 Change Log
 ==========
 
+* :release:`0.4.0 <2022-01-23>`
 * :feature:`8` moves the version mapping to the datamodel product
 * :feature:`28` integrates the datamodel objects into the tools
 * :feature:`18` adds support for retrieving and loading SDSS datamodels
