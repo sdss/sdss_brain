@@ -96,6 +96,7 @@ class HindBrain(Base):
     data_origin = None
     _api = None
     async_client = False
+    _version = None
 
     def __new__(cls, *args, **kwargs):
         # set any work versions

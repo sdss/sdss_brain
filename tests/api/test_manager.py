@@ -24,7 +24,7 @@ class TestDomain(object):
 
     def test_good_domain(self):
         data = {'name': 'test.sdss.org', 'public': False, 'description': 'test domain'}
-        domain = Domain.parse_obj(data)
+        domain = Domain.model_validate(data)
         assert domain.name == data['name']
         assert domain.public == data['public']
         assert domain.description == data['description']
@@ -35,14 +35,14 @@ class TestDomain(object):
     def test_invalid_domain(self):
         with pytest.raises(pydantic.ValidationError, match='Domain name bad.domain does not '
                            'fit format of "xxx.sdss.org"'):
-            Domain.parse_obj({'name': 'bad.domain', 'description': 'bad domain'})
+            Domain.model_validate({'name': 'bad.domain', 'description': 'bad domain'})
 
 
 class TestProfileModel(object):
     def test_good_profile(self):
         data = {'base': 'good', 'description': 'a good API profile', 'domains': ['data', 'sas'],
                 'stems': {'test': 'dev', 'affix': 'prefix'}, 'api': True}
-        profile = ApiProfileModel.parse_obj(data)
+        profile = ApiProfileModel.model_validate(data)
         assert profile.base == data['base']
         assert profile.domains == data['domains']
         assert profile.api is True
@@ -52,15 +52,15 @@ class TestProfileModel(object):
         assert profile.routemap is None
 
     @pytest.mark.parametrize('baddata, msg',
-                             [({'domains': ['data']}, r'base\s* field required'),
-                              ({'base': 'good'}, r'domains\s* field required'),
+                             [({'domains': ['data']}, r'base\s* Field required'),
+                              ({'base': 'good'}, r'domains\s* Field required'),
                               ({'base': 'good', 'domains': ['baddomain']}, 'Not all of the input domains/mirrors are in the list of domains.yml'),
                               ({'stems': {}}, 'stems dictionary must contain at least "test" and "affix" key'),
                               ({'stems': {'test': 'test', 'affix': 'badfix'}}, 'affix value can only be "prefix" or "suffix"')],
                              ids=['noname', 'nodomain', 'baddomain', 'missingaffix', 'badaffix'])
     def test_invalid_profile(self, baddata, msg):
         with pytest.raises(pydantic.ValidationError, match=msg):
-            ApiProfileModel.parse_obj(baddata)
+            ApiProfileModel.model_validate(baddata)
 
 
 class TestProfile(object):
@@ -187,4 +187,3 @@ class TestManager(object):
             assert 'description' not in table.colnames
         else:
             assert table[table['key'] == 'marvin']['description'][0] == 'API for accessing MaNGA data via Marvin'
-

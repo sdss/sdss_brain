@@ -225,7 +225,7 @@ class ApiProfile(object):
         if name not in apis:
             raise ValueError(f'API Profile {name} not in the apis.yml file. Consider adding it.')
 
-        self._validated_model = ApiProfileModel.parse_obj(apis[name])
+        self._validated_model = ApiProfileModel.model_validate(apis[name])
         self.info = self._validated_model.dict()
 
         self.description = self.info.get('description', '')

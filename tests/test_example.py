@@ -131,6 +131,5 @@ class TestCube(object):
 
 def test_bad_brain():
     ''' test that abstract class can't be instantiated '''
-    with pytest.raises(TypeError) as cm:
+    with pytest.raises(TypeError, match="Can't instantiate abstract class Brain (.*?) abstract methods"):
         Brain('A')
-    assert "Can't instantiate abstract class Brain with abstract methods" in str(cm.value)

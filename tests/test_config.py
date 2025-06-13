@@ -12,6 +12,7 @@
 
 
 from __future__ import print_function, division, absolute_import
+import copy
 import pytest
 from sdss_brain import cfg_params
 from sdss_brain.config import config, tree, Config
@@ -21,6 +22,28 @@ from sdss_brain.exceptions import BrainError
 @pytest.fixture(autouse=True)
 def set_default():
     config.set_release("DR16")
+
+
+@pytest.fixture(autouse=True)
+def restore_cfg_params():
+    orig = copy.deepcopy(cfg_params)
+    yield
+    cfg_params.clear()
+    cfg_params.update(orig)
+
+
+@pytest.fixture(autouse=True)
+def reset_config():
+    # Save original state
+    orig_release = config.release
+    orig_ignore_db = getattr(config, 'ignore_db', None)
+    orig_download = getattr(config, 'download', None)
+    orig_work_versions = getattr(config, 'work_versions', None)
+    yield
+    config.set_release(orig_release)
+    config.ignore_db = orig_ignore_db
+    config.download = orig_download
+    config.work_versions = orig_work_versions
 
 
 @pytest.fixture()
@@ -45,7 +68,7 @@ class TestConfig(object):
         with pytest.raises(BrainError, match='trying to set an invalid release version'):
             config.set_release('DR4')
 
-    @pytest.mark.parametrize('release', ['work', 'MPL8'])
+    @pytest.mark.parametrize('release', ['work', 'IPL1'])
     def test_release_bad_user(self, mockedcfg, release):
         with pytest.raises(BrainError, match='User test is not validated.'):
             mockedcfg.set_release(release)
@@ -90,4 +113,3 @@ class TestConfig(object):
         config.set_release('IPL1')
         assert config.is_release_public() == False
         config.set_release('DR16')
-
