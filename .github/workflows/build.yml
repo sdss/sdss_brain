@@ -11,15 +11,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.8'
-        cache: pip
-        cache-dependency-path: |
-          **/setup.cfg
+          python-version: "3.11"
 
     - name: Install dependencies
       run: |
@@ -39,6 +36,13 @@ jobs:
       with:
         machine: data.sdss.org
         username: sdss
+        password: stest
+
+    - name: Setup SDSS data netrc
+      uses: extractions/netrc@v1
+      with:
+        machine: data.sdss5.org
+        username: sdss5
         password: stest
 
     - name: Setup SDSS API netrc

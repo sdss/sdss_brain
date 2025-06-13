@@ -19,7 +19,7 @@ import warnings
 import yaml
 from astropy.table import Table
 from functools import wraps
-from pydantic import BaseModel, validator, parse_obj_as
+from pydantic import BaseModel, field_validator, parse_obj_as
 from typing import List, Dict
 from urllib.parse import urlparse, urlunparse
 from sdss_brain import log, cfg_params
@@ -84,7 +84,8 @@ class Domain(BaseModel):
     public: bool = False
     description: str = None
 
-    @validator('name')
+    @field_validator('name')
+    @classmethod
     def check_domain_name(cls, value):
         if (value != 'localhost' and not value.endswith('sdss.org')
             and not value.endswith('sdss5.org')
@@ -148,13 +149,15 @@ class ApiProfileModel(BaseModel):
     description: str = ''
     docs: str = None
 
-    @validator('domains', 'mirrors')
+    @field_validator('domains', 'mirrors')
+    @classmethod
     def domains_in_list(cls, values):
         if not set(values).issubset(set(domains)):
             raise ValueError('Not all of the input domains/mirrors are in the list of domains.yml!')
         return values
 
-    @validator('stems')
+    @field_validator('stems')
+    @classmethod
     def allowed_affixes(cls, values):
         if {'test', 'affix'} - set(values.keys()):
             raise ValueError('stems dictionary must contain at least "test" and "affix" keys!')

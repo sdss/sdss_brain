@@ -100,7 +100,7 @@ def create_object_pattern(regex: Union[str, Pattern] = None, keys: list = None, 
 def parse_data_input(value: str, regex: str = None, keys: list = None, keymap: dict = None,
                      delimiter: str = '-', exclude: list = None, include: list = None,
                      order: list = None, inputs: bool = False) -> dict:
-    ''' Parse data input for a filename or an object id
+    """ Parse data input for a filename or an object id
 
     Parameters
     ----------
@@ -139,7 +139,7 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, keymap: d
             {'filename': None, 'objectid': '8485-1901', 'parsed_groups': ['8485-1901', '485-1901']}
 
         >>> # parse an objectid using a custom pattern
-        >>> parse_data_input('8485-1901', regex=r'(?P<plate>\d{4,5})-(?P<ifu>\d{3,5})')
+        >>> parse_data_input('8485-1901', regex=r'(?P<plate>\\d{4,5})-(?P<ifu>\\d{3,5})')
             {'filename': None, 'objectid': '8485-1901', 'plate': '8485', 'ifu': '1901', 'parsed_groups': ['8485-1901', '8485', '1901']}
 
         >>> # parse an objectid using access keywords
@@ -152,7 +152,7 @@ def parse_data_input(value: str, regex: str = None, keys: list = None, keymap: d
         >>> parse_data_input('8485-1901', keys=keys, order=['plate', 'ifu'])
             {'filename': None, 'objectid': '8485-1901', 'plate': '8485', 'ifu': '1901', 'parsed_groups': ['8485-1901', '8485', '1901']}
 
-    '''
+    """
 
     if not isinstance(value, (str, pathlib.Path)):
         return ValueError('input value must be a str or pathlib.Path')

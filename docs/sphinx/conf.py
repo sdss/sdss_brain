@@ -226,8 +226,6 @@ texinfo_documents = [
 
 if use_releases == 'yes':
 
-    extensions += ['sdsstools.releases']
-
     releases_github_path = 'sdss/sdss_brain'
     releases_document_name = ['CHANGELOG']
     releases_unstable_prehistory = True

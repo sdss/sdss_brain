@@ -53,6 +53,16 @@ domains:
     public: true
     description: public domain for DR17 data access
 
+  dr18:
+    name: dr18.sdss.org
+    public: true
+    description: public domain for DR17 data access
+
+  dr18:
+    name: dr19.sdss.org
+    public: true
+    description: public domain for DR17 data access
+
   local:
     name: localhost
     description: domain when running services locally
